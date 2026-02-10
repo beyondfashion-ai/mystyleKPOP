@@ -1,20 +1,43 @@
-# CLAUDE.md — mystyleai MVP
+# CLAUDE.md — mystyleai MVP v2
 
 > AI assistant guide for the **beyondfashion-ai/mystyleKPOP** repository.
-> KPOP Stage Outfit AI Generation Platform.
+> "From Prompt to Stage: Design your idol's stage outfit."
 
 ---
 
-## Project Overview
+## 1. Product Vision
 
-**mystyleai** is a platform where KPOP fans design stage outfits using AI, share them in a community gallery, and the monthly winner receives a real costume produced from their design.
+**mystyleai** is a platform where KPOP fans design stage outfits using AI, share them in a community gallery, compete via voting/ranking, and the monthly winner receives a real costume manufactured from their design.
 
-### Core Value Propositions
+### Core Assumptions
 
-- **10-Second Generation:** AI generates 4 KPOP stage outfit images quickly
-- **Multilingual Support:** Korean, Japanese, Chinese prompts are auto-translated to English
-- **Real Reward:** The #1 design each month is manufactured into a real costume and gifted to the winner
-- **Community:** Gallery, voting, and leaderboard to energize fandom culture
+- K-POP is driven by organized fandom behavior (goal-setting -> achievement).
+- Existing fandom participation (voting, sharing) is strong, but there is no structure where "my creative output competes and connects to reality."
+
+### Strategy: Create / Support / Boost
+
+| Role        | Actions                                           |
+| ----------- | ------------------------------------------------- |
+| **Creator** | Generate / Save / Publish / Compete               |
+| **Supporter** | Like (free vote)                                |
+| **Booster** | Boost (Phase 2-A: visibility boost / Phase 2-B: paid vote = 1 ticket) |
+
+### Key Differentiator (R2R: Result to Reality)
+
+The monthly #1 winner's design is manufactured into a real costume and delivered, proving trust through tangible results.
+
+### Product Principles
+
+- Prompts and recipes are **private** (never exposed to other users)
+- **No remix/copy** functionality
+- All policies (voting, currency, visibility) must be expressible as a **public announcement sentence**
+- Conflict will happen: design policies, permissions, and audit logs from day one
+
+### Pay-to-Win Stance
+
+- Currency is defined as "standardized support behavior"
+- Like (free) and Boost (currency) are **always displayed and tallied separately**
+- Expiration, refund, and conditions are fixed as announcement-ready text
 
 ### Repository Details
 
@@ -27,13 +50,13 @@
 
 ---
 
-## Technology Stack
+## 2. Technology Stack
 
 ### Frontend
 
 | Technology       | Details                          |
 | ---------------- | -------------------------------- |
-| Framework        | Next.js 14+ (App Router)        |
+| Framework        | Next.js 14+ (App Router, `src/` directory) |
 | Language         | TypeScript                       |
 | Styling          | Tailwind CSS                     |
 | UI Components    | Shadcn/ui (optional)            |
@@ -45,7 +68,7 @@
 | Technology       | Details                                  |
 | ---------------- | ---------------------------------------- |
 | Platform         | Firebase (Firestore, Storage, Functions) |
-| API Routes       | Next.js API routes (`/app/api/`)         |
+| API Routes       | Next.js Route Handlers (`src/app/api/**/route.ts`) |
 | Image Generation | fal.ai API (Flux model)                 |
 | Translation      | Google Cloud Translation API             |
 | Moderation       | Google Cloud Vision API (SafeSearch)     |
@@ -61,74 +84,131 @@
 
 ---
 
-## Project Structure
+## 3. Architecture Decisions (MVP)
+
+### Directory Convention
+
+- Use `src/app/` (Next.js official `src` support), not root `app/`.
+- API routes live in `src/app/api/**/route.ts` (Route Handlers).
+
+### Security Model: Server-Write Only
+
+- **No client-side Firestore writes.** All mutations go through Next.js API routes.
+- Admin role is determined exclusively by **Firebase Custom Claims** (`admin: true`).
+- Counters (Like count, Boost count) are processed **atomically on the server** (increment / transaction).
+
+### Like vs Boost Separation
+
+- Like and Boost are **separate fields** in every data model.
+- They are **separately displayed** on every UI surface.
+- Ranking score formulas must be **publicly documented**.
+
+---
+
+## 4. User Roles & Permissions
+
+| Role            | Generate | Save Private | Publish | Like | Animate | Boost |
+| --------------- | -------- | ------------ | ------- | ---- | ------- | ----- |
+| **Guest**       | 1 trial  | No           | No      | No   | No      | No    |
+| **Free**        | Daily limit | No        | Yes     | Yes  | No      | No    |
+| **Superfan Pass** | Daily limit | Yes     | Yes     | Yes  | Yes     | No    |
+| **Booster**     | Daily limit | Yes       | Yes     | Yes  | Yes     | Yes (Phase 2) |
+
+---
+
+## 5. Information Architecture (Routes)
+
+| Route            | Page              | Description                        |
+| ---------------- | ----------------- | ---------------------------------- |
+| `/`              | Landing           | 3-second comprehension + Studio CTA + Hall of Fame |
+| `/studio`        | Studio            | 3-input generation (Group/Concept/Keyword) |
+| `/gallery`       | Explore           | Masonry grid + infinite scroll     |
+| `/design/[id]`   | Detail            | Full view + Like + Boost + Share + Animate |
+| `/ranking`       | Monthly Ranking   | Top 50 + phase-specific score text |
+| `/auth/*`        | Auth              | Email/Password login/signup        |
+| `/account`       | My Page           | User profile + my designs          |
+| `/admin/*`       | Admin Console     | Moderation + operations            |
+
+---
+
+## 6. Project Structure
 
 ```
 mystyleai/
-├── app/
-│   ├── (auth)/
-│   │   ├── login/
-│   │   └── signup/
-│   ├── (main)/
-│   │   ├── page.tsx                 # Landing page
-│   │   ├── playground/
-│   │   │   └── page.tsx             # Generation studio
+├── src/
+│   ├── app/
+│   │   ├── (auth)/
+│   │   │   ├── login/
+│   │   │   └── signup/
+│   │   ├── (main)/
+│   │   │   ├── page.tsx                 # Landing page
+│   │   │   ├── studio/
+│   │   │   │   └── page.tsx             # Generation studio
+│   │   │   ├── gallery/
+│   │   │   │   └── page.tsx             # Explore (infinite scroll)
+│   │   │   ├── design/
+│   │   │   │   └── [id]/
+│   │   │   │       └── page.tsx         # Design detail page
+│   │   │   ├── ranking/
+│   │   │   │   └── page.tsx             # Monthly ranking
+│   │   │   └── account/
+│   │   │       └── page.tsx             # My page
+│   │   ├── admin/
+│   │   │   └── page.tsx                 # Admin console
+│   │   ├── api/
+│   │   │   ├── translate/
+│   │   │   │   └── route.ts            # Prompt translation
+│   │   │   ├── generate/
+│   │   │   │   └── route.ts            # AI image generation
+│   │   │   ├── designs/
+│   │   │   │   └── [id]/
+│   │   │   │       └── route.ts        # Design lookup
+│   │   │   ├── like/
+│   │   │   │   └── [designId]/
+│   │   │   │       └── route.ts        # Like toggle
+│   │   │   ├── gallery/
+│   │   │   │   └── route.ts            # Gallery listing
+│   │   │   └── ranking/
+│   │   │       └── route.ts            # Monthly ranking query
+│   │   ├── layout.tsx
+│   │   └── globals.css
+│   ├── components/
+│   │   ├── ui/                          # Shared UI components
+│   │   ├── studio/
+│   │   │   ├── GroupSelect.tsx          # Group/artist selection
+│   │   │   ├── ConceptSelect.tsx        # Concept selection
+│   │   │   └── KeywordInput.tsx         # Keyword/prompt input
 │   │   ├── gallery/
-│   │   │   └── page.tsx             # Gallery (infinite scroll)
-│   │   ├── design/
-│   │   │   └── [id]/
-│   │   │       └── page.tsx         # Design detail page
-│   │   └── leaderboard/
-│   │       └── page.tsx             # Monthly ranking
-│   ├── api/
-│   │   ├── translate/
-│   │   │   └── route.ts            # Prompt translation
-│   │   ├── generate/
-│   │   │   └── route.ts            # AI image generation
-│   │   ├── designs/
-│   │   │   └── [id]/
-│   │   │       └── route.ts        # Design lookup
-│   │   ├── upvote/
-│   │   │   └── [designId]/
-│   │   │       └── route.ts        # Upvote toggle
-│   │   ├── gallery/
-│   │   │   └── route.ts            # Gallery listing
-│   │   ├── remix/
-│   │   │   └── route.ts            # Remix generation
-│   │   └── leaderboard/
-│   │       └── route.ts            # Monthly ranking query
-│   ├── layout.tsx
-│   └── globals.css
-├── components/
-│   ├── ui/                          # Shared UI components
-│   ├── playground/
-│   │   ├── GenderSelect.tsx         # Gender selection
-│   │   ├── LoraStyleSelect.tsx      # LoRA style selection
-│   │   ├── VibeSelect.tsx           # Mood/vibe selection
-│   │   └── PromptInput.tsx          # Prompt input field
-│   ├── gallery/
-│   │   ├── DesignCard.tsx           # Design card
-│   │   └── FilterBar.tsx            # Filter bar
-│   └── design/
-│       ├── ImageGallery.tsx         # Image viewer
-│       └── UpvoteButton.tsx         # Upvote button
-├── lib/
-│   ├── firebase/
-│   │   ├── config.ts               # Firebase configuration
-│   │   ├── auth.ts                  # Auth helpers
-│   │   ├── firestore.ts            # Firestore helpers
-│   │   └── storage.ts              # Storage helpers
-│   ├── fal/
-│   │   └── client.ts               # fal.ai client
-│   ├── translation/
-│   │   └── client.ts               # Translation API client
-│   └── utils.ts                     # Utility functions
+│   │   │   ├── DesignCard.tsx           # Design card
+│   │   │   └── FilterBar.tsx            # Filter bar
+│   │   └── design/
+│   │       ├── ImageViewer.tsx          # Image viewer
+│   │       ├── LikeButton.tsx           # Like button
+│   │       └── ShareButtons.tsx         # Social share buttons
+│   └── lib/
+│       ├── firebase/
+│       │   ├── config.ts               # Firebase configuration
+│       │   ├── admin.ts                # Firebase Admin SDK init
+│       │   ├── auth.ts                 # Auth helpers
+│       │   ├── firestore.ts            # Firestore helpers
+│       │   └── storage.ts              # Storage helpers
+│       ├── fal/
+│       │   └── client.ts               # fal.ai client
+│       ├── translation/
+│       │   └── client.ts               # Translation API client
+│       └── utils.ts                     # Utility functions
 ├── functions/
 │   ├── src/
-│   │   ├── leaderboard-snapshot.ts  # End-of-month ranking snapshot
-│   │   ├── update-upvote-count.ts   # upvoteCount sync
-│   │   └── reset-generation-limits.ts # Daily limit reset
+│   │   ├── ranking-snapshot.ts          # End-of-month ranking snapshot
+│   │   ├── update-like-count.ts         # likeCount sync (atomic)
+│   │   └── reset-generation-limits.ts   # Daily limit reset
 │   └── package.json
+├── docs/
+│   ├── BOOTSTRAP_MVP.md                 # Setup & bootstrap guide
+│   ├── SECURITY_RULES.md                # Firestore security rules
+│   ├── DATA_MODEL.md                    # Full Firestore schema
+│   ├── API_CONTRACTS.md                 # API request/response specs
+│   └── UX_SPEC_PLAYGROUND.md            # Studio UX specification
 ├── public/
 │   └── images/
 ├── .env.local
@@ -137,316 +217,190 @@ mystyleai/
 ├── tailwind.config.ts
 ├── tsconfig.json
 ├── package.json
-└── CLAUDE.md                        # This file
+└── CLAUDE.md                            # This file
 ```
 
 ---
 
-## Core Pages & Features
+## 7. Core Pages & Features
 
-### 1. Landing Page (`/`)
+### 7.1 Landing Page (`/`)
 
-- Hero section with background video/GIF
-- "Get Started Free" CTA redirecting to Playground
+- 3-second comprehension: hero with background video/GIF
+- "Get Started Free" CTA redirecting to Studio
+- Hall of Fame section (past winners with real costume photos)
 - Social proof (user count, sample images)
 - Features section (10-second generation, KPOP-specialized, real reward)
-- Gallery preview (top 12 designs)
 
-### 2. Playground (`/playground`)
+### 7.2 Studio (`/studio`)
 
-**4-step generation process:**
+**3-input generation process:**
 
-1. **Gender selection:** Male / Female
-2. **LoRA style:** Formal, School uniform, Street, High fashion, Concert, etc.
-3. **Vibe/Mood:** Edgy, Elegant, Cute, Sexy, Futuristic
-4. **Prompt input:** Multilingual support (Korean, Japanese, Chinese, etc.)
+1. **Group/Artist:** Select target artist or group
+2. **Concept:** Stage concept (formal, street, concert, school, high fashion, etc.)
+3. **Keywords:** Free-text input; multilingual (Korean, Japanese, Chinese auto-translated)
 
 **Output:**
 - 4 images generated within ~10 seconds
-- Options: [Save (Private)] [Publish] [Regenerate]
+- **Mandatory:** User must select 1 representative image before proceeding
+- Options: [Publish] [Save Private (Superfan only)] [Animate (Superfan only)] [Regenerate]
 
 **Generation limits:**
-- Not logged in: 3 per session
-- Logged in: 20 per day
+- Guest: 1 trial (cannot save or publish)
+- Free user: daily limit (configurable, default 20)
+- Superfan Pass: daily limit + private save + animate
 
-### 3. Gallery (`/gallery`)
+### 7.3 Gallery (`/gallery`)
 
-- 3-column grid layout
+- Masonry grid layout
 - Infinite scroll (loads 12 at a time)
-- Filters: gender, LoRA style, vibe, sort (newest / popular)
-- Each card: image, upvote count, creator nickname, prompt preview
+- Each card: image, creator handle, Like count, timestamp
+- Filters: concept, sort (newest / popular)
 
-### 4. Design Detail (`/design/[id]`)
+### 7.4 Design Detail (`/design/[id]`)
 
-- Large image viewer (select from 4 generated images)
-- Upvote button (login required, 1 vote per user per design)
-- Design info: prompt, gender, style, vibe, creation date
-- Remix button (generate new design based on this one)
-- Social share buttons (KakaoTalk, Instagram, X)
+- Large image viewer (representative image selected by creator)
+- Like button (login required, 1 per user per design)
+- Boost button (Phase 2, displayed separately from Like)
+- Share buttons (KakaoTalk, Instagram, X)
+- Animate preview (if available)
 - Report button (moderation)
+- **Prompt/recipe is never shown** to other users
 
-### 5. Leaderboard (`/leaderboard`)
+### 7.5 Ranking (`/ranking`)
 
-- Current month's Top 10 designs
-- #1 highlighted ("This design will be manufactured into a real costume!")
-- Winner info submission form (within 7 days)
+- Current month's Top 50 designs
+- #1 highlighted: "This design will be manufactured into a real costume!"
+- Phase-specific score text (Phase 1: Likes only; Phase 2-B: Likes + Boost Votes)
+- Winner info submission form (within 7 days after month end)
 - Past winner archive
 - Countdown timer for remaining days
 
----
+### 7.6 Account (`/account`)
 
-## Firestore Data Schema
+- User profile (handle, bio, profile image)
+- My designs list (private + public)
+- Total stats (generations, published, likes received)
 
-### Collection: `designs`
+### 7.7 Admin Console (`/admin`)
 
-```typescript
-{
-  designId: string,              // auto-generated
-  ownerUid: string,              // Firebase Auth UID
-  ownerHandle: string,           // @nickname
-  ownerProfileImage?: string,
-
-  originalPrompt: string,        // Original (Korean, etc.)
-  englishPrompt: string,         // Translated English
-  promptTemplate: string,        // Preset ID
-
-  gender: "male" | "female",
-  loraStyle: string,             // "formal", "school", "street", etc.
-  vibe: string,                  // "edgy", "elegant", etc.
-
-  imageUrls: [
-    {
-      url: string,               // Firebase Storage URL
-      index: number,             // 1~4
-      selected: boolean
-    }
-  ],
-
-  generationRequestId: string,   // fal.ai request ID
-  generatedAt: timestamp,
-
-  visibility: "private" | "public",
-  publishedAt: timestamp | null,
-
-  upvoteCount: number,           // Cache (synced by Cloud Function)
-  remixOfDesignId?: string,
-
-  tags: {
-    vibe: string[],
-    items?: string[],
-    colors?: string[]
-  },
-
-  createdAt: timestamp,
-  updatedAt: timestamp
-}
-```
-
-### Collection: `upvotes`
-
-```typescript
-// Document ID: "{designId}_{uid}"
-{
-  designId: string,
-  uid: string,
-  createdAt: timestamp
-}
-```
-
-### Collection: `generationLimits`
-
-```typescript
-// Document ID: "{uid}_{YYYY-MM-DD}"
-{
-  uid: string,
-  date: string,                  // "2026-02-10"
-  count: number,                 // 0~20
-  lastResetAt: timestamp,
-  isGuest: boolean
-}
-```
-
-### Collection: `leaderboards`
-
-```typescript
-// Document ID: "monthly_{YYYY-MM}"
-{
-  period: "monthly",
-  month: string,                 // "2026-02"
-
-  rankings: [
-    {
-      rank: number,
-      designId: string,
-      upvoteCount: number,
-      ownerUid: string,
-      ownerHandle: string,
-      imageUrl: string,
-      publishedAt: timestamp
-    }
-  ],
-
-  winnerDesignId: string,
-  winnerUid: string,
-  winnerHandle: string,
-  winnerUpvoteCount: number,
-  productionStatus: string,      // "pending" | "in_production" | "shipped" | "delivered"
-
-  snapshotAt: timestamp,
-  snapshotMethod: string         // "auto_cron" | "manual_admin"
-}
-```
-
-### Collection: `users`
-
-```typescript
-// Document ID: Firebase Auth UID
-{
-  uid: string,
-  email: string,
-  handle: string,                // unique, @nickname
-  profileImage?: string,
-  bio?: string,
-
-  totalGenerations: number,
-  totalPublished: number,
-  totalUpvotes: number,
-
-  createdAt: timestamp,
-  lastLoginAt: timestamp,
-
-  winnerHistory?: [
-    {
-      month: string,
-      designId: string,
-      upvoteCount: number,
-      productionStatus: string
-    }
-  ]
-}
-```
+- Requires `admin: true` Custom Claim
+- Content moderation queue
+- User management (warnings, restrictions, bans)
+- Monthly winner confirmation workflow
+- Abuse detection logs
 
 ---
 
-## API Endpoints
+## 8. Monetization Phases
 
-### `POST /api/translate`
+### Phase 1 (MVP): Likes-Based Ranking
 
-Auto-translates a prompt into English.
+- Ranking is determined by Like count only
+- All voting is free
+- Revenue: none (user acquisition focus)
 
-**Request:**
-```json
-{
-  "text": "black leather harness, silver boots",
-  "sourceLanguage": "ko"
-}
-```
+### Phase 2-A: Free Currency + Visibility Boost
 
-**Response:**
-```json
-{
-  "success": true,
-  "englishText": "Black leather harness, silver boots",
-  "originalText": "...",
-  "detectedLanguage": "ko"
-}
-```
+- Users earn free currency via missions/ads
+- Boost = visibility enhancement only (does NOT affect ranking score)
+- Like and Boost displayed separately
+- Revenue: ad-supported
 
-### `POST /api/generate`
+### Phase 2-B: Paid Currency + Boost Vote
 
-Generates KPOP stage outfit images via AI.
-
-**Request:**
-```json
-{
-  "prompt": "black leather harness, silver boots",
-  "gender": "female",
-  "loraStyle": "concert",
-  "vibe": "edgy",
-  "visibility": "private"
-}
-```
-
-**Server-side processing:**
-1. Check generation limit (`generationLimits`)
-2. Translate prompt (`/api/translate`)
-3. Compose final prompt (gender + LoRA + vibe + user prompt)
-4. Call fal.ai API (Flux model, 4 images)
-5. Download images and upload to Firebase Storage
-6. Create Firestore `designs` document
-7. Increment `generationLimits` counter
-
-**Response:**
-```json
-{
-  "success": true,
-  "designId": "design_abc123",
-  "imageUrls": ["https://...", "https://...", "https://...", "https://..."],
-  "englishPrompt": "KPOP stage outfit, female, black leather harness...",
-  "generatedAt": "2026-02-10T14:32:00Z",
-  "remainingGenerations": 15
-}
-```
-
-### `GET /api/designs/[id]`
-
-Retrieves detail info for a single design.
-
-### `POST /api/upvote/[designId]`
-
-Registers an upvote on a design. (Login required, 1 vote per user per design.)
-
-### `DELETE /api/upvote/[designId]`
-
-Removes an upvote.
-
-### `GET /api/gallery`
-
-Retrieves gallery listing with filters.
-
-**Query params:**
-- `gender`: `"male"` | `"female"`
-- `loraStyle`: `"formal"`, `"school"`, `"street"`, etc.
-- `vibe`: `"edgy"`, `"elegant"`, etc.
-- `sortBy`: `"recent"` | `"popular"`
-- `page`: 1, 2, 3, ...
-- `limit`: 12 (default)
-
-### `POST /api/remix`
-
-Creates a new design based on an existing one.
-
-### `GET /api/leaderboard/monthly`
-
-Retrieves the current monthly ranking.
+- Paid currency introduced
+- Ads removed or minimized; free currency discontinued
+- Boost Vote: 1 currency = 1 vote (directly affects ranking score)
+- Like and Boost Vote tallied and displayed separately
+- Revenue: currency purchases
 
 ---
 
-## Environment Variables (`.env.local`)
+## 9. Governance & Trust
+
+### Abuse Prevention
+
+- Rate limiting on all API endpoints
+- Anomaly detection for voting patterns
+- Escalation: warning -> restriction -> ban
+- All moderation actions are logged with timestamps
+
+### Monthly Winner Process
+
+1. Month-end deadline (automatic snapshot)
+2. Winner confirmation (admin review)
+3. Production begins
+4. Delivery to winner
+5. Winner posts authentication/unboxing
+6. Added to Hall of Fame
+
+### Like/Boost Transparency
+
+- Always display Like and Boost counts separately
+- Never combine them into a single "score" without public formula
+- Score calculation formula published in ranking page footer
+
+---
+
+## 10. Firestore Data Schema
+
+> Full schema details: see `docs/DATA_MODEL.md`
+
+### Collections Overview
+
+| Collection          | Document ID Pattern         | Purpose                    |
+| ------------------- | --------------------------- | -------------------------- |
+| `designs`           | auto-generated              | All generated designs      |
+| `likes`             | `{designId}_{uid}`          | Like records               |
+| `generationLimits`  | `{uid}_{YYYY-MM-DD}`        | Daily generation counters  |
+| `rankings`          | `monthly_{YYYY-MM}`         | Monthly ranking snapshots  |
+| `users`             | Firebase Auth UID           | User profiles & stats      |
+
+---
+
+## 11. API Endpoints
+
+> Full request/response specs: see `docs/API_CONTRACTS.md`
+
+| Method   | Route                        | Auth Required | Description                |
+| -------- | ---------------------------- | ------------- | -------------------------- |
+| `POST`   | `/api/translate`             | No            | Translate prompt to English |
+| `POST`   | `/api/generate`              | Yes*          | Generate 4 outfit images   |
+| `GET`    | `/api/designs/[id]`          | No            | Get design detail          |
+| `POST`   | `/api/like/[designId]`       | Yes           | Toggle like on a design    |
+| `GET`    | `/api/gallery`               | No            | List designs with filters  |
+| `GET`    | `/api/ranking/monthly`       | No            | Get current month ranking  |
+
+*Guest gets 1 trial without auth; subsequent calls require login.
+
+---
+
+## 12. Environment Variables (`.env.local`)
 
 ```bash
 # Firebase (client-side)
-NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=123456789
-NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
+NEXT_PUBLIC_FIREBASE_API_KEY=
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
+NEXT_PUBLIC_FIREBASE_APP_ID=
 
 # Firebase Admin (server-side only)
-FIREBASE_ADMIN_PROJECT_ID=your_project_id
-FIREBASE_ADMIN_CLIENT_EMAIL=your_service_account@your_project.iam.gserviceaccount.com
-FIREBASE_ADMIN_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+FIREBASE_ADMIN_PROJECT_ID=
+FIREBASE_ADMIN_CLIENT_EMAIL=
+FIREBASE_ADMIN_PRIVATE_KEY=
 
 # fal.ai
-FAL_KEY=your_fal_api_key
+FAL_KEY=
 
 # Google Cloud Translation
-GOOGLE_CLOUD_PROJECT_ID=your_project_id
-GOOGLE_CLOUD_TRANSLATION_KEY=your_translation_api_key
+GOOGLE_CLOUD_PROJECT_ID=
+GOOGLE_CLOUD_TRANSLATION_KEY=
 
 # Google Cloud Vision (moderation)
-GOOGLE_CLOUD_VISION_KEY=your_vision_api_key
+GOOGLE_CLOUD_VISION_KEY=
 
 # Next.js
 NEXT_PUBLIC_SITE_URL=https://my-style.ai
@@ -458,7 +412,7 @@ NEXT_PUBLIC_SITE_URL=https://my-style.ai
 
 ---
 
-## UI/UX Guidelines
+## 13. UI/UX Guidelines
 
 ### Design System
 
@@ -484,49 +438,36 @@ NEXT_PUBLIC_SITE_URL=https://my-style.ai
 
 ---
 
-## Development Workflow
+## 14. Development Workflow
 
-### Step 1: Environment Setup
+### Setup
 
 ```bash
-# Create the project
-npx create-next-app@latest mystyleai --typescript --tailwind --app
-
-# Install dependencies
+npx create-next-app@latest mystyleai --typescript --tailwind --app --src-dir
 npm install firebase @fal-ai/serverless-client @google-cloud/translate @google-cloud/vision
-
-# Set up environment variables
 cp .env.example .env.local
 # Fill in actual keys in .env.local
-
-# Initialize Firebase
-firebase login
-firebase init firestore
-firebase init functions
-firebase init storage
 ```
 
-### Step 2: Firebase Setup
+### Firebase Setup
 
 1. Create a project in Firebase Console
-2. Enable Firestore Database (test mode, then production mode)
+2. Enable Firestore Database
 3. Enable Storage
-4. Enable Authentication (Email/Password, Google)
-5. Deploy Security Rules
+4. Enable Authentication (Email/Password)
+5. Deploy Security Rules (see `docs/SECURITY_RULES.md`)
+6. Set admin Custom Claims via Firebase Admin SDK
 
-### Step 3: Run Dev Server
+### Dev Server
 
 ```bash
 npm run dev
 ```
 
-### Step 4: Build & Deploy
+### Build & Deploy
 
 ```bash
-# Test build
 npm run build
-
-# Deploy to Vercel
 vercel --prod
 ```
 
@@ -535,91 +476,12 @@ vercel --prod
 - **Default branch:** `main`
 - **Feature branches:** `feature/<description>`
 - **Bug fix branches:** `fix/<description>`
-- **Commit messages:** Clear, imperative mood (e.g., "Add user profile component")
+- **Commit messages:** Clear, imperative mood (e.g., "Add studio generation flow")
 - **Commit signing:** Enabled (GPG/SSH)
 
 ---
 
-## Development Checklist
-
-### Week 1: Foundation + Generation API
-
-- [ ] Firebase project setup
-- [ ] Environment variables configured
-- [ ] Firebase Auth integration
-- [ ] Firestore schema creation
-- [ ] Security Rules deployment
-- [ ] `POST /api/translate` implementation
-- [ ] `POST /api/generate` implementation
-- [ ] Generation limit logic
-
-### Week 2: Playground UI + Gallery + Upvote
-
-- [ ] Playground 4-step UI
-- [ ] Generation progress indicator UI
-- [ ] Generation result display
-- [ ] Gallery page (infinite scroll)
-- [ ] Gallery filters
-- [ ] `GET /api/gallery` implementation
-- [ ] `POST /api/upvote` implementation
-- [ ] Upvote Cloud Function
-- [ ] Design Detail page
-
-### Week 3: Leaderboard + Remix + Landing
-
-- [ ] Leaderboard page
-- [ ] `GET /api/leaderboard` implementation
-- [ ] Monthly snapshot Cloud Function
-- [ ] Winner info submission form
-- [ ] Remix feature
-- [ ] Landing page
-- [ ] Social sharing (KakaoTalk, Instagram, X)
-- [ ] OG tag configuration
-
-### Week 4: Moderation + Testing + Deployment
-
-- [ ] Vision API integration (auto-filtering)
-- [ ] Report system
-- [ ] Admin dashboard (minimal)
-- [ ] Banned-word prompt check
-- [ ] E2E testing
-- [ ] Performance optimization
-- [ ] Vercel deployment
-- [ ] Monitoring setup (Sentry)
-- [ ] Final deployment
-
----
-
-## Debugging Tips
-
-### Firebase connection issues
-
-```bash
-# Check Firebase config
-firebase projects:list
-
-# Check Firestore indexes
-firebase firestore:indexes
-
-# View logs
-firebase functions:log
-```
-
-### fal.ai API errors
-
-- Verify API key is correct
-- Check rate limits
-- Review usage on the fal.ai dashboard
-
-### Image upload failures
-
-- Check Firebase Storage Rules
-- Ensure image size is under 10MB
-- Verify CORS configuration
-
----
-
-## AI Assistant Guidelines
+## 15. AI Assistant Guidelines
 
 ### General Principles
 
@@ -627,8 +489,15 @@ firebase functions:log
 2. **Minimal changes** — Make only the changes requested; avoid unnecessary refactoring
 3. **No over-engineering** — Keep solutions simple and focused on the task
 4. **Security first** — Never commit secrets, credentials, or API keys
-5. **Test coverage** — Add tests for new functionality when a test framework exists
+5. **Server-write only** — All Firestore mutations go through API routes, never client-side
 6. **One task at a time** — Complete one feature fully before moving to the next
+
+### Security Rules for AI
+
+- Never expose user prompts/recipes to other users in any API response
+- Always validate auth tokens server-side before mutations
+- Use atomic operations for counters (Like count, generation count)
+- Admin checks must use Custom Claims, never client-side role fields
 
 ### Code Style
 
@@ -650,24 +519,32 @@ firebase functions:log
 - Do not modify CI/CD pipelines without explicit permission
 - Do not force-push or rewrite shared branch history
 - Do not generate or guess URLs
-
-### Effective Prompting Tips (for the developer)
-
-- **Be specific:** "Build the 4-step selection UI on the Playground page"
-- **Name the file:** "Modify `app/playground/page.tsx`"
-- **Share errors verbatim:** Copy-paste the full error message
-- **One at a time:** Don't request multiple features simultaneously
+- Do not expose prompts/recipes in gallery or detail views
+- Do not combine Like and Boost into a single score without explicit instruction
 
 ---
 
-## MVP Success Criteria
+## 16. Companion Documents
+
+| Document                      | Purpose                                    |
+| ----------------------------- | ------------------------------------------ |
+| `docs/BOOTSTRAP_MVP.md`       | Step-by-step project setup guide           |
+| `docs/SECURITY_RULES.md`      | Firestore security rules with explanations |
+| `docs/DATA_MODEL.md`          | Full Firestore schema with all fields      |
+| `docs/API_CONTRACTS.md`       | Complete API request/response contracts    |
+| `docs/UX_SPEC_PLAYGROUND.md`  | Studio page UX specification               |
+
+---
+
+## 17. MVP Success Criteria
 
 ### Technical Success
 
 - Login -> Prompt input -> 4 images generated within 10 seconds
-- Publish -> Appears in gallery -> Other users can upvote
-- Monthly auto-selection of Top 1
+- Select representative -> Publish -> Appears in gallery -> Others can Like
+- Monthly auto-snapshot of Top 50 ranking
 - Fully functional on mobile
+- Admin can moderate content and confirm winners
 
 ### Business Success (3-month target)
 
@@ -686,6 +563,7 @@ firebase functions:log
 | ---------- | ------------------------------------------------------- |
 | 2026-02-10 | Initial CLAUDE.md created for empty repository          |
 | 2026-02-10 | Full MVP spec: tech stack, schema, APIs, UI, checklist  |
+| 2026-02-11 | v2 rewrite: product vision, roles, phases, governance, security decisions, src/ structure, companion docs |
 
 ---
 
