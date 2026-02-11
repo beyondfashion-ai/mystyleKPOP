@@ -1,6 +1,6 @@
 # SECURITY_RULES.md — Firestore Security Rules
 
-> Security rules for the mystyleai MVP Firestore database.
+> Security rules for the MyStyleAI MVP Firestore database.
 > Core principle: **Server-write only.** Clients never write directly to Firestore.
 
 ---
@@ -25,59 +25,70 @@ service cloud.firestore {
 
     // ─── Helper Functions ───
 
-    // Check if the request is from an authenticated user
     function isAuthenticated() {
       return request.auth != null;
     }
 
-    // Check if the authenticated user is an admin
     function isAdmin() {
       return isAuthenticated() && request.auth.token.admin == true;
     }
 
-    // Check if the authenticated user owns the resource
     function isOwner(uid) {
       return isAuthenticated() && request.auth.uid == uid;
     }
 
     // ─── Collection: designs ───
-    // Read: anyone can read public designs
-    // Write: server-only (Admin SDK bypasses rules)
     match /designs/{designId} {
       allow read: if resource.data.visibility == "public" || isOwner(resource.data.ownerUid);
-      allow create, update, delete: if false; // Server-only via Admin SDK
+      allow create, update, delete: if false;
     }
 
-    // ─── Collection: likes ───
-    // Read: anyone can read likes
-    // Write: server-only
-    match /likes/{likeId} {
+    // ─── Collection: votes ───
+    match /votes/{voteId} {
       allow read: if true;
-      allow create, update, delete: if false; // Server-only via Admin SDK
+      allow create, update, delete: if false;
     }
 
     // ─── Collection: generationLimits ───
-    // Read: owner only
-    // Write: server-only
     match /generationLimits/{limitId} {
       allow read: if isAuthenticated() && limitId.matches(request.auth.uid + '_.*');
-      allow create, update, delete: if false; // Server-only via Admin SDK
+      allow create, update, delete: if false;
     }
 
     // ─── Collection: rankings ───
-    // Read: anyone can read rankings
-    // Write: server-only (snapshot function)
     match /rankings/{rankingId} {
       allow read: if true;
-      allow create, update, delete: if false; // Server-only via Admin SDK
+      allow create, update, delete: if false;
     }
 
     // ─── Collection: users ───
-    // Read: anyone can read public profile fields
-    // Write: server-only
     match /users/{userId} {
       allow read: if true;
-      allow create, update, delete: if false; // Server-only via Admin SDK
+      allow create, update, delete: if false;
+    }
+
+    // ─── Collection: adminSettings ───
+    match /adminSettings/{docId} {
+      allow read: if isAdmin();
+      allow create, update, delete: if false;
+    }
+
+    // ─── Collection: loraModels ───
+    match /loraModels/{loraId} {
+      allow read: if false;  // Server-only; never read from client
+      allow create, update, delete: if false;
+    }
+
+    // ─── Collection: reports ───
+    match /reports/{reportId} {
+      allow read: if isAdmin();
+      allow create, update, delete: if false;
+    }
+
+    // ─── Collection: moderationLogs ───
+    match /moderationLogs/{logId} {
+      allow read: if isAdmin();
+      allow create, update, delete: if false;
     }
 
     // ─── Catch-all: deny everything else ───
@@ -101,13 +112,13 @@ service firebase.storage {
     // Design images: readable by anyone, writable only by server
     match /designs/{designId}/{allPaths=**} {
       allow read: if true;
-      allow write: if false; // Server-only via Admin SDK
+      allow write: if false;
     }
 
     // User profile images: readable by anyone, writable only by server
     match /profiles/{userId}/{allPaths=**} {
       allow read: if true;
-      allow write: if false; // Server-only via Admin SDK
+      allow write: if false;
     }
 
     // Catch-all: deny everything else
@@ -138,11 +149,14 @@ firebase deploy --only storage
 
 | Operation              | Client SDK | Admin SDK (API Routes) |
 | ---------------------- | ---------- | ---------------------- |
-| Read public data       | Allowed    | Allowed                |
+| Read public designs    | Allowed    | Allowed                |
 | Read own private data  | Allowed    | Allowed                |
+| Read admin settings    | Admin only | Allowed                |
+| Read LoRA models       | Blocked    | Allowed                |
 | Create design          | Blocked    | Allowed                |
-| Toggle like            | Blocked    | Allowed                |
+| Cast vote              | Blocked    | Allowed                |
 | Update counters        | Blocked    | Allowed (atomic)       |
+| Publish design         | Blocked    | Allowed                |
 | Modify user profile    | Blocked    | Allowed                |
 | Admin operations       | Blocked    | Allowed (claims check) |
 
@@ -164,12 +178,12 @@ if (decodedToken.admin !== true) {
 
 ### Counter Atomicity
 
-Like counts and generation limits are updated using atomic operations:
+Vote counts are updated using atomic operations:
 
 ```typescript
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 
-// Atomic increment
+// Atomic increment in POST /api/vote
 await getFirestore()
   .collection("designs")
   .doc(designId)
@@ -178,9 +192,9 @@ await getFirestore()
 
 ### Rate Limiting
 
-All API routes should implement rate limiting:
 - Generation: enforced by `generationLimits` collection
-- Likes: 1 per user per design (enforced by document ID pattern)
+- Voting: 1 per user per design (enforced by document ID pattern `{designId}_{uid}`)
+- Admin endpoints: protected by Custom Claims check
 - General API: consider middleware-level rate limiting (e.g., Vercel Edge)
 
 ---

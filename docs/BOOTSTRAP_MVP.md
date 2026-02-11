@@ -1,6 +1,6 @@
 # BOOTSTRAP_MVP.md — Project Setup Guide
 
-> Step-by-step guide to bootstrap the mystyleai MVP from scratch.
+> Step-by-step guide to bootstrap the MyStyleAI MVP from scratch.
 
 ---
 
@@ -50,6 +50,9 @@ npm install @fal-ai/serverless-client
 
 # Google Cloud APIs
 npm install @google-cloud/translate @google-cloud/vision
+
+# Validation
+npm install zod
 
 # Optional: Shadcn/ui setup
 npx shadcn-ui@latest init
@@ -154,20 +157,22 @@ Create the initial directory structure:
 # Pages
 mkdir -p src/app/\(auth\)/login
 mkdir -p src/app/\(auth\)/signup
+mkdir -p src/app/\(auth\)/reset
 mkdir -p src/app/\(main\)/studio
 mkdir -p src/app/\(main\)/gallery
 mkdir -p src/app/\(main\)/design/\[id\]
 mkdir -p src/app/\(main\)/ranking
 mkdir -p src/app/\(main\)/account
-mkdir -p src/app/admin
+mkdir -p src/app/admin/settings
+mkdir -p src/app/admin/lora
 
 # API routes
-mkdir -p src/app/api/translate
 mkdir -p src/app/api/generate
+mkdir -p src/app/api/designs/publish
 mkdir -p src/app/api/designs/\[id\]
-mkdir -p src/app/api/like/\[designId\]
-mkdir -p src/app/api/gallery
+mkdir -p src/app/api/vote
 mkdir -p src/app/api/ranking
+mkdir -p src/app/api/admin/settings
 
 # Components
 mkdir -p src/components/ui
@@ -179,6 +184,7 @@ mkdir -p src/components/design
 mkdir -p src/lib/firebase
 mkdir -p src/lib/fal
 mkdir -p src/lib/translation
+mkdir -p src/lib/validations
 ```
 
 ---
@@ -240,7 +246,41 @@ export const adminStorage = getStorage();
 
 ---
 
-## Step 9: Run Development Server
+## Step 9: Zod Validation Setup
+
+Create `src/lib/validations/schemas.ts`:
+
+```typescript
+import { z } from "zod";
+
+export const GenerateSchema = z.object({
+  group: z.string().max(100).optional(),
+  concept: z.enum(["formal", "street", "concert", "school", "high_fashion", "casual"]),
+  keywords: z.string().min(1).max(200),
+});
+
+export const PublishSchema = z.object({
+  designId: z.string().min(1),
+  representativeIndex: z.number().int().min(0).max(3),
+});
+
+export const VoteSchema = z.object({
+  designId: z.string().min(1),
+});
+
+export const AdminSettingsSchema = z.object({
+  dailyGenerationLimit: z.number().int().min(1).max(100).optional(),
+  guestTrialLimit: z.number().int().min(0).max(10).optional(),
+  galleryPageSize: z.number().int().min(4).max(48).optional(),
+  rankingTopN: z.number().int().min(10).max(100).optional(),
+  currentPhase: z.enum(["phase1", "phase2a", "phase2b"]).optional(),
+  moderationEnabled: z.boolean().optional(),
+});
+```
+
+---
+
+## Step 10: Run Development Server
 
 ```bash
 npm run dev
@@ -250,7 +290,7 @@ Open `http://localhost:3000` to verify the app loads.
 
 ---
 
-## Step 10: Build Verification
+## Step 11: Build Verification
 
 ```bash
 npm run build
@@ -260,7 +300,7 @@ Fix any TypeScript or build errors before deploying.
 
 ---
 
-## Step 11: Deploy to Vercel
+## Step 12: Deploy to Vercel
 
 ```bash
 vercel --prod
@@ -270,7 +310,7 @@ Set environment variables in Vercel Dashboard -> Settings -> Environment Variabl
 
 ---
 
-## Step 12: Deploy Firebase Functions
+## Step 13: Deploy Firebase Functions
 
 ```bash
 cd functions
@@ -286,6 +326,7 @@ firebase deploy --only functions
 - [ ] `npm run dev` starts without errors
 - [ ] Firebase Auth sign-up/sign-in works
 - [ ] Firestore reads work from API routes
+- [ ] Zod validation rejects bad input with 400
 - [ ] fal.ai API key is valid (test with a simple generation)
 - [ ] Translation API returns results
 - [ ] `npm run build` succeeds

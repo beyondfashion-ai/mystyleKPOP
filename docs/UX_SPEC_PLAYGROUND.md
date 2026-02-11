@@ -1,13 +1,37 @@
 # UX_SPEC_PLAYGROUND.md — Studio Page Specification
 
 > UX specification for the `/studio` page (generation studio).
-> This is the core experience: prompt input -> AI generation -> publish.
+> Core experience: prompt input -> AI generation -> publish.
+> Layout follows the my-style.ai playground pattern: **left inputs / right results**.
 
 ---
 
 ## Overview
 
-The Studio page guides users through a 3-input generation flow to create KPOP stage outfit designs. The flow is intentionally simple: 3 inputs, 1 button, 4 results, 1 mandatory selection, then publish or save.
+The Studio page guides users through a 3-input generation flow to create KPOP stage outfit designs. The flow is intentionally simple: 3 inputs, 1 button, 4 results, 1 mandatory selection, then publish.
+
+**UX Priority:** Fast start, left inputs / right results, 2x2 grid, representative selection gating.
+
+---
+
+## Layout: Left/Right Split (Desktop)
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  Left Panel (inputs)          │  Right Panel (results)   │
+│                               │                          │
+│  [Group/Artist] ............  │  ┌──────┐  ┌──────┐     │
+│  [Concept Cards] ............  │  │ img0 │  │ img1 │     │
+│  [Keywords] ................  │  └──────┘  └──────┘     │
+│  [Generate] .................  │  ┌──────┐  ┌──────┐     │
+│  [Remaining: 15/20] ........  │  │ img2 │  │ img3 │     │
+│                               │  └──────┘  └──────┘     │
+│                               │                          │
+│                               │  [Publish] [Regenerate]  │
+└─────────────────────────────────────────────────────────┘
+```
+
+On mobile, this collapses to a single column: inputs on top, results below.
 
 ---
 
@@ -26,22 +50,21 @@ The Studio page guides users through a 3-input generation flow to create KPOP st
     │       │
     │       ├─ Loading state (~10 seconds)
     │       │
-    │       └─ 4 images displayed
+    │       └─ 4 images in 2×2 grid (right panel)
     │               │
     │               ├─ User MUST select 1 representative image
     │               │
     │               └─ Actions:
-    │                   ├─ [Publish] → Gallery (requires login)
+    │                   ├─ [Publish] → POST /api/designs/publish (requires login)
     │                   ├─ [Save Private] → My Page (Superfan only)
-    │                   ├─ [Animate] → Generate animation (Superfan only)
-    │                   └─ [Regenerate] → Back to loading (counts toward limit)
+    │                   └─ [Regenerate] → POST /api/generate again (counts toward limit)
     │
     └─ [Back to inputs] (modify and regenerate)
 ```
 
 ---
 
-## Input Section
+## Input Section (Left Panel)
 
 ### Step 1: Group/Artist Selection (Optional)
 
@@ -116,11 +139,11 @@ The Studio page guides users through a 3-input generation flow to create KPOP st
 
 ---
 
-## Results Section
+## Results Section (Right Panel)
 
 ### Image Grid
 
-- **Layout:** 2x2 grid on desktop, 2x2 grid on mobile (scaled down)
+- **Layout:** 2x2 grid (always, on all breakpoints)
 - **Image format:** WebP, optimized for web
 - **Image size:** 1024x1024 recommended from fal.ai
 - **Interaction:**
@@ -128,23 +151,22 @@ The Studio page guides users through a 3-input generation flow to create KPOP st
   - Select radio button or tap to choose representative image
   - Selected image has a visible border/highlight (e.g., pink-purple glow)
 
-### Mandatory Representative Selection
+### Mandatory Representative Selection (Gating)
 
 - **Rule:** User MUST select exactly 1 image as the "representative" before any action
 - **UI:** Radio-button overlay on each image, or tap-to-select with highlight
-- **Validation:** Publish/Save buttons are disabled until selection is made
+- **Validation:** Publish/Save buttons are **disabled** until selection is made
 - **Why:** The representative image is what appears in Gallery and Ranking
 
 ### Action Buttons
 
 After selecting a representative image:
 
-| Button          | Visibility    | Auth Required | Description                      |
-| --------------- | ------------- | ------------- | -------------------------------- |
-| **Publish**     | All users     | Yes (Free+)   | Publishes to Gallery with "public" visibility |
-| **Save Private**| Superfan only | Yes           | Saves without publishing         |
-| **Animate**     | Superfan only | Yes           | Generates animated version       |
-| **Regenerate**  | All users     | No*           | Discards current results, generates new set |
+| Button           | Visibility    | Auth Required | API Call                       |
+| ---------------- | ------------- | ------------- | ------------------------------ |
+| **Publish**      | All users     | Yes (Free+)   | `POST /api/designs/publish`    |
+| **Save Private** | Superfan only | Yes           | (design stays `visibility: "private"`) |
+| **Regenerate**   | All users     | No*           | `POST /api/generate`           |
 
 *Regenerate counts toward daily limit.
 
@@ -162,7 +184,7 @@ After publishing:
 - Guest lands on Studio page
 - All 3 inputs are available
 - Generate button shows "Try Free"
-- After generation: 4 images displayed
+- After generation: 4 images displayed in 2x2 grid
 - Publish/Save buttons show "Sign up to publish"
 - Regenerate is disabled ("Sign up for more generations")
 - Clear CTA to sign up
@@ -173,7 +195,7 @@ After publishing:
 
 ### Mobile (< 768px)
 
-- Inputs stack vertically (full width)
+- **Single column:** inputs on top, results below
 - Concept cards: 2x3 grid
 - Results: 2x2 grid, each image ~45% viewport width
 - Action buttons: full-width, stacked vertically
@@ -181,14 +203,14 @@ After publishing:
 
 ### Tablet (768px - 1024px)
 
-- Inputs in a single column, wider
+- **Single column**, wider layout
 - Concept cards: 3x2 grid
 - Results: 2x2 grid
 - Action buttons: horizontal row
 
 ### Desktop (> 1024px)
 
-- Two-column layout: inputs on left, results on right
+- **Two-column layout:** inputs on left, results on right
 - Concept cards: 3x2 grid
 - Results: 2x2 grid in right column
 - Action buttons: horizontal row below results
@@ -203,6 +225,7 @@ After publishing:
 | Network timeout          | "Connection lost. Please check your internet."   |
 | Daily limit reached      | Disable Generate, show remaining = 0, next reset time |
 | Auth expired mid-flow    | Prompt re-login, preserve inputs                 |
+| Zod validation fails     | Show inline field errors before submitting        |
 | Translation fails        | Fallback: use original text as-is, log warning   |
 | Image upload fails       | Retry upload silently (3 attempts), then show error |
 

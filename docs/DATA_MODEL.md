@@ -1,6 +1,6 @@
 # DATA_MODEL.md — Firestore Schema
 
-> Complete Firestore data model for the mystyleai MVP.
+> Complete Firestore data model for the MyStyleAI MVP.
 > All writes go through the Admin SDK (server-side API routes).
 
 ---
@@ -26,7 +26,7 @@ interface Design {
 
   // ─── Generation Inputs ───
   group?: string;                // Target group/artist name
-  concept: string;               // "formal", "street", "concert", "school", "high_fashion"
+  concept: string;               // "formal", "street", "concert", "school", "high_fashion", "casual"
   keywords: string;              // User's free-text keywords
 
   // ─── Generated Images ───
@@ -34,7 +34,7 @@ interface Design {
     url: string;                 // Firebase Storage URL
     index: number;               // 0-3
   }[];
-  representativeIndex: number;   // Index of the user-selected representative image (0-3)
+  representativeIndex: number;   // Index of the user-selected representative image (0-3), -1 if unselected
 
   // ─── fal.ai Tracking ───
   generationRequestId: string;   // fal.ai request ID for debugging
@@ -42,10 +42,10 @@ interface Design {
 
   // ─── Visibility ───
   visibility: "private" | "public";
-  publishedAt: Timestamp | null; // Set when visibility changes to "public"
+  publishedAt: Timestamp | null; // Set when published via POST /api/designs/publish
 
   // ─── Engagement (server-managed, atomic) ───
-  likeCount: number;             // Cached count (synced by Cloud Function or atomic increment)
+  likeCount: number;             // Cached vote count (atomic increment via POST /api/vote)
   boostCount: number;            // Phase 2: separate from likeCount, always 0 in Phase 1
 
   // ─── Animation (Superfan feature) ───
@@ -53,8 +53,8 @@ interface Design {
   hasAnimation: boolean;         // Quick flag for UI rendering
 
   // ─── Moderation ───
-  status: "active" | "hidden" | "removed";  // Moderation status
-  reportCount: number;           // Number of reports received
+  status: "active" | "hidden" | "removed";
+  reportCount: number;
 
   // ─── Timestamps ───
   createdAt: Timestamp;
@@ -65,22 +65,23 @@ interface Design {
 ### Key Indexes
 
 ```
-designs: visibility ASC, publishedAt DESC      → Gallery (newest)
-designs: visibility ASC, likeCount DESC        → Gallery (popular)
-designs: ownerUid ASC, createdAt DESC          → My designs
-designs: visibility ASC, concept ASC, publishedAt DESC  → Gallery filtered by concept
+designs: visibility ASC, publishedAt DESC                       → Gallery (newest)
+designs: visibility ASC, likeCount DESC                         → Gallery (popular)
+designs: ownerUid ASC, createdAt DESC                           → My designs
+designs: visibility ASC, concept ASC, publishedAt DESC          → Gallery filtered by concept
+designs: visibility ASC, concept ASC, likeCount DESC            → Gallery filtered + popular
 ```
 
 ---
 
-## Collection: `likes`
+## Collection: `votes`
 
-Records individual like actions. Enforces 1 like per user per design via document ID.
+Records individual vote actions. Enforces 1 vote per user per design via document ID.
 
 **Document ID:** `{designId}_{uid}`
 
 ```typescript
-interface Like {
+interface Vote {
   designId: string;
   uid: string;
   createdAt: Timestamp;
@@ -89,9 +90,9 @@ interface Like {
 
 ### Why This Pattern
 
-- Document ID `{designId}_{uid}` guarantees uniqueness (no duplicate likes)
+- Document ID `{designId}_{uid}` guarantees uniqueness (no duplicate votes)
 - Checking existence is a single document read (fast and cheap)
-- Deleting a like is a single document delete
+- Maps directly to `POST /api/vote` endpoint constraint: 1 user, 1 design, 1 time
 
 ---
 
@@ -106,17 +107,17 @@ interface GenerationLimit {
   uid: string;
   date: string;                  // "2026-02-11"
   count: number;                 // Current count (0 to dailyMax)
-  dailyMax: number;              // Maximum allowed (e.g., 20)
+  dailyMax: number;              // From adminSettings (e.g., 20)
   isGuest: boolean;              // Guest trial tracking
   createdAt: Timestamp;
-  lastGeneratedAt: Timestamp;    // Last generation timestamp
+  lastGeneratedAt: Timestamp;
 }
 ```
 
 ### Usage Flow
 
-1. On generation request, read `{uid}_{today}` document
-2. If not exists, create with `count: 0`
+1. On `POST /api/generate`, read `{uid}_{today}` document
+2. If not exists, create with `count: 0`, `dailyMax` from `adminSettings`
 3. If `count >= dailyMax`, reject with 429
 4. Otherwise, increment `count` atomically and proceed
 
@@ -138,7 +139,7 @@ interface MonthlyRanking {
     designId: string;
     likeCount: number;
     boostCount: number;          // Phase 2: separate tally
-    totalScore: number;          // Phase 1: same as likeCount; Phase 2-B: likeCount + boostCount
+    totalScore: number;          // Phase 1: same as likeCount
     ownerUid: string;
     ownerHandle: string;
     imageUrl: string;            // Representative image URL
@@ -153,13 +154,13 @@ interface MonthlyRanking {
 
   // ─── Production Tracking ───
   productionStatus: "pending" | "confirmed" | "in_production" | "shipped" | "delivered";
-  winnerInfoSubmittedAt?: Timestamp;    // When winner submitted shipping info
+  winnerInfoSubmittedAt?: Timestamp;
   productionStartedAt?: Timestamp;
   shippedAt?: Timestamp;
   deliveredAt?: Timestamp;
 
   // ─── Metadata ───
-  scoreFormula: string;          // Human-readable formula, e.g., "likeCount"
+  scoreFormula: string;          // e.g., "likeCount"
   snapshotAt: Timestamp;
   snapshotMethod: "auto_cron" | "manual_admin";
 }
@@ -182,8 +183,7 @@ interface User {
   bio?: string;
 
   // ─── Role ───
-  // Note: admin role is in Custom Claims, NOT here.
-  // This field is for display/billing purposes only.
+  // Note: admin role is in Custom Claims, NOT in this document.
   tier: "free" | "superfan";
 
   // ─── Aggregate Stats (server-managed) ───
@@ -193,7 +193,7 @@ interface User {
 
   // ─── Winner History ───
   winnerHistory: {
-    month: string;               // "2026-02"
+    month: string;
     designId: string;
     score: number;
     productionStatus: string;
@@ -210,7 +210,54 @@ interface User {
 
 Enforced at the application layer (API route):
 1. Before creating/updating handle, query `users` where `handle == newHandle`
-2. If result is non-empty and not the current user, reject with 409 Conflict
+2. If result is non-empty and not the current user, reject with 409
+
+---
+
+## Collection: `adminSettings`
+
+Singleton document holding admin-configurable platform settings.
+
+**Document ID:** `current`
+
+```typescript
+interface AdminSettings {
+  dailyGenerationLimit: number;  // Default: 20
+  guestTrialLimit: number;       // Default: 1
+  galleryPageSize: number;       // Default: 12
+  rankingTopN: number;           // Default: 50
+  currentPhase: "phase1" | "phase2a" | "phase2b";
+  moderationEnabled: boolean;
+  updatedAt: Timestamp;
+  updatedBy: string;             // Admin UID who last updated
+}
+```
+
+Accessed via `GET /api/admin/settings` and `PATCH /api/admin/settings`.
+
+---
+
+## Collection: `loraModels`
+
+LoRA model configurations managed via `/admin/lora`.
+
+**Document ID:** auto-generated
+
+```typescript
+interface LoraModel {
+  loraId: string;                // Same as document ID
+  name: string;                  // Display name (e.g., "Concert Stage")
+  triggerWord: string;           // LoRA trigger (PRIVATE — never exposed to users)
+  modelUrl: string;              // fal.ai LoRA URL (PRIVATE)
+  concept: string;               // Maps to concept enum
+  isActive: boolean;             // Whether available for generation
+  sortOrder: number;             // Display order in admin UI
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+```
+
+**INVARIANT:** `triggerWord` and `modelUrl` are never exposed in any public API response.
 
 ---
 
@@ -227,13 +274,10 @@ interface Report {
   reporterUid: string;
   reason: "inappropriate" | "spam" | "copyright" | "other";
   description?: string;
-
-  // ─── Resolution ───
   status: "pending" | "reviewed" | "resolved" | "dismissed";
-  reviewedBy?: string;           // Admin UID
+  reviewedBy?: string;
   reviewedAt?: Timestamp;
   action?: "none" | "hidden" | "removed" | "user_warned" | "user_banned";
-
   createdAt: Timestamp;
 }
 ```
@@ -250,9 +294,9 @@ Immutable log of all moderation actions.
 interface ModerationLog {
   logId: string;
   adminUid: string;
-  action: string;                // "hide_design", "remove_design", "warn_user", "ban_user", etc.
+  action: string;
   targetType: "design" | "user";
-  targetId: string;              // designId or userId
+  targetId: string;
   reason: string;
   metadata?: Record<string, unknown>;
   createdAt: Timestamp;
@@ -270,6 +314,7 @@ Guest/User (Client)
   │
   └─ Write ──→ Next.js API Route ──→ Firestore (via Admin SDK, bypasses rules)
                     │
+                    ├─ Validates input (Zod)
                     ├─ Validates auth token
                     ├─ Checks permissions/limits
                     ├─ Performs atomic writes
@@ -277,7 +322,7 @@ Guest/User (Client)
 
 Cloud Functions
   │
-  ├─ ranking-snapshot: Monthly cron → snapshot top 50 → write to rankings
-  ├─ update-like-count: Triggered on likes write → atomic increment on designs.likeCount
+  ├─ ranking-snapshot: Monthly cron → snapshot top N → write to rankings
+  ├─ update-vote-count: Triggered on votes write → atomic increment on designs.likeCount
   └─ reset-generation-limits: Daily cron → (optional, limits auto-expire by date key)
 ```
