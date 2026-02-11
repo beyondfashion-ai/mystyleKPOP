@@ -1,0 +1,10 @@
+# OMC state files (session-specific, not committed)
+state/
+todos.json
+
+# Keep notepad and plans
+!notepad.md
+!plans/
+!drafts/
+!research/
+!logs/

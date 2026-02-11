@@ -557,6 +557,128 @@ vercel --prod
 
 ---
 
+<!-- OMC:START -->
+<!-- OMC:VERSION:1.0.0 -->
+
+## 18. Multi-Agent Orchestration (OMC)
+
+This project uses an oh-my-claudecode-inspired multi-agent orchestration system for Claude Code.
+Specialized agents coordinate to complete complex tasks accurately and efficiently.
+
+### Operating Principles
+
+- Delegate specialized or tool-heavy work to the most appropriate agent.
+- Keep users informed with concise progress updates while work is in flight.
+- Prefer clear evidence over assumptions: verify outcomes before final claims.
+- Choose the lightest-weight path that preserves quality (direct action or agent).
+- Consult official documentation before implementing with SDKs, frameworks, or APIs.
+
+### Delegation Rules
+
+Use delegation when it improves quality, speed, or correctness:
+- Multi-file implementations, refactors, debugging, reviews, planning, research, and verification.
+- Work that benefits from specialist prompts (security, API compatibility, test strategy, product framing).
+- Independent tasks that can run in parallel.
+
+Work directly only for trivial operations where delegation adds disproportionate overhead.
+
+### Model Routing
+
+Pass `model` on Task calls to match complexity:
+- `haiku`: quick lookups, lightweight scans, narrow checks
+- `sonnet`: standard implementation, debugging, reviews
+- `opus`: architecture, deep analysis, complex refactors
+
+### Agent Catalog
+
+Agents are defined in `.claude/agents/`. Use `general-purpose` subagent_type with agent prompt context.
+
+**Build/Analysis Lane:**
+- `explore` (haiku): codebase discovery, symbol/file mapping
+- `analyst` (opus): requirements clarity, acceptance criteria, hidden constraints
+- `planner` (opus): task sequencing, execution plans, risk flags
+- `architect` (opus): system design, boundaries, interfaces, long-horizon tradeoffs
+- `debugger` (sonnet): root-cause analysis, regression isolation, failure diagnosis
+- `executor` (sonnet): code implementation, refactoring, feature work
+- `deep-executor` (opus): complex autonomous goal-oriented tasks
+- `verifier` (sonnet): completion evidence, claim validation, test adequacy
+
+**Review Lane:**
+- `code-reviewer` (opus): comprehensive review across concerns
+- `security-reviewer` (opus): vulnerabilities, trust boundaries, authn/authz
+
+**Domain Specialists:**
+- `test-engineer` (sonnet): test strategy, coverage, flaky-test hardening
+- `build-fixer` (sonnet): build/toolchain/type failures
+- `designer` (sonnet): UX/UI architecture, interaction design, KPOP aesthetic
+- `git-master` (sonnet): commit strategy, history hygiene
+
+**Product Lane:**
+- `product-manager` (sonnet): problem framing, personas/JTBD, PRDs
+
+### Agent Compositions
+
+Feature Development:
+  `analyst` -> `planner` -> `executor` -> `test-engineer` -> `code-reviewer` -> `verifier`
+
+Bug Investigation:
+  `explore` + `debugger` + `executor` + `test-engineer` + `verifier`
+
+Code Review:
+  `code-reviewer` + `security-reviewer`
+
+Product Discovery:
+  `product-manager` + `analyst` + `planner`
+
+### Execution Modes (Magic Keywords)
+
+Type these keywords in your prompt to activate modes:
+
+| Keyword | Mode | Description |
+|---------|------|-------------|
+| `autopilot` | Autopilot | Full autonomous execution from idea to working code |
+| `ralph` | Persistent | Self-continuing loop until task is verified complete |
+| `ultrawork` / `ulw` | Parallel | Maximum parallelism with parallel agent orchestration |
+| `ecomode` / `eco` | Token-efficient | Uses haiku and sonnet to minimize token usage |
+| `plan this` | Planning | Strategic planning interview before implementation |
+| `ultrathink` | Deep thinking | Extended reasoning for complex analysis |
+| `stopomc` | Cancel | Stop all active modes and clear state |
+
+### Verification Protocol
+
+Verify before claiming completion:
+- Small changes (<5 files): verifier with `model="haiku"`
+- Standard changes: verifier with `model="sonnet"`
+- Large or security changes (>20 files): verifier with `model="opus"`
+
+### Context Persistence
+
+Use `<remember>info</remember>` to persist information across context compaction (7 days).
+Use `<remember priority>info</remember>` for permanent persistence (loaded every session start).
+
+### Hooks System
+
+Hooks are configured in `.claude/settings.json`:
+- **UserPromptSubmit**: Keyword detection for mode activation
+- **SessionStart**: Restore persistent modes, load notepad priority context
+- **PreToolUse**: Delegation notices for source file edits
+- **PostToolUse**: Process `<remember>` tags from agent output
+- **Stop**: Persistent mode continuation enforcement
+
+### State Management
+
+OMC state lives in `.omc/`:
+- `.omc/state/` - Mode state files (ralph, autopilot, ultrawork, ecomode)
+- `.omc/plans/` - Work plans
+- `.omc/drafts/` - Drafts and notes
+- `.omc/research/` - Research outputs
+- `.omc/logs/` - Audit logs
+- `.omc/notepad.md` - Session memory (priority context + working memory)
+
+<!-- OMC:END -->
+
+---
+
 ## Changelog
 
 | Date       | Change                                                  |
@@ -564,6 +686,7 @@ vercel --prod
 | 2026-02-10 | Initial CLAUDE.md created for empty repository          |
 | 2026-02-10 | Full MVP spec: tech stack, schema, APIs, UI, checklist  |
 | 2026-02-11 | v2 rewrite: product vision, roles, phases, governance, security decisions, src/ structure, companion docs |
+| 2026-02-11 | Added OMC multi-agent orchestration: 14 agents, hooks, execution modes, state management |
 
 ---
 
