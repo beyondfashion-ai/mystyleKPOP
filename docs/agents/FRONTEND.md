@@ -1,25 +1,27 @@
 # FRONTEND — Frontend Developer Sub-Agent
 
-> mystyleKPOP 프론트엔드 개발자 에이전트
-> 역할: UI 구현, 스타일링, SDK 연동, API 호출, 클라이언트 상태 관리
+> Frontend developer agent for the mystyleKPOP repository.
+> Role: UI implementation, styling, SDK integration, API calls, client-side state management.
 
 ---
 
-## 1. 역할 정의
+## 1. Role Definition
 
-FRONTEND 에이전트는 mystyleKPOP의 **모든 클라이언트 사이드 코드**를 담당한다.
+The FRONTEND agent owns **all client-side code** in the mystyleKPOP project:
 
-- Next.js App Router 기반 페이지/레이아웃 구현
-- Tailwind CSS + CSS 변수 기반 디자인 시스템 적용
-- Firebase Auth 클라이언트 연동
-- API Route Handler 호출 패턴 구현
-- 반응형 레이아웃 및 접근성 보장
+- Next.js 14+ App Router pages and layouts
+- Tailwind CSS + CSS variable design system
+- Firebase Auth client integration
+- API Route Handler call patterns
+- Responsive layout and accessibility compliance
+
+**Key rule:** No direct Firestore writes from the client. All mutations go through API routes.
 
 ---
 
-## 2. CSS 변수 — 컬러 시스템
+## 2. CSS Variables — Color System
 
-### 2.1 글로벌 CSS 변수 (`src/app/globals.css`)
+### 2.1 Global CSS Variables (`src/app/globals.css`)
 
 ```css
 @tailwind base;
@@ -29,12 +31,12 @@ FRONTEND 에이전트는 mystyleKPOP의 **모든 클라이언트 사이드 코�
 @layer base {
   :root {
     /* === Brand Colors === */
-    --color-primary: 280 80% 60%;          /* 메인 퍼플 #9333EA */
-    --color-primary-hover: 280 80% 50%;    /* 호버 #7E22CE */
-    --color-primary-light: 280 80% 95%;    /* 연한 배경 #F3E8FF */
-    --color-secondary: 330 80% 60%;        /* 핑크 #EC4899 */
-    --color-secondary-hover: 330 80% 50%;  /* 핑크 호버 #DB2777 */
-    --color-accent: 200 90% 55%;           /* 네온 블루 #0EA5E9 */
+    --color-primary: 280 80% 60%;          /* Main purple #9333EA */
+    --color-primary-hover: 280 80% 50%;    /* Hover purple #7E22CE */
+    --color-primary-light: 280 80% 95%;    /* Light background #F3E8FF */
+    --color-secondary: 330 80% 60%;        /* Pink #EC4899 */
+    --color-secondary-hover: 330 80% 50%;  /* Hover pink #DB2777 */
+    --color-accent: 200 90% 55%;           /* Neon blue #0EA5E9 */
 
     /* === Gradient Presets === */
     --gradient-brand: linear-gradient(135deg, hsl(280 80% 60%), hsl(330 80% 60%));
@@ -42,26 +44,26 @@ FRONTEND 에이전트는 mystyleKPOP의 **모든 클라이언트 사이드 코�
     --gradient-ranking: linear-gradient(135deg, hsl(45 100% 50%), hsl(30 100% 55%));
 
     /* === Neutral Colors === */
-    --color-bg: 0 0% 100%;                /* 배경 #FFFFFF */
-    --color-bg-secondary: 240 5% 96%;     /* 보조 배경 #F4F4F5 */
-    --color-bg-tertiary: 240 5% 92%;      /* 3차 배경 #E4E4E7 */
-    --color-text: 240 6% 10%;             /* 본문 텍스트 #18181B */
-    --color-text-secondary: 240 4% 46%;   /* 보조 텍스트 #71717A */
-    --color-text-muted: 240 4% 65%;       /* 약한 텍스트 #A1A1AA */
-    --color-border: 240 6% 90%;           /* 테두리 #E4E4E7 */
-    --color-border-hover: 240 5% 80%;     /* 테두리 호버 */
+    --color-bg: 0 0% 100%;                /* Background #FFFFFF */
+    --color-bg-secondary: 240 5% 96%;     /* Secondary bg #F4F4F5 */
+    --color-bg-tertiary: 240 5% 92%;      /* Tertiary bg #E4E4E7 */
+    --color-text: 240 6% 10%;             /* Body text #18181B */
+    --color-text-secondary: 240 4% 46%;   /* Secondary text #71717A */
+    --color-text-muted: 240 4% 65%;       /* Muted text #A1A1AA */
+    --color-border: 240 6% 90%;           /* Border #E4E4E7 */
+    --color-border-hover: 240 5% 80%;     /* Border hover */
 
     /* === Semantic Colors === */
-    --color-success: 142 72% 45%;          /* 성공 #22C55E */
-    --color-warning: 38 92% 50%;           /* 경고 #F59E0B */
-    --color-error: 0 84% 60%;             /* 에러 #EF4444 */
-    --color-info: 200 90% 55%;            /* 정보 #0EA5E9 */
+    --color-success: 142 72% 45%;          /* Success #22C55E */
+    --color-warning: 38 92% 50%;           /* Warning #F59E0B */
+    --color-error: 0 84% 60%;             /* Error #EF4444 */
+    --color-info: 200 90% 55%;            /* Info #0EA5E9 */
 
     /* === Like / Boost Specific === */
-    --color-like: 0 84% 60%;              /* 좋아요: 레드 #EF4444 */
-    --color-like-active: 0 84% 55%;       /* 좋아요 활성 #DC2626 */
-    --color-boost: 45 100% 50%;           /* 부스트: 골드 #EAB308 */
-    --color-boost-active: 38 92% 50%;     /* 부스트 활성 #F59E0B */
+    --color-like: 0 84% 60%;              /* Like: red #EF4444 */
+    --color-like-active: 0 84% 55%;       /* Like active #DC2626 */
+    --color-boost: 45 100% 50%;           /* Boost: gold #EAB308 */
+    --color-boost-active: 38 92% 50%;     /* Boost active #F59E0B */
 
     /* === Spacing & Layout === */
     --header-height: 64px;
@@ -79,19 +81,19 @@ FRONTEND 에이전트는 mystyleKPOP의 **모든 클라이언트 사이드 코�
   }
 
   .dark {
-    --color-bg: 240 10% 4%;               /* 다크 배경 #09090B */
-    --color-bg-secondary: 240 6% 10%;     /* 다크 보조 배경 #18181B */
-    --color-bg-tertiary: 240 5% 16%;      /* 다크 3차 배경 #27272A */
-    --color-text: 0 0% 98%;               /* 다크 텍스트 #FAFAFA */
-    --color-text-secondary: 240 5% 65%;   /* 다크 보조 텍스트 */
-    --color-text-muted: 240 4% 46%;       /* 다크 약한 텍스트 */
-    --color-border: 240 4% 20%;           /* 다크 테두리 */
-    --color-border-hover: 240 5% 30%;     /* 다크 테두리 호버 */
+    --color-bg: 240 10% 4%;               /* Dark bg #09090B */
+    --color-bg-secondary: 240 6% 10%;     /* Dark secondary bg #18181B */
+    --color-bg-tertiary: 240 5% 16%;      /* Dark tertiary bg #27272A */
+    --color-text: 0 0% 98%;               /* Dark text #FAFAFA */
+    --color-text-secondary: 240 5% 65%;   /* Dark secondary text */
+    --color-text-muted: 240 4% 46%;       /* Dark muted text */
+    --color-border: 240 4% 20%;           /* Dark border */
+    --color-border-hover: 240 5% 30%;     /* Dark border hover */
   }
 }
 ```
 
-### 2.2 Tailwind 설정 (`tailwind.config.ts`)
+### 2.2 Tailwind Configuration (`tailwind.config.ts`)
 
 ```typescript
 import type { Config } from "tailwindcss";
@@ -149,15 +151,15 @@ export default config;
 
 ---
 
-## 3. 폰트 설정
+## 3. Font Configuration
 
-### 3.1 `next/font` 설정 (`src/app/layout.tsx`)
+### 3.1 `next/font` Setup (`src/app/layout.tsx`)
 
 ```typescript
 import localFont from "next/font/local";
 import { Inter } from "next/font/google";
 
-// Pretendard: 한국어 기본 폰트
+// Pretendard: Primary font for Korean text
 const pretendard = localFont({
   src: [
     { path: "../fonts/Pretendard-Regular.woff2", weight: "400", style: "normal" },
@@ -169,7 +171,7 @@ const pretendard = localFont({
   display: "swap",
 });
 
-// Inter: 영문 폰트 (fallback)
+// Inter: English font (fallback)
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
@@ -185,114 +187,122 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 }
 ```
 
-### 3.2 타이포그래피 스케일
+### 3.2 Typography Scale
 
-| 용도 | 클래스 | 크기 | 굵기 | 행간 |
-|------|--------|------|------|------|
-| 히어로 제목 | `text-4xl md:text-5xl font-bold` | 36px / 48px | 700 | 1.1 |
-| 페이지 제목 | `text-2xl md:text-3xl font-bold` | 24px / 30px | 700 | 1.2 |
-| 섹션 제목 | `text-xl font-semibold` | 20px | 600 | 1.3 |
-| 카드 제목 | `text-lg font-medium` | 18px | 500 | 1.4 |
-| 본문 | `text-base` | 16px | 400 | 1.5 |
-| 보조 텍스트 | `text-sm text-text-secondary` | 14px | 400 | 1.5 |
-| 캡션 | `text-xs text-text-muted` | 12px | 400 | 1.4 |
-| 버튼 (대) | `text-base font-semibold` | 16px | 600 | 1 |
-| 버튼 (소) | `text-sm font-medium` | 14px | 500 | 1 |
-
----
-
-## 4. 페이지별 구현 가이드
-
-### 4.1 랜딩 페이지 (`/`)
-
-```
-┌─────────────────────────────────────────┐
-│  Header (로고 + 네비게이션 + 로그인)        │
-├─────────────────────────────────────────┤
-│  Hero Section                            │
-│  ┌─────────────────────────────────┐     │
-│  │  배경: 그라디언트 or 비디오/GIF      │     │
-│  │  "나만의 아이돌 무대의상을 디자인하세요" │     │
-│  │  [시작하기] CTA 버튼               │     │
-│  └─────────────────────────────────┘     │
-├─────────────────────────────────────────┤
-│  Features (3-column grid)                │
-│  [10초 생성] [KPOP 특화] [실물 제작]       │
-├─────────────────────────────────────────┤
-│  Hall of Fame (이전 우승작 캐러셀)         │
-├─────────────────────────────────────────┤
-│  Social Proof (사용자 수, 샘플 이미지)     │
-├─────────────────────────────────────────┤
-│  Footer                                 │
-└─────────────────────────────────────────┘
-```
-
-**핵심 구현 사항:**
-- Hero 배경은 `object-cover`로 반응형 처리
-- CTA 버튼은 `--gradient-brand` 적용, 호버 시 scale(1.02) 트랜지션
-- Features는 `grid grid-cols-1 md:grid-cols-3 gap-6`
-- Hall of Fame은 `overflow-x-auto snap-x` 기반 가로 스크롤
-
-### 4.2 스튜디오 (`/studio`)
-
-```
-┌──────────────────┬──────────────────────┐
-│  Input Panel      │  Result Panel         │
-│                   │                       │
-│  1. 그룹 선택     │  [생성 전: 안내 텍스트]  │
-│  2. 컨셉 선택     │  [생성 중: 스켈레톤]     │
-│  3. 키워드 입력    │  [생성 후: 2x2 그리드]  │
-│                   │                       │
-│  [생성하기] 버튼   │  [대표 이미지 선택]      │
-│                   │  [게시] [저장] [재생성]  │
-└──────────────────┴──────────────────────┘
-```
-
-**핵심 구현 사항:**
-- 모바일: 세로 스택 (입력 → 결과)
-- 데스크톱: `grid grid-cols-1 lg:grid-cols-2 gap-6`
-- 이미지 생성 중 스켈레톤 UI + 진행 텍스트
-- 대표 이미지 선택: 클릭 시 체크 오버레이 + 보더 하이라이트
-- 게시 버튼은 대표 이미지 선택 전까지 `disabled`
-
-### 4.3 갤러리 (`/gallery`)
-
-**핵심 구현 사항:**
-- Masonry 그리드: CSS `columns` 또는 `react-masonry-css` 활용
-- 무한 스크롤: `IntersectionObserver` 기반
-- 카드: 이미지 + 작성자 핸들 + 좋아요 수 + 타임스탬프
-- 필터 바: 컨셉 / 정렬 (최신순/인기순)
-- 스켈레톤 로딩: 카드 형태의 플레이스홀더
-
-### 4.4 디자인 상세 (`/design/[id]`)
-
-**핵심 구현 사항:**
-- 이미지 뷰어: `aspect-ratio` 유지, 확대/축소 지원
-- 좋아요 버튼: 하트 아이콘 + 카운트, 클릭 시 즉시 UI 반영 (낙관적 업데이트)
-- 공유 버튼: 카카오톡, 인스타그램, X
-- **프롬프트/레시피 절대 표시 금지**
-
-### 4.5 랭킹 (`/ranking`)
-
-**핵심 구현 사항:**
-- Top 3: 특별 스타일링 (골드/실버/브론즈 + 큰 카드)
-- 4~50위: 리스트 형태
-- 1위 하이라이트 문구: "이 디자인이 실물 의상으로 제작됩니다!"
-- 남은 일수 카운트다운 타이머
-- 점수 산출 공식 하단 표기
-
-### 4.6 어카운트 (`/account`)
-
-**핵심 구현 사항:**
-- 프로필 편집 (핸들, 바이오, 프로필 이미지)
-- 내 디자인 그리드 (공개 + 비공개 구분)
-- 통계: 총 생성 수, 게시 수, 받은 좋아요 수
+| Usage | Tailwind Classes | Size | Weight | Line Height |
+|-------|-----------------|------|--------|-------------|
+| Hero title | `text-4xl md:text-5xl font-bold` | 36px / 48px | 700 | 1.1 |
+| Page title | `text-2xl md:text-3xl font-bold` | 24px / 30px | 700 | 1.2 |
+| Section heading | `text-xl font-semibold` | 20px | 600 | 1.3 |
+| Card title | `text-lg font-medium` | 18px | 500 | 1.4 |
+| Body text | `text-base` | 16px | 400 | 1.5 |
+| Secondary text | `text-sm text-text-secondary` | 14px | 400 | 1.5 |
+| Caption | `text-xs text-text-muted` | 12px | 400 | 1.4 |
+| Button (large) | `text-base font-semibold` | 16px | 600 | 1 |
+| Button (small) | `text-sm font-medium` | 14px | 500 | 1 |
 
 ---
 
-## 5. SDK 연동 코드
+## 4. Page-by-Page Implementation Guide
 
-### 5.1 Firebase Auth — 인증 컨텍스트
+### 4.1 Landing Page (`/`)
+
+```
+┌──────────────────────────────────────────┐
+│  Header (Logo + Navigation + Login)       │
+├──────────────────────────────────────────┤
+│  Hero Section                             │
+│  ┌──────────────────────────────────┐    │
+│  │  Background: gradient or video/GIF │    │
+│  │  "Design your idol's stage outfit" │    │
+│  │  [Get Started Free] CTA button     │    │
+│  └──────────────────────────────────┘    │
+├──────────────────────────────────────────┤
+│  Features (3-column grid)                 │
+│  [10s Generation] [KPOP-Specialized]      │
+│  [Real Costume]                           │
+├──────────────────────────────────────────┤
+│  Hall of Fame (past winners carousel)     │
+├──────────────────────────────────────────┤
+│  Social Proof (user count, sample images) │
+├──────────────────────────────────────────┤
+│  Footer                                   │
+└──────────────────────────────────────────┘
+```
+
+**Implementation details:**
+- Hero background: `object-cover` for responsive handling
+- CTA button: apply `--gradient-brand`, hover `scale(1.02)` transition
+- Features: `grid grid-cols-1 md:grid-cols-3 gap-6`
+- Hall of Fame: `overflow-x-auto snap-x` horizontal scroll
+- Social proof: animated counter (count-up on viewport entry)
+
+### 4.2 Studio (`/studio`)
+
+```
+┌───────────────────┬───────────────────────┐
+│  Input Panel       │  Result Panel          │
+│                    │                        │
+│  1. Group select   │  [Before: guide text]  │
+│  2. Concept select │  [During: skeleton]    │
+│  3. Keyword input  │  [After: 2x2 grid]    │
+│                    │                        │
+│  [Generate] button │  [Select representative]│
+│                    │  [Publish][Save][Redo]  │
+└───────────────────┴───────────────────────┘
+```
+
+**Implementation details:**
+- Mobile: vertical stack (input → result)
+- Desktop: `grid grid-cols-1 lg:grid-cols-2 gap-6`
+- Skeleton UI + progress text during generation
+- Representative image selection: click → check overlay + border highlight
+- Publish button stays `disabled` until representative image is selected
+- Keyword input: detect Korean/Japanese/Chinese → auto-translate via `/api/translate`
+
+### 4.3 Gallery (`/gallery`)
+
+**Implementation details:**
+- Masonry grid: CSS `columns` or `react-masonry-css`
+- Infinite scroll: `IntersectionObserver` based, loads 12 items per batch
+- Card: image + creator handle + like count + timestamp
+- Filter bar: concept filter / sort (newest / most popular)
+- Skeleton loading: card-shaped placeholder during load
+- Empty state: friendly message + CTA to visit studio
+
+### 4.4 Design Detail (`/design/[id]`)
+
+**Implementation details:**
+- Image viewer: maintain `aspect-ratio`, support pinch-zoom on mobile
+- Like button: heart icon + count, optimistic update on click
+- Share buttons: KakaoTalk, Instagram, X (Twitter)
+- Animate preview: video player if animation exists (Superfan only)
+- Report button: opens modal → sends to `/api/report`
+- **NEVER display prompt/recipe to any user other than the creator**
+
+### 4.5 Ranking (`/ranking`)
+
+**Implementation details:**
+- Top 3: special styling (gold/silver/bronze + enlarged card)
+- Rank 4–50: list format with thumbnail + like count
+- #1 highlight text: "This design will be manufactured into a real costume!"
+- Countdown timer for days remaining in current month
+- Score formula displayed in footer
+- Phase-aware: display appropriate score text per monetization phase
+
+### 4.6 Account (`/account`)
+
+**Implementation details:**
+- Profile edit: handle, bio, profile image upload
+- My designs grid: toggle between public and private
+- Stats: total generations, published count, likes received
+- Account deletion: confirm modal → calls deletion API
+
+---
+
+## 5. SDK Integration Code
+
+### 5.1 Firebase Auth — Auth Context
 
 ```typescript
 // src/lib/firebase/auth-context.tsx
@@ -314,8 +324,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      setUser(firebaseUser);
       setLoading(false);
     });
     return () => unsubscribe();
@@ -331,7 +341,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 export const useAuth = () => useContext(AuthContext);
 ```
 
-### 5.2 Firebase Auth — 로그인/회원가입
+### 5.2 Firebase Auth — Sign In / Sign Up
 
 ```typescript
 // src/lib/firebase/auth.ts
@@ -358,7 +368,7 @@ export async function signOut() {
 }
 ```
 
-### 5.3 Auth Token 헬퍼
+### 5.3 Auth Token Helper
 
 ```typescript
 // src/lib/firebase/get-token.ts
@@ -373,9 +383,9 @@ export async function getAuthToken(): Promise<string | null> {
 
 ---
 
-## 6. API 호출 패턴
+## 6. API Call Patterns
 
-### 6.1 공통 Fetch 래퍼
+### 6.1 Shared Fetch Wrapper
 
 ```typescript
 // src/lib/api/client.ts
@@ -415,37 +425,37 @@ export async function apiClient<T>(endpoint: string, options: ApiOptions = {}): 
 }
 ```
 
-### 6.2 페이지별 API 호출 예시
+### 6.2 Per-Page API Call Examples
 
 ```typescript
-// === 이미지 생성 ===
+// === Image Generation ===
 const result = await apiClient<GenerateResponse>("/api/generate", {
   method: "POST",
   requireAuth: true,
   body: { groupName, concept, keywords },
 });
 
-// === 갤러리 조회 ===
+// === Gallery Listing ===
 const gallery = await apiClient<GalleryResponse>(
   `/api/gallery?cursor=${cursor}&limit=12&sort=${sort}`
 );
 
-// === 좋아요 토글 ===
+// === Like Toggle ===
 const likeResult = await apiClient<LikeResponse>(`/api/like/${designId}`, {
   method: "POST",
   requireAuth: true,
 });
 
-// === 디자인 상세 ===
+// === Design Detail ===
 const design = await apiClient<DesignDetail>(`/api/designs/${id}`);
 
-// === 랭킹 조회 ===
+// === Monthly Ranking ===
 const ranking = await apiClient<RankingResponse>(
   `/api/ranking?month=${month}`
 );
 ```
 
-### 6.3 낙관적 업데이트 패턴 (좋아요)
+### 6.3 Optimistic Update Pattern (Like)
 
 ```typescript
 // src/hooks/useLike.ts
@@ -462,7 +472,7 @@ export function useLike(designId: string, initialLiked: boolean, initialCount: n
   const toggleLike = useCallback(async () => {
     if (loading) return;
 
-    // 낙관적 업데이트
+    // Optimistic update
     setLiked((prev) => !prev);
     setCount((prev) => (liked ? prev - 1 : prev + 1));
     setLoading(true);
@@ -473,7 +483,7 @@ export function useLike(designId: string, initialLiked: boolean, initialCount: n
         requireAuth: true,
       });
     } catch {
-      // 실패 시 롤백
+      // Rollback on failure
       setLiked((prev) => !prev);
       setCount((prev) => (liked ? prev + 1 : prev - 1));
     } finally {
@@ -487,34 +497,38 @@ export function useLike(designId: string, initialLiked: boolean, initialCount: n
 
 ---
 
-## 7. 반응형 브레이크포인트 규칙
+## 7. Responsive Breakpoint Rules
 
-| 기기 | Tailwind 접두사 | 기준 너비 | 주요 레이아웃 변경 |
-|------|----------------|-----------|------------------|
-| 모바일 | (기본) | < 768px | 단일 컬럼, 하단 네비게이션 |
-| 태블릿 | `md:` | 768px ~ 1024px | 2컬럼 그리드, 사이드바 축소 |
-| 데스크톱 | `lg:` | > 1024px | 2~3컬럼 그리드, 풀 사이드바 |
-
----
-
-## 8. 접근성 규칙
-
-- 모든 `<button>`에 `aria-label` 필수
-- 모든 `<img>`에 의미 있는 `alt` 텍스트 필수
-- 포커스 가시성: `focus-visible:ring-2 focus-visible:ring-primary`
-- 터치 타겟 최소 44x44px
-- 키보드 네비게이션 (Tab, Enter, Escape) 지원
-- 색상만으로 정보를 전달하지 않기 (아이콘/텍스트 병행)
+| Device | Tailwind Prefix | Width | Layout Changes |
+|--------|----------------|-------|----------------|
+| Mobile | (default) | < 768px | Single column, bottom navigation |
+| Tablet | `md:` | 768px – 1024px | 2-column grid, collapsed sidebar |
+| Desktop | `lg:` | > 1024px | 2–3 column grid, full sidebar |
 
 ---
 
-## 9. 성능 가이드라인
+## 8. Accessibility Rules
 
-- 이미지: `next/image` 사용, `priority` 속성은 LCP 이미지에만 적용
-- 코드 분할: `dynamic()` import로 무거운 컴포넌트 지연 로딩
-- 클라이언트 컴포넌트 최소화: `"use client"` 가 필요한 부분만 분리
-- 번들 사이즈: 정기적으로 `next build` 후 사이즈 확인
+- All `<button>` elements must have `aria-label`
+- All `<img>` elements must have meaningful `alt` text
+- Focus visibility: `focus-visible:ring-2 focus-visible:ring-primary`
+- Minimum touch target: 44x44px
+- Keyboard navigation support: Tab, Enter, Escape
+- Never convey information through color alone (pair with icon/text)
+- Semantic HTML: use `<main>`, `<nav>`, `<section>`, `<article>` appropriately
+- Skip-to-content link at the top of every page
 
 ---
 
-*이 문서는 FRONTEND 에이전트가 모든 클라이언트 사이드 구현 시 참조하는 기본 규칙이다.*
+## 9. Performance Guidelines
+
+- Images: use `next/image` with `priority` only on LCP images
+- Code splitting: `dynamic()` import for heavy components
+- Minimize client components: isolate `"use client"` to interactive leaf nodes
+- Bundle size: check with `next build` regularly
+- Prefetching: `<Link prefetch>` for high-probability navigation targets
+- Avoid layout shifts: set explicit `width` and `height` on images
+
+---
+
+*This document is the primary reference for the FRONTEND agent in all client-side implementation tasks.*
