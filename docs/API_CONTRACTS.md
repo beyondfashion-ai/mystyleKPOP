@@ -50,132 +50,99 @@ if (!parsed.success) {
 
 ### `POST /api/generate`
 
-Generates 4 KPOP stage outfit images via fal.ai.
+Generates 1-4 KPOP stage outfit images via fal.ai (Flux 2 Turbo).
 
-**Auth:** Required (except 1 guest trial)
+**Auth:** Not enforced in MVP (guest trial supported)
 
-**Zod Schema:**
-```typescript
-const GenerateSchema = z.object({
-  group: z.string().max(100).optional(),
-  concept: z.enum(["formal", "street", "concert", "school", "high_fashion", "casual"]),
-  keywords: z.string().min(1).max(200),
-});
-```
-
-**Request:**
+**Request Body:**
 ```json
 {
-  "group": "BLACKPINK",
-  "concept": "concert",
-  "keywords": "black leather harness, silver boots, edgy vibe"
+  "prompt": "크롭탑 #네온컬러 #레더재킷",
+  "idolType": "K-POP girl group",
+  "conceptStyle": "Futuristic, electric, digital",
+  "conceptPrompt": "cyberpunk, futuristic, metallic textures, tech-wear",
+  "imageCount": 4
 }
 ```
 
+| Field          | Type   | Required | Description                                          |
+| -------------- | ------ | -------- | ---------------------------------------------------- |
+| `prompt`       | string | Yes      | User keywords + hashtags (max 2000 chars)            |
+| `idolType`     | string | No       | "K-POP girl group" / "K-POP boy group" / "K-POP solo artist" |
+| `conceptStyle` | string | No       | Mood keywords from concept selection                 |
+| `conceptPrompt`| string | No       | Style keywords from concept selection                |
+| `imageCount`   | number | No       | 1, 2, or 4 (default: 1, max: 4)                     |
+
 **Server-Side Processing:**
-1. Validate auth token (or check guest trial)
-2. Check `generationLimits` for daily cap (default: 10)
-3. If daily limit exceeded: check user's `creditBalance` ≥ `creditCostPerGeneration` (default: 1); if insufficient, reject with 402
-4. If using credit: atomically deduct credit + write `credits_ledger` entry
-5. Translate keywords to English (server-side, internal call)
-6. Compose system prompt: concept + group + translated keywords
-7. Call fal.ai API (Flux model, 4 images, ~10 seconds)
-8. Download images from fal.ai URLs
-9. Upload to Firebase Storage (`designs/{designId}/`)
-10. Create Firestore `designs` document (`visibility: "private"`, `representativeIndex: -1`)
-11. Increment `generationLimits` counter
+1. Validate prompt exists and length ≤ 2000
+2. Check FAL_KEY configured
+3. For each image: build natural language prompt with random pose/angle/framing
+4. Call fal.ai `fal-ai/flux-2/turbo` with `guidance_scale: 3.5`, `num_inference_steps: 8`, unique random seed
+5. Return generated image URLs directly (fal.ai CDN)
 
 **Response (200):**
 ```json
 {
-  "success": true,
-  "designId": "design_abc123",
-  "imageUrls": [
-    "https://storage.googleapis.com/.../0.webp",
-    "https://storage.googleapis.com/.../1.webp",
-    "https://storage.googleapis.com/.../2.webp",
-    "https://storage.googleapis.com/.../3.webp"
-  ],
-  "generatedAt": "2026-02-11T14:32:00Z",
-  "remainingGenerations": 5,
-  "usedCredit": false,
-  "creditBalance": 48
+  "urls": [
+    "https://fal.media/.../image1.png",
+    "https://fal.media/.../image2.png"
+  ]
 }
 ```
 
-**Error (429 — Rate Limit):**
-```json
-{
-  "success": false,
-  "error": "Daily generation limit reached",
-  "code": "RATE_LIMITED",
-  "remainingGenerations": 0,
-  "resetsAt": "2026-02-12T00:00:00Z",
-  "creditBalance": 0
-}
-```
-
-**Error (402 — Insufficient Credits):**
-```json
-{
-  "success": false,
-  "error": "Not enough credits for extra generation",
-  "code": "INSUFFICIENT_CREDITS",
-  "creditBalance": 0,
-  "creditCostPerGeneration": 1
-}
-```
+**Error (400):** `{ "error": "Prompt is required" }`
+**Error (500):** `{ "error": "No images generated" }`
 
 ---
 
 ### `POST /api/designs/publish`
 
-Selects a representative image and publishes a design to the gallery.
+Creates a new design document and publishes it to the gallery. Supports multiple images.
 
-**Auth:** Required (owner only)
+**Auth:** Optional (uses token if available, falls back to body uid)
 
-**Zod Schema:**
-```typescript
-const PublishSchema = z.object({
-  designId: z.string().min(1),
-  representativeIndex: z.number().int().min(0).max(3),
-});
-```
-
-**Request:**
+**Request Body:**
 ```json
 {
-  "designId": "design_abc123",
-  "representativeIndex": 2
+  "imageUrl": "https://fal.media/.../image1.png",
+  "imageUrls": [
+    "https://fal.media/.../image1.png",
+    "https://fal.media/.../image2.png"
+  ],
+  "prompt": "크롭탑 #네온컬러",
+  "concept": "사이버펑크",
+  "keywords": "네온 컬러,레더 재킷",
+  "ownerUid": "user123",
+  "ownerHandle": "KpopFan99"
 }
 ```
 
+| Field         | Type     | Required | Description                                    |
+| ------------- | -------- | -------- | ---------------------------------------------- |
+| `imageUrl`    | string   | Yes*     | Single image URL (legacy, used if imageUrls missing) |
+| `imageUrls`   | string[] | Yes*     | Multiple selected image URLs                   |
+| `prompt`      | string   | Yes      | User prompt text                               |
+| `concept`     | string   | No       | Concept label (Korean)                         |
+| `keywords`    | string   | No       | Comma-separated hashtag keywords               |
+| `ownerUid`    | string   | No       | Fallback if no auth token                      |
+| `ownerHandle` | string   | No       | Fallback display name                          |
+
+*At least one of `imageUrl` or `imageUrls` is required.
+
 **Server-Side Processing:**
-1. Validate auth token
-2. Verify requester is the design owner
-3. Verify `representativeIndex` is 0-3
-4. Update design: `visibility: "public"`, `representativeIndex`, `publishedAt: now()`
-5. Increment `users/{uid}.totalPublished`
+1. Try verify auth token; fall back to body uid
+2. Build design data with all selected images as `imageUrls` array
+3. Save to Firestore (Admin SDK → client SDK → local JSON fallback)
 
 **Response (200):**
 ```json
 {
   "success": true,
-  "designId": "design_abc123",
-  "visibility": "public",
-  "representativeIndex": 2,
-  "publishedAt": "2026-02-11T14:35:00Z"
+  "designId": "abc123def456"
 }
 ```
 
-**Error (403):**
-```json
-{
-  "success": false,
-  "error": "Not the owner of this design",
-  "code": "FORBIDDEN"
-}
-```
+**Fallback:** When Firebase is not configured, saves to `data/designs.json` (dev only).
 
 ---
 

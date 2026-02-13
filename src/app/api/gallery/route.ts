@@ -12,10 +12,13 @@ import {
   doc,
   getDoc,
 } from "firebase/firestore";
+import fs from "fs/promises";
+import path from "path";
 
 export const dynamic = "force-dynamic";
 
 const PAGE_SIZE = 12;
+const LOCAL_DB_PATH = path.join(process.cwd(), "data", "designs.json");
 
 function stripPrivateFields(id: string, data: Record<string, unknown>) {
   return {
@@ -91,6 +94,40 @@ export async function GET(request: NextRequest) {
     }
 
     // Fallback: client SDK
+    if (!db) {
+      // Local JSON fallback for development without Firebase
+      try {
+        const raw = await fs.readFile(LOCAL_DB_PATH, "utf-8");
+        let designs: Record<string, unknown>[] = JSON.parse(raw);
+
+        // Filter
+        designs = designs.filter((d) => d.visibility === "public");
+        if (ownerUid) designs = designs.filter((d) => d.ownerUid === ownerUid);
+        if (concept) designs = designs.filter((d) => d.concept === concept);
+
+        // Sort
+        designs.sort((a, b) => {
+          if (sort === "newest") {
+            return String(b.createdAt || "").localeCompare(String(a.createdAt || ""));
+          }
+          return ((b.likeCount as number) || 0) - ((a.likeCount as number) || 0);
+        });
+
+        // Paginate
+        const cursorIndex = cursor ? designs.findIndex((d) => d.id === cursor) : -1;
+        const start = cursorIndex >= 0 ? cursorIndex + 1 : 0;
+        const page = designs.slice(start, start + PAGE_SIZE);
+        const nextCursor = page.length === PAGE_SIZE ? (page[page.length - 1].id as string) : null;
+
+        return NextResponse.json({
+          designs: page.map((d) => stripPrivateFields(d.id as string, d)),
+          nextCursor,
+          hasMore: nextCursor !== null,
+        });
+      } catch {
+        return NextResponse.json({ designs: [], nextCursor: null, hasMore: false });
+      }
+    }
     const constraints: Parameters<typeof query>[1][] = [];
 
     if (ownerUid) constraints.push(where("ownerUid", "==", ownerUid));

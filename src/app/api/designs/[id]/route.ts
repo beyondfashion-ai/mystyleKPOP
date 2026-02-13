@@ -11,8 +11,12 @@ import {
   limit,
   getDocs,
 } from "firebase/firestore";
+import fs from "fs/promises";
+import path from "path";
 
 export const dynamic = "force-dynamic";
+
+const LOCAL_DB_PATH = path.join(process.cwd(), "data", "designs.json");
 
 function safeDesign(id: string, data: Record<string, unknown>) {
   return {
@@ -82,6 +86,30 @@ export async function GET(
     }
 
     // Fallback: client SDK
+    if (!db) {
+      // Local JSON fallback for development without Firebase
+      try {
+        const raw = await fs.readFile(LOCAL_DB_PATH, "utf-8");
+        const designs: Record<string, unknown>[] = JSON.parse(raw);
+        const found = designs.find((d) => d.id === id);
+        if (!found) {
+          return NextResponse.json({ error: "Design not found" }, { status: 404 });
+        }
+        const design = safeDesign(found.id as string, found);
+        const creatorDesigns = designs
+          .filter((d) => d.ownerUid === design.ownerUid && d.id !== id && d.visibility === "public")
+          .slice(0, 4)
+          .map((d) => ({ id: d.id as string, imageUrls: d.imageUrls }));
+        const recommended = designs
+          .filter((d) => d.id !== id && d.visibility === "public")
+          .sort((a, b) => ((b.likeCount as number) || 0) - ((a.likeCount as number) || 0))
+          .slice(0, 3)
+          .map((d) => ({ id: d.id as string, imageUrls: d.imageUrls }));
+        return NextResponse.json({ design, creatorDesigns, recommended });
+      } catch {
+        return NextResponse.json({ error: "Design not found" }, { status: 404 });
+      }
+    }
     const docRef = doc(db, "designs", id);
     const docSnap = await getDoc(docRef);
 

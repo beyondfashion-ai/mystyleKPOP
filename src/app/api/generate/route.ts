@@ -16,7 +16,7 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
         }
 
-        const { prompt, idolType, conceptStyle, imageCount: requestedCount } = body;
+        const { prompt, idolType, conceptStyle, conceptPrompt, imageCount: requestedCount } = body;
 
         if (!prompt || typeof prompt !== "string") {
             return NextResponse.json(
@@ -39,60 +39,80 @@ export async function POST(request: Request) {
             );
         }
 
-        // Build structured JSON prompt for flux-2-pro (expand mode)
-        const subjectDescription = `Wearing a K-pop stage costume, ${prompt}`;
-        const idolLabel = idolType || "K-pop idol";
-        const conceptMood = conceptStyle || "Charismatic, stylish, energetic";
+        // Build natural language prompt for flux-2/turbo
+        const idolLabel = idolType || "K-POP idol";
+        const conceptKeywords = conceptPrompt || "";
+        const conceptMood = conceptStyle || "charismatic, stylish, energetic";
 
-        const structuredPrompt = JSON.stringify({
-            scene: "K-pop stage performance",
-            subjects: [
-                {
-                    type: idolLabel,
-                    description: subjectDescription,
-                    pose: "Standing confident, facing forward, arms relaxed",
-                    position: "center foreground",
-                },
-            ],
-            style: "broadcast photography",
-            color_palette: [],
-            lighting: "Vibrant stage lighting, rim lighting, bright backlights",
-            mood: conceptMood,
-            background: "Blurred geometric stage lights",
-            composition: "Full body vertical shot",
-            camera: {
-                angle: "Eye level",
-                distance: "Full shot",
-                focus: "Sharp focus on face and outfit",
-                lens: "Telephoto 85mm-135mm",
-                "f-number": "f/2.8",
-                ISO: 800,
-            },
-            effects: [
-                "Bokeh background",
-                "Soft glow on skin",
-                "Vibrant color saturation",
-            ],
-        });
+        // Pose / angle / framing pools for variation
+        const POSES = [
+            "standing confident with one hand on hip",
+            "walking forward mid-stride, dynamic motion",
+            "sitting on a tall stool, legs crossed elegantly",
+            "leaning against a wall, arms folded, cool attitude",
+            "turning to look over shoulder, back partially visible",
+            "kneeling on one knee, dramatic low angle",
+            "dancing mid-move, arms extended, hair flowing",
+            "hands in pockets, relaxed swagger",
+            "pointing at camera with a wink",
+            "arms raised above head, powerful stage presence",
+        ];
+        const ANGLES = [
+            "eye level shot",
+            "slight low angle, looking up",
+            "high angle looking down, dramatic",
+            "three-quarter view from the left",
+            "three-quarter view from the right",
+            "straight frontal shot",
+        ];
+        const FRAMINGS = [
+            "full body shot showing head to toe",
+            "full body vertical composition",
+            "wide shot with environment visible",
+            "medium-full shot from knees up",
+        ];
 
-        console.log("[Generate] Structured prompt:", structuredPrompt);
+        const pick = <T,>(arr: T[]) => arr[Math.floor(Math.random() * arr.length)];
 
         // Generate 1-4 images based on requested count
         const count = Math.min(Math.max(Number(requestedCount) || 1, 1), 4);
 
-        const generateOne = () =>
-            fal.subscribe("fal-ai/flux-2-pro", {
+        const buildPrompt = () => {
+            const pose = pick(POSES);
+            const angle = pick(ANGLES);
+            const framing = pick(FRAMINGS);
+
+            return [
+                `A ${idolLabel} wearing a K-pop stage costume, ${prompt}.`,
+                conceptKeywords ? `Style: ${conceptKeywords}.` : "",
+                `Mood: ${conceptMood}.`,
+                `${framing}, ${pose}, ${angle}.`,
+                "Broadcast photography, telephoto 85-135mm f/2.8 lens, sharp focus on face and outfit.",
+                "Vibrant stage lighting, rim lighting, bright backlights, bokeh background.",
+                "Vivid color saturation, soft glow on skin, blurred geometric stage lights in background.",
+            ].filter(Boolean).join(" ");
+        };
+
+        const generateOne = (index: number) => {
+            const variedPrompt = buildPrompt();
+            console.log(`[Generate] Prompt #${index}:`, variedPrompt);
+
+            return fal.subscribe("fal-ai/flux-2/turbo", {
                 input: {
-                    prompt: structuredPrompt,
+                    prompt: variedPrompt,
                     image_size: "square_hd" as const,
+                    num_inference_steps: 8,
+                    guidance_scale: 3.5,
+                    seed: Math.floor(Math.random() * 2147483647),
                     safety_tolerance: "5" as const,
                 },
                 logs: false,
-                pollInterval: 3000,
+                pollInterval: 2000,
             });
+        };
 
         const results = await Promise.all(
-            Array.from({ length: count }, () => generateOne())
+            Array.from({ length: count }, (_, i) => generateOne(i))
         );
 
         const urls: string[] = [];

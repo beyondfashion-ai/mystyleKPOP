@@ -37,6 +37,12 @@ export async function GET() {
         }
 
         // Client SDK fallback
+        if (!db) {
+            return NextResponse.json(
+                { error: "Database not configured" },
+                { status: 500 }
+            );
+        }
         const q = query(
             collection(db, "communityPosts"),
             orderBy("createdAt", "desc"),
@@ -103,6 +109,12 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ success: true, postId: docRef.id });
         }
 
+        if (!db) {
+            return NextResponse.json(
+                { error: "Database not configured" },
+                { status: 500 }
+            );
+        }
         const docRef = await addDoc(collection(db, "communityPosts"), {
             ...postData,
             createdAt: serverTimestamp(),

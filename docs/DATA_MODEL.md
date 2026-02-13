@@ -14,53 +14,47 @@ Stores all generated outfit designs.
 ```typescript
 interface Design {
   // ─── Identity ───
-  designId: string;              // Same as document ID
-  ownerUid: string;              // Firebase Auth UID of the creator
-  ownerHandle: string;           // @nickname (denormalized from users)
-  ownerProfileImage?: string;    // Profile image URL (denormalized)
+  id?: string;                   // Document ID (auto-generated or local UUID)
+  ownerUid: string;              // Firebase Auth UID or "anonymous"
+  ownerHandle: string;           // Display name (e.g., "Guest Designer")
 
   // ─── Prompt (PRIVATE — never expose to other users) ───
-  originalPrompt: string;        // Original input (Korean, Japanese, etc.)
-  englishPrompt: string;         // Translated English prompt
-  systemPrompt: string;          // Full composed prompt sent to fal.ai
+  originalPrompt: string;        // User's input text (Korean + hashtags)
+  englishPrompt: string;         // Same as originalPrompt in MVP (no translation yet)
+  systemPrompt: string;          // Same as originalPrompt in MVP
 
   // ─── Generation Inputs ───
-  group?: string;                // Target group/artist name
-  concept: string;               // "formal", "street", "concert", "school", "high_fashion", "casual"
-  keywords: string;              // User's free-text keywords
+  concept: string;               // Korean label: "사이버펑크", "Y2K", "하이틴", "섹시", "수트", "스트릿", "걸크러쉬", "general"
+  keywords: string;              // Comma-separated hashtag keywords (e.g., "네온 컬러,레더 재킷")
 
-  // ─── Generated Images ───
+  // ─── Images ───
   imageUrls: {
-    url: string;                 // Firebase Storage URL
-    index: number;               // 0-3
+    url: string;                 // fal.ai CDN URL (or Firebase Storage in production)
+    index: number;               // 0-based index
   }[];
-  representativeIndex: number;   // Index of the user-selected representative image (0-3), -1 if unselected
-
-  // ─── fal.ai Tracking ───
-  generationRequestId: string;   // fal.ai request ID for debugging
-  generatedAt: Timestamp;        // When generation completed
+  representativeIndex: number;   // Always 0 in current implementation
 
   // ─── Visibility ───
-  visibility: "private" | "public";
-  publishedAt: Timestamp | null; // Set when published via POST /api/designs/publish
+  visibility: "public";          // MVP: all published designs are public
+  publishedAt: Timestamp;
 
   // ─── Engagement (server-managed, atomic) ───
-  likeCount: number;             // Cached vote count (atomic increment via POST /api/vote)
+  likeCount: number;             // Like count (atomic increment via POST /api/like/[designId])
   boostCount: number;            // Phase 2: separate from likeCount, always 0 in Phase 1
-
-  // ─── Animation (Superfan feature) ───
-  animationUrl?: string;         // URL of animated version, if generated
-  hasAnimation: boolean;         // Quick flag for UI rendering
 
   // ─── Moderation ───
   status: "active" | "hidden" | "removed";
-  reportCount: number;
 
   // ─── Timestamps ───
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
 ```
+
+**Notes:**
+- `imageUrls` can contain 1-4 images (user selects which to publish from generated results)
+- In dev mode without Firebase, designs are stored in `data/designs.json` (local JSON fallback)
+- Prompts/recipes are never exposed in gallery or detail API responses
 
 ### Key Indexes
 

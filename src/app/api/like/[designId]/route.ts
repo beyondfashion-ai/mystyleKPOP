@@ -64,6 +64,9 @@ export async function POST(
     }
 
     // Fallback: client SDK
+    if (!db) {
+      return NextResponse.json({ error: "Database not configured" }, { status: 500 });
+    }
     const designRef = doc(db, "designs", designId);
     const likeRef = doc(db, "likes", likeId);
 
@@ -119,6 +122,9 @@ export async function GET(
       return NextResponse.json({ liked: snap.exists });
     }
 
+    if (!db) {
+      return NextResponse.json({ liked: false });
+    }
     const snap = await getDoc(doc(db, "likes", likeId));
     return NextResponse.json({ liked: snap.exists() });
   } catch {

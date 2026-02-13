@@ -132,8 +132,8 @@ The monthly #1 winner's design is manufactured into a real costume and delivered
 
 | Route            | Page              | Description                        |
 | ---------------- | ----------------- | ---------------------------------- |
-| `/`              | Landing           | 3-second comprehension + Studio CTA + Hall of Fame |
-| `/studio`        | Studio            | 3-input generation (Group/Concept/Keyword) |
+| `/`              | Landing           | Hero CTA + Best Picks (API-driven) + How It Works |
+| `/studio`        | Studio            | 4-step generation (IdolType/Concept/Keywords+Hashtags/ImageCount) |
 | `/gallery`       | Explore           | Masonry grid + infinite scroll     |
 | `/design/[id]`   | Detail            | Full view + Like + Boost + Share + Animate |
 | `/ranking`       | Monthly Ranking   | Top 50 + phase-specific score text |
@@ -238,31 +238,41 @@ mystyleai/
 
 ### 7.1 Landing Page (`/`)
 
-- 3-second comprehension: hero with background video/GIF
-- "Get Started Free" CTA redirecting to Studio
-- Hall of Fame section (past winners with real costume photos)
-- Social proof (user count, sample images)
-- Features section (10-second generation, KPOP-specialized, real reward)
+- Hero section: "당신의 팬심이 현실이 되는 곳" + "지금 바로 디자인하기" CTA
+- **BEST PICKS section:** API-driven (`/api/gallery?sort=popular`), top 5 designs
+  - 1st place: large card (aspect-4/3) with overlay info
+  - 2nd-5th: horizontal scroll cards with rank badges
+  - Each card links to `/design/[id]`
+  - Empty state when no designs exist
+- **"어떻게 진행되나요?" section:** 4-step process cards (프롬프트 입력 → AI 의상 생성 → 커뮤니티 투표 → 실제 의상 제작)
+- Footer with brand + navigation links
 
 ### 7.2 Studio (`/studio`)
 
-**3-input generation process:**
+**4-step generation process (form always visible):**
 
-1. **Group/Artist:** Select target artist or group
-2. **Concept:** Stage concept (formal, street, concert, school, high fashion, etc.)
-3. **Keywords:** Free-text input; multilingual (Korean, Japanese, Chinese auto-translated)
+1. **Idol Type:** girlgroup / boygroup / solo (3-column grid)
+2. **Concept Style:** 7 concepts (cyber, y2k, highteen, sexy, suit, street + girlcrush for girlgroup only)
+3. **Keywords + Hashtags:** Textarea with hashtag chips that append `#tags` directly into text
+4. **Image Count:** 1장 / 2장 / 4장 selector
 
-**Output:**
-- **Free tier:** 1 image generated per request (~5 seconds)
-- **Paid tier (Superfan Pass):** 4 images generated per request, user selects 1 representative
-- **Mandatory:** User must select 1 representative image before proceeding
-- Options: [Publish] [Save Private (Superfan only)] [Animate (Superfan only)] [Regenerate]
+**Preview (appears below form after generation):**
+- Tap any image → fullscreen popup
+- Checkbox (top-right) to select/deselect images for publish
+- First image auto-selected by default
+- Multiple images can be published together
+- Actions: [결과 지우기] [갤러리에 공개]
 
-**Generation limits:**
-- Guest: 1 trial (cannot save or publish)
-- Free user: daily limit (configurable, default 10)
-- All logged-in users (Phase 2+): After daily limit (10), spend 1 Credit per extra generation
-- Superfan Pass: daily limit + private save + animate
+**Publish flow:**
+- Bottom sheet modal (z-[60], above BottomNav)
+- Shows selected images preview + concept tags + optional title/description
+- Fixed bottom button: "갤러리에 공개하기"
+- Success screen with share buttons (Web Share, X, Link copy, KakaoTalk)
+
+**AI Model:** fal-ai/flux-2/turbo
+- Parameters: `guidance_scale: 3.5`, `num_inference_steps: 8`, random seed per image
+- Prompt: natural language with randomized pose (10), angle (6), framing (4) per image
+- See `docs/UX_SPEC_PLAYGROUND.md` for full specification
 
 ### 7.3 Gallery (`/gallery`)
 
@@ -408,14 +418,19 @@ mystyleai/
 
 | Method   | Route                        | Auth Required | Description                |
 | -------- | ---------------------------- | ------------- | -------------------------- |
-| `POST`   | `/api/translate`             | No            | Translate prompt to English |
-| `POST`   | `/api/generate`              | Yes*          | Generate outfit image (1 for free, 4 for paid)   |
-| `GET`    | `/api/designs/[id]`          | No            | Get design detail          |
+| `POST`   | `/api/generate`              | No*           | Generate 1-4 outfit images (fal-ai/flux-2/turbo) |
+| `POST`   | `/api/designs/publish`       | Optional      | Publish design with 1-4 images to gallery |
+| `GET`    | `/api/designs/[id]`          | No            | Get design detail + creator designs + recommended |
 | `POST`   | `/api/like/[designId]`       | Yes           | Toggle like on a design    |
-| `GET`    | `/api/gallery`               | No            | List designs with filters  |
-| `GET`    | `/api/ranking/monthly`       | No            | Get current month ranking  |
+| `GET`    | `/api/like/[designId]`       | No            | Check if user liked a design |
+| `GET`    | `/api/gallery`               | No            | List designs (sort, concept, cursor pagination) |
+| `GET`    | `/api/ranking`               | No            | Get current month ranking  |
+| `GET`    | `/api/community`             | No            | Community feed             |
+| `GET`    | `/api/user/stats`            | No            | User design count & total likes |
 
-*Guest gets 1 trial without auth; subsequent calls require login.
+*Auth not enforced in MVP; generation limits planned for Phase 2.
+
+**Local dev fallback:** When Firebase is not configured, `/api/designs/publish`, `/api/gallery`, and `/api/designs/[id]` fall back to `data/designs.json` (local JSON file).
 
 ---
 
@@ -612,6 +627,7 @@ vercel --prod
 | 2026-02-11 | v2 rewrite: product vision, roles, phases, governance, security decisions, src/ structure, companion docs |
 | 2026-02-12 | v2.1 update: Growth mechanics (Daily Streak, Share-to-Unlock) added |
 | 2026-02-12 | v2.2 update: Free tier = 1 image/generation, paid = 4 images. Model upgraded to fal-ai/flux-2-pro with JSON structured prompts |
+| 2026-02-13 | v2.3 update: Studio UI finalized — 4-step form (idol/concept/keywords+hashtags/count), form always visible with preview below, multi-image publish, fullscreen popup, pose/angle/framing randomization, fal-ai/flux-2/turbo model. Landing page BEST PICKS section now API-driven from gallery data. Trending Styles removed. Local JSON fallback for dev without Firebase. Docs updated to match implementation. |
 
 ---
 

@@ -4,13 +4,35 @@ import { db } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { FieldValue } from "firebase-admin/firestore";
 import { verifyAuthToken } from "@/lib/auth-helpers";
+import { randomUUID } from "crypto";
+import fs from "fs/promises";
+import path from "path";
+
+const LOCAL_DB_PATH = path.join(process.cwd(), "data", "designs.json");
+
+async function readLocalDb(): Promise<Record<string, unknown>[]> {
+  try {
+    const raw = await fs.readFile(LOCAL_DB_PATH, "utf-8");
+    return JSON.parse(raw);
+  } catch {
+    return [];
+  }
+}
+
+async function writeLocalDb(data: Record<string, unknown>[]) {
+  await fs.mkdir(path.dirname(LOCAL_DB_PATH), { recursive: true });
+  await fs.writeFile(LOCAL_DB_PATH, JSON.stringify(data, null, 2));
+}
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { imageUrl, prompt, concept, ownerHandle } = body;
+    const { imageUrl, imageUrls: rawImageUrls, prompt, concept, keywords, ownerHandle } = body;
 
-    if (!imageUrl || !prompt) {
+    // Support single imageUrl or multiple imageUrls
+    const imageUrls: string[] = rawImageUrls?.length ? rawImageUrls : imageUrl ? [imageUrl] : [];
+
+    if (imageUrls.length === 0 || !prompt) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
@@ -29,8 +51,8 @@ export async function POST(request: Request) {
       englishPrompt: prompt,
       systemPrompt: prompt,
       concept: concept || "general",
-      keywords: "",
-      imageUrls: [{ url: imageUrl, index: 0 }],
+      keywords: keywords || "",
+      imageUrls: imageUrls.map((url: string, index: number) => ({ url, index })),
       representativeIndex: 0,
       visibility: "public",
       likeCount: 0,
@@ -50,13 +72,30 @@ export async function POST(request: Request) {
     }
 
     // Fallback to client SDK
-    const docRef = await addDoc(collection(db, "designs"), {
+    if (db) {
+      const docRef = await addDoc(collection(db, "designs"), {
+        ...designData,
+        publishedAt: serverTimestamp(),
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+      return NextResponse.json({ success: true, designId: docRef.id });
+    }
+
+    // Local JSON fallback for development without Firebase
+    const designId = randomUUID().replace(/-/g, "").slice(0, 20);
+    const now = new Date().toISOString();
+    const designs = await readLocalDb();
+    designs.push({
+      id: designId,
       ...designData,
-      publishedAt: serverTimestamp(),
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
+      publishedAt: now,
+      createdAt: now,
+      updatedAt: now,
     });
-    return NextResponse.json({ success: true, designId: docRef.id });
+    await writeLocalDb(designs);
+    console.log(`[Dev] Design saved locally: ${designId}`);
+    return NextResponse.json({ success: true, designId });
   } catch (error) {
     console.error("Publish error:", error);
     return NextResponse.json(

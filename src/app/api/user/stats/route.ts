@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
             snapshot.docs.forEach((doc) => {
                 totalLikes += (doc.data().likeCount as number) || 0;
             });
-        } else {
+        } else if (db) {
             const q = query(
                 collection(db, "designs"),
                 where("ownerUid", "==", uid),

@@ -44,6 +44,9 @@ export async function GET() {
     }
 
     // Fallback: client SDK
+    if (!db) {
+      return NextResponse.json({ error: "Database not configured" }, { status: 500 });
+    }
     const q = query(
       collection(db, "designs"),
       where("visibility", "==", "public"),

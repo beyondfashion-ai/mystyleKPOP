@@ -45,5 +45,8 @@ firebase-debug.log
 firestore-debug.log
 ui-debug.log
 
+# local dev data
+data/
+
 # misc
 *.pem

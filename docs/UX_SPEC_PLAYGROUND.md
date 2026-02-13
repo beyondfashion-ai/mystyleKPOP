@@ -1,37 +1,40 @@
 # UX_SPEC_PLAYGROUND.md — Studio Page Specification
 
 > UX specification for the `/studio` page (generation studio).
-> Core experience: prompt input -> AI generation -> publish.
-> Layout follows the my-style.ai playground pattern: **left inputs / right results**.
+> Core experience: prompt input -> AI generation -> preview -> publish.
+> Layout: **mobile-first single column** (`max-w-md mx-auto`).
 
 ---
 
 ## Overview
 
-The Studio page guides users through a 3-input generation flow to create KPOP stage outfit designs. The flow is intentionally simple: 3 inputs, 1 button, 4 results, 1 mandatory selection, then publish.
+The Studio page guides users through a 4-step generation flow to create KPOP stage outfit designs. The form is always visible, and generated images appear as a preview section below the form.
 
-**UX Priority:** Fast start, left inputs / right results, 2x2 grid, representative selection gating.
+**UX Priority:** Fast start, form always visible, preview below, multi-image publish support.
 
 ---
 
-## Layout: Left/Right Split (Desktop)
+## Layout: Single Column (Mobile-First)
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│  Left Panel (inputs)          │  Right Panel (results)   │
-│                               │                          │
-│  [Group/Artist] ............  │  ┌──────┐  ┌──────┐     │
-│  [Concept Cards] ............  │  │ img0 │  │ img1 │     │
-│  [Keywords] ................  │  └──────┘  └──────┘     │
-│  [Generate] .................  │  ┌──────┐  ┌──────┐     │
-│  [Remaining: 15/20] ........  │  │ img2 │  │ img3 │     │
-│                               │  └──────┘  └──────┘     │
-│                               │                          │
-│                               │  [Publish] [Regenerate]  │
-└─────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────┐
+│  Header (fixed top)                  │
+├──────────────────────────────────────┤
+│  Step 1: Idol Type (3 cols)          │
+│  Step 2: Concept Style (3 cols)      │
+│  Step 3: Keywords + Hashtags         │
+│  Step 4: Image Count (1/2/4)         │
+│  [Generate Button]                   │
+│                                      │
+│  ── 프리뷰 ──  (after generation)    │
+│  Image Grid + Checkboxes             │
+│  [결과 지우기] [갤러리에 공개]         │
+├──────────────────────────────────────┤
+│  BottomNav (fixed bottom)            │
+└──────────────────────────────────────┘
 ```
 
-On mobile, this collapses to a single column: inputs on top, results below.
+The form is **never hidden** — after generation, the preview section simply appears below the form. Users can modify inputs and regenerate without losing context.
 
 ---
 
@@ -40,195 +43,232 @@ On mobile, this collapses to a single column: inputs on top, results below.
 ```
 [Enter Studio]
     │
-    ├─ Step 1: Select Group/Artist (optional)
+    ├─ Step 1: Select Idol Type (girlgroup / boygroup / solo)
     │
-    ├─ Step 2: Select Concept (required)
+    ├─ Step 2: Select Concept Style (7 options, girlcrush = girlgroup only)
     │
-    ├─ Step 3: Enter Keywords (required, multilingual)
+    ├─ Step 3: Enter Keywords + tap hashtag suggestions
+    │       Hashtags append as #tags directly into the textarea
+    │
+    ├─ Step 4: Select Image Count (1 / 2 / 4)
     │
     ├─ [Generate] button
     │       │
-    │       ├─ Loading state (~10 seconds)
+    │       ├─ Loading overlay (~5-10 seconds)
+    │       │   Rotating Korean messages
     │       │
-    │       └─ 4 images in 2×2 grid (right panel)
+    │       └─ Preview section appears below form
     │               │
-    │               ├─ User MUST select 1 representative image
+    │               ├─ Tap any image → fullscreen popup
+    │               ├─ Checkbox (top-right) to select/deselect for publish
+    │               ├─ First image auto-selected by default
     │               │
     │               └─ Actions:
-    │                   ├─ [Publish] → POST /api/designs/publish (requires login)
-    │                   ├─ [Save Private] → My Page (Superfan only)
-    │                   └─ [Regenerate] → POST /api/generate again (counts toward limit)
+    │                   ├─ [갤러리에 공개] → Publish modal (bottom sheet)
+    │                   ├─ [결과 지우기] → Clear preview, keep form
+    │                   └─ [N장 다시 생성하기] → Regenerate (form button text changes)
     │
-    └─ [Back to inputs] (modify and regenerate)
+    └─ Post-Publish: Success screen with share buttons (X, Link, KakaoTalk)
 ```
 
 ---
 
-## Input Section (Left Panel)
+## Input Section (Steps 1-4)
 
-### Step 1: Group/Artist Selection (Optional)
+### Step 1: Idol Type
 
-- **Component:** `GroupSelect.tsx`
-- **Type:** Searchable dropdown / autocomplete
-- **Behavior:**
-  - Popular groups shown by default (e.g., BLACKPINK, BTS, Stray Kids, aespa, etc.)
-  - User can type to search
-  - Can be left empty (generates a generic KPOP outfit)
-- **UI:** Chip-style selector with search input
-
-### Step 2: Concept Selection (Required)
-
-- **Component:** `ConceptSelect.tsx`
-- **Type:** Visual card grid (single-select)
+- **Type:** 3-column button grid (single-select)
 - **Options:**
 
-| Value          | Label         | Description                    |
-| -------------- | ------------- | ------------------------------ |
-| `formal`       | Formal        | Award show, gala, red carpet   |
-| `school`       | School        | School uniform concept         |
-| `street`       | Street        | Casual streetwear              |
-| `high_fashion` | High Fashion  | Runway, avant-garde            |
-| `concert`      | Concert       | Stage performance, tour outfit |
-| `casual`       | Casual        | Everyday, comfortable          |
+| ID          | Label    | Prompt              | Icon |
+| ----------- | -------- | ------------------- | ---- |
+| `girlgroup` | 걸그룹   | K-POP girl group    | 👩‍🎤  |
+| `boygroup`  | 보이그룹 | K-POP boy group     | 🧑‍🎤  |
+| `solo`      | 솔로     | K-POP solo artist   | 🎤   |
 
-- **UI:** 2x3 or 3x2 grid of cards with icon/illustration + label
-- **Validation:** Must select one before generating
+- **Default:** `girlgroup`
+- **UI:** Black bg when selected, white border when not
 
-### Step 3: Keywords Input (Required)
+### Step 2: Concept Style
 
-- **Component:** `KeywordInput.tsx`
-- **Type:** Textarea with character limit
-- **Behavior:**
-  - Accepts any language (Korean, Japanese, Chinese, English, etc.)
-  - Auto-translated to English server-side before generation
-  - Character limit: 200 characters
-  - Placeholder examples shown (changes based on selected concept)
-- **UI:** Textarea with character counter
-- **Placeholder examples by concept:**
-  - Formal: "Sparkly silver gown with crystal details"
-  - Street: "Oversized denim jacket, neon sneakers"
-  - Concert: "Black leather harness, silver chains, combat boots"
+- **Type:** 3-column visual card grid (single-select, toggleable)
+- **Options:**
 
----
+| ID          | Label      | Gradient Colors                              | Girl Only |
+| ----------- | ---------- | -------------------------------------------- | --------- |
+| `cyber`     | 사이버펑크 | violet-600 → purple-700 → blue-900          | No        |
+| `y2k`       | Y2K        | pink-400 → fuchsia-300 → yellow-300         | No        |
+| `highteen`  | 하이틴     | sky-400 → cyan-300 → pink-200               | No        |
+| `sexy`      | 섹시       | rose-600 → red-500 → pink-400               | No        |
+| `suit`      | 수트       | slate-700 → gray-600 → slate-800            | No        |
+| `street`    | 스트릿     | gray-600 → gray-800 → gray-950              | No        |
+| `girlcrush` | 걸크러쉬   | red-800 → rose-900 → gray-900              | **Yes**   |
 
-## Generation Section
+- Each card has gradient background (7% opacity default, 25% when selected)
+- Selected: `ring-2 ring-black`, checkmark icon top-right
+- `girlcrush` only visible when idol type = `girlgroup`
+- Each concept sends both `mood` (for generation mood) and `prompt` (for style keywords)
+
+### Step 3: Keywords + Hashtags
+
+- **Type:** Textarea (3 rows) + horizontal scrolling hashtag chips
+- **Hashtag behavior:**
+  - Tapping a hashtag appends `#keyword` directly to the textarea text
+  - Tapping again removes it from the textarea
+  - Manually deleting from textarea auto-deselects the chip
+  - Natural text flow — hashtags mix with free-text input
+- **Available hashtags:**
+
+| Label        | Keyword      |
+| ------------ | ------------ |
+| #무대의상     | 무대의상     |
+| #Y2K패션      | Y2K         |
+| #스트릿       | 스트릿       |
+| #시퀸드레스   | 시퀸 드레스  |
+| #크롭탑       | 크롭탑       |
+| #오버사이즈   | 오버사이즈   |
+| #레더재킷     | 레더 재킷    |
+| #네온컬러     | 네온 컬러    |
+| #플리츠스커트 | 플리츠 스커트 |
+| #하이부츠     | 하이부츠     |
+
+- Character limit: 500
+- Keywords stored as comma-separated string in `keywords` field
+
+### Step 4: Image Count
+
+- **Type:** 3-button row (single-select)
+- **Options:** 1장 / 2장 / 4장
+- **Icons:** `image` / `photo_library` / `grid_view`
+- **Default:** 1
 
 ### Generate Button
 
-- **Label:** "Generate" / "Create My Design"
-- **State management:**
-  - **Default:** Active (when concept + keywords are filled)
-  - **Disabled:** When inputs are incomplete
-  - **Loading:** During generation (~10 seconds)
-  - **Cooldown:** Brief delay after generation to prevent spam
-
-### Loading State
-
-- **Duration:** ~10 seconds
-- **UI:**
-  - Full-width progress indicator (animated)
-  - Encouraging text that rotates: "Creating your design...", "Styling the outfit...", "Almost ready..."
-  - Do NOT show a percentage (fal.ai doesn't provide progress %)
-  - Prevent user from navigating away (unsaved generation would be lost)
-
-### AdSense Ad Placement (Phase 2-A)
-
-- **Studio loading (10s wait)**: Display ad below progress indicator
-  - Ad slot: responsive, max height 250px
-  - Does NOT block or delay the generation result
-- Ad component: `src/components/ads/AdBanner.tsx`
-- Controlled by `adminSettings.adsenseEnabled` flag
-- Removed when transitioning to Phase 2-B
+- **Full width, rounded-full, black bg**
+- **Label (dynamic):**
+  - Before generation: `{N}장 디자인 생성하기`
+  - After generation: `{N}장 다시 생성하기`
+- **Disabled:** When prompt is empty or during generation
+- **Loading state:** Spinner + "생성 중..."
 
 ---
 
-### Generation Limit Display
+## Preview Section
 
-- Show remaining generations: "5 of 10 remaining today"
-- When daily limit reached (Phase 2+): show credit-based generation option
-  - "Daily limit reached. Use 1 Credit to generate." + [Generate with Credit] button
-  - Show current credit balance inline
-  - If credits insufficient: "Get Credits" button → credit purchase page or rewarded ad
-- When limit reached (Phase 1): disable Generate button, show "Come back tomorrow!" or upsell Superfan
-- Guest trial: "Try 1 free generation — sign up for more!"
-
----
-
-## Results Section (Right Panel)
+Appears below the form after generation. Separated by a divider with label "프리뷰".
 
 ### Image Grid
 
-- **Layout:** 2x2 grid (always, on all breakpoints)
-- **Image format:** WebP, optimized for web
-- **Image size:** 1024x1024 recommended from fal.ai
-- **Interaction:**
-  - Click/tap to enlarge (lightbox/modal)
-  - Select radio button or tap to choose representative image
-  - Selected image has a visible border/highlight (e.g., pink-purple glow)
+- **1 image:** Full width, `aspect-[3/4]`
+- **2+ images:** 2-column grid, `aspect-[3/4]` each
+- **Tap image:** Opens fullscreen popup (no separate zoom icon needed)
+- **Selection:**
+  - Each image has a round checkbox (top-right corner)
+  - `bg-black text-white` when selected, `bg-white/80 border-gray-300` when not
+  - **First image auto-selected** by default after generation
+  - Multiple images can be selected for publish
+  - Counter shown: "공개할 이미지를 선택하세요 (1/4)"
 
-### Mandatory Representative Selection (Gating)
+### Fullscreen Popup
 
-- **Rule:** User MUST select exactly 1 image as the "representative" before any action
-- **UI:** Radio-button overlay on each image, or tap-to-select with highlight
-- **Validation:** Publish/Save buttons are **disabled** until selection is made
-- **Why:** The representative image is what appears in Gallery and Ranking
+- Fixed overlay, `z-[70]`, `bg-black/90`
+- Close button (top-right)
+- Image displayed at `aspect-[3/4]`, `object-contain`
+- Bottom button to toggle selection: "공개 목록에 추가" / "선택됨"
 
 ### Action Buttons
 
-After selecting a representative image:
-
-| Button           | Visibility    | Auth Required | API Call                       |
-| ---------------- | ------------- | ------------- | ------------------------------ |
-| **Publish**      | All users     | Yes (Free+)   | `POST /api/designs/publish`    |
-| **Save Private** | Superfan only | Yes           | (design stays `visibility: "private"`) |
-| **Regenerate**   | All users     | No*           | `POST /api/generate`           |
-
-*Regenerate counts toward daily limit.
-
-### Post-Publish Flow
-
-After publishing:
-1. Show success confirmation with animation
-2. Display shareable link/card
-3. Offer quick actions: "View in Gallery", "Share", "Create Another"
+- **Row of 2 buttons:**
+  - `결과 지우기` — Clears preview, keeps form intact
+  - `갤러리에 공개` / `{N}장 공개` — Opens publish modal
+- Toast shown if no images selected: "공개할 이미지를 선택해주세요"
 
 ---
 
-## Guest Experience
+## Publish Modal (Bottom Sheet)
 
-- Guest lands on Studio page
-- All 3 inputs are available
-- Generate button shows "Try Free"
-- After generation: 4 images displayed in 2x2 grid
-- Publish/Save buttons show "Sign up to publish"
-- Regenerate is disabled ("Sign up for more generations")
-- Clear CTA to sign up
+- **Trigger:** "갤러리에 공개" button
+- **z-index:** `z-[60]` (above BottomNav)
+- **Structure:** 3-part flex-col layout
+  1. **Header (fixed):** Drag handle + title + close button
+  2. **Content (scrollable):** Image preview + tags + title input + description input
+  3. **Button (fixed bottom):** "갤러리에 공개하기" with `border-t`, `pb-6`
+- **Image preview:**
+  - 1 image: full-width square
+  - 2+ images: 2-column square grid
+- **Fields:**
+  - Concept & hashtag chips (read-only summary)
+  - Title input (optional, 50 chars max)
+  - Description textarea (optional, 200 chars max)
+- **Publishes:** All selected images as `imageUrls` array
 
 ---
 
-## Responsive Behavior
+## Publish Success Screen
 
-### Mobile (< 768px)
+- Full page replacement (not a modal)
+- Shows published images (single or grid)
+- "공개 완료" badge
+- Share buttons:
+  - "친구에게 공유하기" (Web Share API / fallback to link copy)
+  - X (Twitter), 링크 복사, 카카오톡 (3-column grid)
+- Navigation: "디자인 보기" / "새로 만들기"
 
-- **Single column:** inputs on top, results below
-- Concept cards: 2x3 grid
-- Results: 2x2 grid, each image ~45% viewport width
-- Action buttons: full-width, stacked vertically
-- Floating "Generate" button at bottom when inputs are off-screen
+---
 
-### Tablet (768px - 1024px)
+## Loading Overlay
 
-- **Single column**, wider layout
-- Concept cards: 3x2 grid
-- Results: 2x2 grid
-- Action buttons: horizontal row
+- Fixed fullscreen, `bg-white/95 backdrop-blur-sm`, `z-50`
+- Large spinner (64px)
+- Title: "AI가 디자인하는 중..."
+- Rotating messages (every 3 seconds):
+  1. 실루엣과 스테이지 무드를 잡고 있어요...
+  2. 패브릭 텍스처, 컬러, 광택을 조합 중...
+  3. 퍼포먼스에 어울리는 디테일을 구성 중...
+  4. 악세서리를 매치하고 컨셉을 다듬는 중...
+  5. 마지막 터치: 더 대담하고 선명하게...
 
-### Desktop (> 1024px)
+---
 
-- **Two-column layout:** inputs on left, results on right
-- Concept cards: 3x2 grid
-- Results: 2x2 grid in right column
-- Action buttons: horizontal row below results
+## AI Generation Details
+
+### Model
+
+- **fal-ai/flux-2/turbo** via `@fal-ai/client`
+- Parameters: `image_size: "square_hd"`, `num_inference_steps: 8`, `guidance_scale: 3.5`
+- Each image gets a unique random `seed`
+
+### Prompt Composition
+
+Natural language prompt built per image with randomized elements:
+
+```
+A {idolType} wearing a K-pop stage costume, {userKeywords}.
+Style: {conceptPrompt}.
+Mood: {conceptMood}.
+{randomFraming}, {randomPose}, {randomAngle}.
+Broadcast photography, telephoto 85-135mm f/2.8 lens, sharp focus on face and outfit.
+Vibrant stage lighting, rim lighting, bright backlights, bokeh background.
+Vivid color saturation, soft glow on skin, blurred geometric stage lights in background.
+```
+
+### Randomization Pools (per image)
+
+- **10 Poses:** standing confident, walking mid-stride, sitting on stool, leaning against wall, looking over shoulder, kneeling dramatic, dancing mid-move, hands in pockets, pointing at camera, arms raised
+- **6 Angles:** eye level, low angle, high angle, three-quarter left, three-quarter right, frontal
+- **4 Framings:** full body head-to-toe, full body vertical, wide shot with environment, medium-full knees up
+
+---
+
+## Page Style
+
+```
+Container: bg-white text-black antialiased pb-24 min-h-screen font-korean
+Content:   max-w-md mx-auto pt-[80px] px-5
+Buttons:   rounded-full (primary: bg-black text-white)
+Cards:     rounded-xl, border border-gray-200
+Inputs:    rounded-xl, border border-gray-200, focus:ring-2 focus:ring-black
+```
 
 ---
 
@@ -236,24 +276,10 @@ After publishing:
 
 | Error                    | UI Response                                      |
 | ------------------------ | ------------------------------------------------ |
-| Generation fails         | "Something went wrong. Please try again." + retry button (does NOT count toward limit) |
-| Network timeout          | "Connection lost. Please check your internet."   |
-| Daily limit reached      | Disable Generate, show remaining = 0, next reset time |
-| Auth expired mid-flow    | Prompt re-login, preserve inputs                 |
-| Zod validation fails     | Show inline field errors before submitting        |
-| Translation fails        | Fallback: use original text as-is, log warning   |
-| Image upload fails       | Retry upload silently (3 attempts), then show error |
-
----
-
-## Accessibility
-
-- All concept cards have `aria-label` with concept name and description
-- Image selection uses proper radio group semantics (`role="radiogroup"`)
-- Loading state announced via `aria-live="polite"`
-- Generate button has clear disabled state (visual + `aria-disabled`)
-- Keyboard: Tab through inputs, Enter to generate, Arrow keys for concept selection
-- Screen reader: announce generation progress and completion
+| Generation fails         | Toast: "오류가 발생했습니다. 다시 시도해주세요." (4s) |
+| No images selected       | Toast: "공개할 이미지를 선택해주세요" (3s)          |
+| Publish fails            | Toast: error message (4s)                        |
+| No prompt entered        | Generate button disabled (opacity-40)             |
 
 ---
 
@@ -263,13 +289,9 @@ After publishing:
 | ------------------------ | -------------------------------- | ----------------------------- |
 | `studio_viewed`          | Page load                        | `isGuest`, `tier`             |
 | `concept_selected`       | Concept card clicked             | `concept`                     |
-| `generation_started`     | Generate button clicked          | `concept`, `hasGroup`, `keywordLength` |
-| `generation_completed`   | Images loaded                    | `designId`, `durationMs`      |
+| `generation_started`     | Generate button clicked          | `concept`, `idolType`, `imageCount` |
+| `generation_completed`   | Images loaded                    | `imageCount`, `durationMs`    |
 | `generation_failed`      | Generation error                 | `errorCode`                   |
-| `representative_selected`| Image selected                   | `designId`, `index`           |
-| `design_published`       | Publish button clicked           | `designId`, `concept`         |
-| `design_saved_private`   | Save Private clicked             | `designId`                    |
-| `design_regenerated`     | Regenerate clicked               | `previousDesignId`            |
-| `guest_signup_prompt`    | Guest hits auth-required action  | `action`                      |
-| `credit_generation`      | Generate with Credit clicked     | `designId`, `creditBalance`   |
-| `credits_insufficient`   | User sees "Get Credits" prompt   | `creditBalance`               |
+| `image_selected`         | Checkbox toggled                 | `index`, `selectedCount`      |
+| `design_published`       | Publish confirmed                | `imageCount`, `concept`       |
+| `share_clicked`          | Share button on success screen   | `method` (x, link, kakao)    |
