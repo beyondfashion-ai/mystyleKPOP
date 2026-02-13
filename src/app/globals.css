@@ -1,0 +1,62 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #1978e5;
+  --color-background-light: #f6f7f8;
+  --color-background-dark: #111821;
+  --color-neon-purple: #BF00FF;
+  --color-neon-pink: #FF007F;
+  --color-electric-blue: #00FFFF;
+  --color-neon-gold: #FFD700;
+  --color-mint-green: #00FFAB;
+  --color-vibrant-cyan: #00E5FF;
+  --color-superstar: #9D50FF;
+  --color-neutral-border: #E5E7EB;
+  --color-text-main: #000000;
+  --color-text-sub: #666666;
+  --color-accent-purple: #a855f7;
+  --color-neutral-ink: #1a1a1a;
+
+  --font-display: var(--font-sora), "Sora", sans-serif;
+  --font-body: var(--font-inter), "Inter", sans-serif;
+  --font-korean: var(--font-noto-sans-kr), "Noto Sans KR", sans-serif;
+}
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Hide scrollbar for horizontal scroll areas */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Safe area padding for mobile notch/home indicator */
+.pt-safe-top {
+  padding-top: env(safe-area-inset-top, 20px);
+}
+.pb-safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 20px);
+}
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}

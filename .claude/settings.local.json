@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gh repo view:*)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebSearch",
+      "WebFetch(domain:docs.fal.ai)",
+      "Bash(npm install:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm run dev:*)",
+      "Bash(curl:*)",
+      "Bash(taskkill:*)",
+      "Bash(netstat:*)",
+      "Bash(powershell:*)",
+      "Bash(npx next dev:*)",
+      "Bash(npx tailwindcss --help:*)",
+      "Bash(node -e:*)",
+      "Bash(tasklist:*)",
+      "Bash(findstr:*)",
+      "Bash(dir \"C:\\\\Users\\\\cw11\\\\mystyleKPOP\\\\ui design sample\"\" /b 2>nul || echo \"Directory not found \")",
+      "Bash(dir /b \"C:\\\\Users\\\\cw11\\\\mystyleKPOP\\\\ui design sample\")"
+    ]
+  }
+}

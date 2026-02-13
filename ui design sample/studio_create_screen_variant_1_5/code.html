@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html class="" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Outfit Detail - MyStyleAI</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1978e5",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#111821",
+                        "superstar": "#9D50FF",
+                    },
+                    fontFamily: {
+                        "display": ["Sora", "sans-serif"],
+                        "korean": ["Noto Sans KR", "sans-serif"],
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+<style type="text/tailwindcss">
+        body {
+            font-family: 'Noto Sans KR', 'Sora', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .font-brand {
+            font-family: 'Sora', sans-serif;
+        }
+        .glass-header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        .premium-border {
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+        .nav-label {
+            font-size: 10px;
+            margin-top: 2px;
+            font-weight: 500;
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .celebration-bg {
+            background: radial-gradient(circle at center, rgba(157, 80, 255, 0.15) 0%, transparent 70%);
+        }
+    </style>
+<style>
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-white text-black antialiased font-display">
+<div class="fixed inset-0 z-[100] flex items-center justify-center bg-white/90 backdrop-blur-md hidden" id="celebrationOverlay">
+<div class="celebration-bg absolute inset-0"></div>
+<div class="relative flex flex-col items-center text-center px-8">
+<div class="w-24 h-24 bg-superstar rounded-full flex items-center justify-center mb-6 shadow-[0_0_40px_rgba(157,80,255,0.4)]">
+<span class="material-symbols-outlined text-white text-[48px] font-variation-settings-'FILL'-1">star</span>
+</div>
+<h2 class="text-2xl font-bold mb-2 tracking-tight">슈퍼스타를 보냈습니다!</h2>
+<p class="text-gray-500 text-[15px] leading-relaxed">크리에이터에게 특별한 응원을 전달했습니다.<br/>슈퍼스타 뱃지가 이 디자인에 추가됩니다.</p>
+<button class="mt-10 px-8 py-3 bg-black text-white rounded-full font-bold text-sm tracking-wider" onclick="document.getElementById('celebrationOverlay').classList.add('hidden')">확인</button>
+</div>
+</div>
+<header class="fixed top-0 left-0 right-0 z-50 glass-header premium-border px-4 h-14 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<button class="p-1 -ml-1">
+<span class="material-symbols-outlined text-[28px]">chevron_left</span>
+</button>
+<h1 class="text-sm font-bold tracking-[0.1em] font-brand uppercase">
+                MY-STYLE.AI
+            </h1>
+</div>
+<div class="flex items-center gap-0.5">
+<button class="p-2">
+<span class="material-symbols-outlined text-[24px]">search</span>
+</button>
+<button class="p-2 relative">
+<span class="material-symbols-outlined text-[24px]">notifications</span>
+<span class="absolute top-2 right-2.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
+</button>
+<button class="p-2 ml-1 text-primary">
+<span class="material-symbols-outlined text-[24px]">ios_share</span>
+</button>
+</div>
+</header>
+<main class="max-w-md mx-auto pt-14 pb-32">
+<section class="relative aspect-[3/4] w-full overflow-hidden bg-slate-50">
+<img alt="K-pop star in premium stage suit" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCXyFemVacvZ6Yk-yUOzK_J5cDtffgWOsOIpCaU87-MogsrhFX-HzHwTfQNILhOsXPkr26DNgurhKE3Dpi2kOtBYEUPC7qb20KVtAHJ5Jncl5GGJsl--QqL9nurH7ZWHMNUpuhuDTuKFbBSp_9OgEvhliL-D7kFXR8rrEhU_eR9uNXtIAW3y1TV1FmxWS4yKtraBl7jORNjhlF-8xkrmVTn292EtjX2VZagi9BBZInDQXE7qmJITwpePEn94Cbp_9lgPLAQwZT3rDc"/>
+<div class="absolute bottom-4 left-4">
+<span class="bg-black/80 backdrop-blur-md text-white text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-widest">
+                    PREMIUM STUDIO
+                </span>
+</div>
+</section>
+<section class="px-5 py-5 space-y-3">
+<div class="flex items-center gap-3">
+<button class="flex-1 h-14 bg-black text-white rounded-xl flex items-center justify-center gap-2 active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-[22px]">favorite</span>
+<span class="font-bold text-[15px]">좋아요</span>
+</button>
+<button class="flex-[1.2] h-14 border-2 border-superstar bg-white text-superstar rounded-xl flex items-center justify-center gap-2 active:scale-95 transition-transform relative" onclick="document.getElementById('celebrationOverlay').classList.remove('hidden')">
+<span class="material-symbols-outlined text-[22px] font-variation-settings-'FILL'-1">star</span>
+<span class="font-bold text-[15px]">슈퍼스타</span>
+<div class="ml-1 px-2 py-0.5 bg-superstar text-white text-[10px] font-bold rounded-full shadow-[0_0_10px_rgba(157,80,255,0.4)]">
+                        128
+                    </div>
+</button>
+</div>
+<button class="w-full h-12 border border-gray-200 bg-white text-gray-700 rounded-xl flex items-center justify-center gap-2 active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-[20px]">ios_share</span>
+<span class="font-bold text-[14px]">공유하기</span>
+</button>
+</section>
+<section class="px-5 space-y-6">
+<div class="space-y-2">
+<div class="flex justify-between items-start">
+<h2 class="text-2xl font-bold tracking-tight leading-tight">블랙 벨벳 스테이지 수트</h2>
+<span class="text-[11px] text-gray-400 mt-2 font-medium">2시간 전</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-black flex items-center justify-center">
+<span class="text-[10px] font-bold text-white font-brand">S</span>
+</div>
+<span class="text-sm font-bold text-gray-900">@스타일마스터</span>
+</div>
+</div>
+<div class="flex items-center gap-6 pt-4 pb-2 border-t border-gray-100">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[20px] text-gray-400">favorite</span>
+<span class="text-sm font-semibold text-gray-800">2,482</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[20px] text-gray-400">visibility</span>
+<span class="text-sm font-semibold text-gray-800">5,210</span>
+</div>
+<div class="ml-auto">
+<button class="p-1">
+<span class="material-symbols-outlined text-[22px] text-gray-400">bookmark</span>
+</button>
+</div>
+</div>
+<div class="space-y-4">
+<p class="text-[15px] leading-relaxed text-gray-700 font-normal">
+                    4세대 K-POP 무대 미학에서 영감을 받은 디자인입니다. 실버 체인 디테일과 고급스러운 실크 안감이 특징입니다. 강렬한 퍼포먼스 비주얼을 위해 제작되었습니다.
+                </p>
+<div class="flex flex-wrap gap-2 pt-2">
+<span class="text-black font-bold text-sm">#KPOP</span>
+<span class="text-black font-bold text-sm">#스테이지수트</span>
+<span class="text-black font-bold text-sm">#아이돌패션</span>
+<span class="text-black font-bold text-sm">#사이버펑크</span>
+</div>
+</div>
+</section>
+<section class="mt-12">
+<div class="px-5 flex items-center justify-between mb-4">
+<h3 class="text-[13px] font-bold text-black uppercase tracking-wider">크리에이터의 다른 디자인</h3>
+<span class="material-symbols-outlined text-gray-400 text-sm">arrow_forward</span>
+</div>
+<div class="flex overflow-x-auto gap-3 px-5 no-scrollbar pb-4">
+<div class="flex-none w-40 aspect-[3/4] bg-gray-100 rounded-xl overflow-hidden relative group">
+<img alt="Other design" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAYuudgfDypVmisEwfg7KcV7f0_rjldqqeNwtraq3_bwBxKXXcVrAMeWTVdkjWobOkh9LP5fHOo9CH22y6HGp4izJhna1lVKso6Oqi3nT2_PYSF38wHB6_kUnHYdH62iSDHLKHsLM_CCV46JMWJqLs3qMOab2jUJ-KQyG9MSUjHYOR91wiJUhI66MliNkw6uKhN_-bcFIiGgL5JPZMdXYXHV2vHMnEKnS9O8FxpvFnWVle5xMpWZazI6J5pXNHkIws8EgalPrnSkZw"/>
+</div>
+<div class="flex-none w-40 aspect-[3/4] bg-gray-100 rounded-xl overflow-hidden relative group">
+<img alt="Other design" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC6_oXrDeYcv3AUwxfKkiCN_BKMI53_BeMEt915rs3y7dF6-508L_nhUNzVDHIoDCJtKqUvE3XxTFbJcxhkcfAyn3eHJkwZ-6R8HPzcJkYOaLOsuINiTHHnn5QL9eBIKBmq3IP_4kgMDknrZHHBE_EuLLLV89DGYs3CjqiGkO6Lqp1jLbJ5zH5lSMHKmR6aTTt6O4RF7WLR_WaZECCiBG__bAT7ay2XCmC5NekpSDpjlXRMrChR0rKKLsmCNZ8CmXoEXPkEWlwjwXw"/>
+</div>
+<div class="flex-none w-40 aspect-[3/4] bg-gray-100 rounded-xl overflow-hidden relative group">
+<img alt="Other design" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCXCyjzqiZynHpFalw47O0gw8dsQ1Hfm7c4SE5xx07aSoxrjVQDWIHyCxPc3kM2FE3rwiqkxVM7oWNiY-_yhl7o5p549AUOjHDddmcCS8Vzqcm3xTYm4rwNwNF2lp8RngsSBHZxOvI9PfEmSXrS-hcoi0AYKdPLRuhPI0E4jMzI7XMux9kRTCqt2qod89Swn5Jcaq6S-7CEQWltzJv23l962faO14htkNplckEu6FpiIcxsM7Xo5UF6-x5IgTZ_PGUfxwubm7Vv_a8"/>
+</div>
+<div class="flex-none w-40 aspect-[3/4] bg-gray-100 rounded-xl overflow-hidden relative group">
+<img alt="Other design" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCXyFemVacvZ6Yk-yUOzK_J5cDtffgWOsOIpCaU87-MogsrhFX-HzHwTfQNILhOsXPkr26DNgurhKE3Dpi2kOtBYEUPC7qb20KVtAHJ5Jncl5GGJsl--QqL9nurH7ZWHMNUpuhuDTuKFbBSp_9OgEvhliL-D7kFXR8rrEhU_eR9uNXtIAW3y1TV1FmxWS4yKtraBl7jORNjhlF-8xkrmVTn292EtjX2VZagi9BBZInDQXE7qmJITwpePEn94Cbp_9lgPLAQwZT3rDc"/>
+</div>
+</div>
+</section>
+<section class="px-5 mt-8 pb-8">
+<h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">추천 스타일</h3>
+<div class="grid grid-cols-3 gap-2">
+<div class="aspect-square bg-slate-50 rounded-lg overflow-hidden border border-gray-100">
+<img alt="Similar" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAYuudgfDypVmisEwfg7KcV7f0_rjldqqeNwtraq3_bwBxKXXcVrAMeWTVdkjWobOkh9LP5fHOo9CH22y6HGp4izJhna1lVKso6Oqi3nT2_PYSF38wHB6_kUnHYdH62iSDHLKHsLM_CCV46JMWJqLs3qMOab2jUJ-KQyG9MSUjHYOR91wiJUhI66MliNkw6uKhN_-bcFIiGgL5JPZMdXYXHV2vHMnEKnS9O8FxpvFnWVle5xMpWZazI6J5pXNHkIws8EgalPrnSkZw"/>
+</div>
+<div class="aspect-square bg-slate-50 rounded-lg overflow-hidden border border-gray-100">
+<img alt="Similar" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC6_oXrDeYcv3AUwxfKkiCN_BKMI53_BeMEt915rs3y7dF6-508L_nhUNzVDHIoDCJtKqUvE3XxTFbJcxhkcfAyn3eHJkwZ-6R8HPzcJkYOaLOsuINiTHHnn5QL9eBIKBmq3IP_4kgMDknrZHHBE_EuLLLV89DGYs3CjqiGkO6Lqp1jLbJ5zH5lSMHKmR6aTTt6O4RF7WLR_WaZECCiBG__bAT7ay2XCmC5NekpSDpjlXRMrChR0rKKLsmCNZ8CmXoEXPkEWlwjwXw"/>
+</div>
+<div class="aspect-square bg-slate-50 rounded-lg overflow-hidden border border-gray-100">
+<img alt="Similar" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCXCyjzqiZynHpFalw47O0gw8dsQ1Hfm7c4SE5xx07aSoxrjVQDWIHyCxPc3kM2FE3rwiqkxVM7oWNiY-_yhl7o5p549AUOjHDddmcCS8Vzqcm3xTYm4rwNwNF2lp8RngsSBHZxOvI9PfEmSXrS-hcoi0AYKdPLRuhPI0E4jMzI7XMux9kRTCqt2qod89Swn5Jcaq6S-7CEQWltzJv23l962faO14htkNplckEu6FpiIcxsM7Xo5UF6-x5IgTZ_PGUfxwubm7Vv_a8"/>
+</div>
+</div>
+</section>
+</main>
+<nav class="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-xl border-t border-gray-100 pb-safe shadow-lg">
+<div class="max-w-md mx-auto flex justify-between items-center px-6 h-16">
+<button class="flex flex-col items-center justify-center text-gray-400">
+<span class="material-symbols-outlined text-[26px]">home</span>
+<span class="nav-label">홈</span>
+</button>
+<button class="flex flex-col items-center justify-center text-black">
+<span class="material-symbols-outlined text-[26px] font-variation-settings-'FILL'-1">explore</span>
+<span class="nav-label">둘러보기</span>
+</button>
+<button class="flex items-center justify-center -mt-6">
+<div class="w-12 h-12 bg-black rounded-full flex items-center justify-center shadow-xl shadow-black/20 text-white">
+<span class="material-symbols-outlined text-[28px]">add</span>
+</div>
+</button>
+<button class="flex flex-col items-center justify-center text-gray-400">
+<span class="material-symbols-outlined text-[26px]">favorite</span>
+<span class="nav-label">활동</span>
+</button>
+<button class="flex flex-col items-center justify-center text-gray-400">
+<span class="material-symbols-outlined text-[26px]">person</span>
+<span class="nav-label">프로필</span>
+</button>
+</div>
+</nav>
+
+</body></html>

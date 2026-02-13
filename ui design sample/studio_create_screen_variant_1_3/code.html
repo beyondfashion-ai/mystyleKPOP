@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html class="" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Studio Screen - MyStyleAI</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1978e5",
+                        "background-light": "#ffffff",
+                        "background-dark": "#111821",
+                        "text-main": "#000000",
+                        "text-sub": "#666666",
+                    },
+                    fontFamily: {
+                        "display": ["Sora", "sans-serif"],
+                        "korean": ["Noto Sans KR", "sans-serif"],
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+<style type="text/tailwindcss">
+        @layer base {
+            body {
+                @apply font-display bg-white text-text-main antialiased;
+            }
+            .font-korean {
+                font-family: 'Noto Sans KR', sans-serif;
+            }
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }.pb-safe {
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="pb-44">
+<header class="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-lg border-b border-gray-100/50 pt-14 pb-4 px-6">
+<div class="max-w-md mx-auto flex justify-between items-center">
+<h1 class="text-[11px] font-bold tracking-[0.15em] uppercase text-black">
+                MY-STYLE.AI
+            </h1>
+<div class="flex items-center gap-5">
+<button aria-label="검색" class="text-black transition-opacity hover:opacity-60">
+<span class="material-symbols-outlined text-[22px] font-light">search</span>
+</button>
+<button aria-label="알림" class="text-black transition-opacity hover:opacity-60 relative">
+<span class="material-symbols-outlined text-[22px] font-light">notifications</span>
+<span class="absolute top-0.5 right-0.5 w-1.5 h-1.5 bg-black rounded-full border border-white"></span>
+</button>
+</div>
+</div>
+</header>
+<main class="max-w-md mx-auto pt-32 px-6 space-y-12">
+<section class="space-y-6">
+<div class="flex justify-between items-baseline">
+<h2 class="text-3xl font-bold text-black font-korean tracking-tight">만들기</h2>
+<button class="text-[11px] font-bold text-black border-b border-black pb-0.5 flex items-center gap-1 hover:opacity-60 transition-opacity">
+<span class="material-symbols-outlined text-[14px]">auto_awesome</span>
+                    프롬프트 개선
+                </button>
+</div>
+<div class="relative group">
+<div class="bg-white rounded-xl p-5 border border-gray-200 shadow-sm focus-within:border-black transition-all duration-300">
+<textarea class="w-full bg-transparent border-0 focus:ring-0 p-0 text-[15px] leading-relaxed text-black placeholder-gray-300 resize-none min-h-[100px] font-korean" placeholder="원하는 스타일을 자유롭게 설명해주세요 (예: IVE 컴백 무대 의상, 사이버펑크 테마...)"></textarea>
+<div class="flex justify-between items-center mt-4 pt-4 border-t border-gray-50">
+<div class="flex gap-1.5">
+<button class="px-2.5 py-1 text-[10px] bg-gray-50 border border-gray-100 rounded-md text-gray-500 font-bold hover:bg-gray-100 transition">
+                                #사이버펑크
+                            </button>
+<button class="px-2.5 py-1 text-[10px] bg-gray-50 border border-gray-100 rounded-md text-gray-500 font-bold hover:bg-gray-100 transition">
+                                #무대의상
+                            </button>
+</div>
+<span class="text-[10px] text-gray-300 font-bold">42/500</span>
+</div>
+</div>
+</div>
+</section>
+<section class="space-y-8">
+<div class="space-y-4">
+<h3 class="text-[10px] font-bold text-black uppercase tracking-[0.2em]">아이돌 타입</h3>
+<div class="flex gap-2">
+<button class="px-6 py-2.5 rounded-full bg-black text-white text-[13px] font-bold transition-all">
+                        걸그룹
+                    </button>
+<button class="px-6 py-2.5 rounded-full bg-white border border-gray-200 text-gray-400 text-[13px] font-bold hover:border-black hover:text-black transition-all">
+                        보이그룹
+                    </button>
+<button class="px-6 py-2.5 rounded-full bg-white border border-gray-200 text-gray-400 text-[13px] font-bold hover:border-black hover:text-black transition-all">
+                        솔로
+                    </button>
+</div>
+</div>
+<div class="space-y-4">
+<h3 class="text-[10px] font-bold text-black uppercase tracking-[0.2em]">컨셉 스타일</h3>
+<div class="flex gap-3 overflow-x-auto no-scrollbar pb-2">
+<button class="flex-shrink-0 relative w-24 h-24 rounded-xl overflow-hidden border border-black group">
+<img alt="Cyberpunk" class="absolute inset-0 w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCXyFemVacvZ6Yk-yUOzK_J5cDtffgWOsOIpCaU87-MogsrhFX-HzHwTfQNILhOsXPkr26DNgurhKE3Dpi2kOtBYEUPC7qb20KVtAHJ5Jncl5GGJsl--QqL9nurH7ZWHMNUpuhuDTuKFbBSp_9OgEvhliL-D7kFXR8rrEhU_eR9uNXtIAW3y1TV1FmxWS4yKtraBl7jORNjhlF-8xkrmVTn292EtjX2VZagi9BBZInDQXE7qmJITwpePEn94Cbp_9lgPLAQwZT3rDc"/>
+<div class="absolute inset-0 bg-black/40 flex items-center justify-center">
+<span class="text-[11px] font-bold text-white tracking-widest">사이버</span>
+</div>
+</button>
+<button class="flex-shrink-0 relative w-24 h-24 rounded-xl overflow-hidden border border-gray-100 hover:border-gray-300 transition-all group">
+<img alt="Y2K" class="absolute inset-0 w-full h-full object-cover grayscale transition-all duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAYuudgfDypVmisEwfg7KcV7f0_rjldqqeNwtraq3_bwBxKXXcVrAMeWTVdkjWobOkh9LP5fHOo9CH22y6HGp4izJhna1lVKso6Oqi3nT2_PYSF38wHB6_kUnHYdH62iSDHLKHsLM_CCV46JMWJqLs3qMOab2jUJ-KQyG9MSUjHYOR91wiJUhI66MliNkw6uKhN_-bcFIiGgL5JPZMdXYXHV2vHMnEKnS9O8FxpvFnWVle5xMpWZazI6J5pXNHkIws8EgalPrnSkZw"/>
+<div class="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors flex items-center justify-center">
+<span class="text-[11px] font-bold text-white tracking-widest">Y2K</span>
+</div>
+</button>
+<button class="flex-shrink-0 relative w-24 h-24 rounded-xl overflow-hidden border border-gray-100 hover:border-gray-300 transition-all group">
+<img alt="Highteen" class="absolute inset-0 w-full h-full object-cover grayscale transition-all duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC6_oXrDeYcv3AUwxfKkiCN_BKMI53_BeMEt915rs3y7dF6-508L_nhUNzVDHIoDCJtKqUvE3XxTFbJcxhkcfAyn3eHJkwZ-6R8HPzcJkYOaLOsuINiTHHnn5QL9eBIKBmq3IP_4kgMDknrZHHBE_EuLLLV89DGYs3CjqiGkO6Lqp1jLbJ5zH5lSMHKmR6aTTt6O4RF7WLR_WaZECCiBG__bAT7ay2XCmC5NekpSDpjlXRMrChR0rKKLsmCNZ8CmXoEXPkEWlwjwXw"/>
+<div class="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors flex items-center justify-center">
+<span class="text-[11px] font-bold text-white tracking-widest">하이틴</span>
+</div>
+</button>
+<button class="flex-shrink-0 relative w-24 h-24 rounded-xl overflow-hidden border border-gray-100 hover:border-gray-300 transition-all group">
+<img alt="Girl Crush" class="absolute inset-0 w-full h-full object-cover grayscale transition-all duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCXCyjzqiZynHpFalw47O0gw8dsQ1Hfm7c4SE5xx07aSoxrjVQDWIHyCxPc3kM2FE3rwiqkxVM7oWNiY-_yhl7o5p549AUOjHDddmcCS8Vzqcm3xTYm4rwNwNF2lp8RngsSBHZxOvI9PfEmSXrS-hcoi0AYKdPLRuhPI0E4jMzI7XMux9kRTCqt2qod89Swn5Jcaq6S-7CEQWltzJv23l962faO14htkNplckEu6FpiIcxsM7Xo5UF6-x5IgTZ_PGUfxwubm7Vv_a8"/>
+<div class="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors flex items-center justify-center">
+<span class="text-[11px] font-bold text-white tracking-widest">걸크러쉬</span>
+</div>
+</button>
+</div>
+</div>
+</section>
+<section class="space-y-6">
+<div class="flex justify-between items-center">
+<h3 class="text-[10px] font-bold text-black uppercase tracking-[0.2em]">생성 프리뷰</h3>
+<div class="flex items-center gap-3">
+<button class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-50 transition">
+<span class="material-symbols-outlined text-[18px]">grid_view</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-full bg-black text-white">
+<span class="material-symbols-outlined text-[18px]">view_module</span>
+</button>
+</div>
+</div>
+<div class="grid grid-cols-4 gap-1.5">
+<div class="relative aspect-square border border-gray-50 bg-gray-50 hover:border-black transition-colors overflow-hidden">
+<img alt="Result 1" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAB7lZo8WdfrRqZEyjkE2Y_qfUhxzYcfj1riKCJ9QS2PxdEECQ9CzWBW2BA25zcmzro7hOt5QBMnK2dmF0OGlLRXPuP8yXk7x9lsOzIU4OBkOtwVB6C9mMH_m3tDuP55DvEaCB4iu3ieaqKqFIf7yWKfeVI269aDYnpL-3afnz_8We1UiO2R85ODfzj1n1GhKIYDbD2iKQAdji--ZpFRcKVGfAiu3WXTBafQ91WYWBheZNshmB2q8U7IuvLFTMe1OMq6cOBPE_U_is"/>
+<div class="absolute top-1.5 right-1.5"><div class="w-1.5 h-1.5 rounded-full bg-black"></div></div>
+</div>
+<div class="relative aspect-square border border-gray-50 bg-gray-50 hover:border-black transition-colors overflow-hidden">
+<img alt="Result 2" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB8ZSJuFBVVGk524dX4kaCJVlYuuX25j9crMi0q-Mzoyric7OeBE7R3Kmbm2WTVnTYB3QyKt6OBrXdIVwuKfiA2lREUcW1BOgiwyYqtq1O6iQCcJ3_TBMWVjSw4hh77xwVn70d22LdLQuUrgu2Top5cizSLqMdK5uDgx8evW6vya604wLbjr6b1kKhbhwIVlpdnrZAyYIUx2SCEDObRKUSbqKVCS7inooa1B2gdp1CQCooHhfCHKm9yXL4LIyLH83s3_HajluaadgQ"/>
+</div>
+<div class="relative aspect-square border border-gray-50 bg-gray-50 hover:border-black transition-colors overflow-hidden">
+<img alt="Result 3" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBL42ScYifAPBMfb6IDD5TDnMh_P4Td1_RNrf0edH2DS7L503ab-ci6JL8st7CCUNaG5odEQ6hEexKS5imzVGQH3BCVBAeK0P2rhXMt6KDmSlsStGegobh0Jb2Tkrzb3SNQDf-xbrcxFIl-0YNyKKVTYwnLEPXrGJbHk2DwOLUfXuOxo4dTOOI8jzA3oWF_vQMdnJsuXVbkWbTq3wMUmfeo3UKfPwsBXz3wgaB3TAKpWsRPpEvBSC_imnFu6lLgOAKetspSb4CxEMI"/>
+</div>
+<div class="relative aspect-square border border-gray-50 bg-gray-50 hover:border-black transition-colors overflow-hidden">
+<img alt="Result 4" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDVozl07M7mJmjVUjMJDvmJBNJV71_AkZH-SsdZsZz9d3Q4WHgvNNmty4vDQnSfRv1VWjDKuqBNiFvEWGpk9OWUcTUS9Of8otsXaGtgYNQga8zW0d4Gga1Cl-w9G7gk8jDMhxtWX_Rs1tgVDyex-EQHq3W0VZ95csNtTc0mb6_BHGyv0C3y6kQNI74D6WxAnMEAnbsFTi4hG0BnCmOFyR2Hv36XmQ882-_eY_c1jSmjbCD918D2v5EZeBjWtN_XA-6lwtbaxZiyV6g"/>
+</div>
+<div class="relative aspect-square bg-gray-50 border border-gray-50 flex items-center justify-center">
+<div class="w-4 h-4 border border-black/10 border-t-black rounded-full animate-spin"></div>
+</div>
+<div class="relative aspect-square bg-gray-50 border border-gray-50"></div>
+<div class="relative aspect-square bg-gray-50 border border-gray-50"></div>
+<div class="relative aspect-square bg-gray-50 border border-gray-50"></div>
+</div>
+</section>
+<section class="space-y-6 pb-20">
+<h3 class="text-[10px] font-bold text-black uppercase tracking-[0.2em]">최근 작업</h3>
+<div class="flex flex-col gap-3">
+<div class="bg-white p-3.5 border border-gray-100 hover:border-black transition-all cursor-pointer rounded-xl group flex items-center gap-4">
+<div class="w-14 h-14 flex-shrink-0 bg-gray-50 rounded-lg overflow-hidden">
+<img alt="Recent 1" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDm4SFTcVGVq5FThoDGua59w3O5FYTRedUr9Nxb1ISlu0o6WlAVCUUGfN50n_95TAxeg3eFTzjMjZXYVN6_ShuScihDCMbP6R9WOAfTpU1jl40EYTFp_U1j9zJJUGHJmdZrwZ__nflUhzpevxP7FyJ8h634HrQnZ8CTydYpLUu5_w6ImHUWbb35xniyr1hwXBROkdmaqNk8HgCj_kDSF6IiRIfFj6BjWN7SBw7bDRx29nCVEsPg8jfsfNW3nAOIcVJDdUYD8TpRXF8"/>
+</div>
+<div class="flex-1 min-w-0">
+<p class="text-[13px] font-bold text-black truncate font-korean">뉴진스 스타일 데님 배기 팬츠...</p>
+<span class="text-[10px] text-gray-400 font-bold mt-1 block">2시간 전</span>
+</div>
+<button class="text-[11px] font-bold text-black border-b border-black pb-0.5 whitespace-nowrap">다시 사용</button>
+</div>
+<div class="bg-white p-3.5 border border-gray-50 opacity-60 hover:opacity-100 transition-all cursor-pointer rounded-xl flex items-center gap-4">
+<div class="w-14 h-14 flex-shrink-0 bg-gray-50 rounded-lg overflow-hidden">
+<img alt="Recent 2" class="w-full h-full object-cover grayscale" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA5MqaGM59VszfUZOQfmLfV_8Z4kSJ-iTQdt1JJA3u6Hw5LD-jiogov9hEt3kycGkDTMgLSyGwPXRTGebg8qrt2ZSMRa6A4u0MHEYLuquISdRqnz0mpv645oz3KvB9WkdgSxVh5t4IKTGDUOVFLyaRpSnGWnR7U_rmTfhO9_2j0dBoG1JCAKqPov5DBXPL1QPTTwFgLHEt5zG7cVe5-tzFiBTwPew5Khm5YneF3d0EQ73v13ggzXZijds4go8XRPnrhZihWR9WuY34"/>
+</div>
+<div class="flex-1 min-w-0">
+<p class="text-[13px] font-bold text-black truncate font-korean">에스파 Savage 뮤직비디오 세트...</p>
+<span class="text-[10px] text-gray-300 font-bold mt-1 block">어제</span>
+</div>
+<button class="text-[11px] font-bold text-gray-300 hover:text-black hover:border-b hover:border-black transition-all whitespace-nowrap">다시 사용</button>
+</div>
+</div>
+</section>
+</main>
+<div class="fixed bottom-[90px] left-0 right-0 z-40 bg-white/95 backdrop-blur-xl border-t border-gray-100/50 px-6 py-5">
+<div class="max-w-md mx-auto flex items-center gap-3">
+<button aria-label="초기화" class="w-12 h-12 flex items-center justify-center rounded-xl bg-gray-50 border border-gray-100 text-black hover:bg-gray-100 transition-colors">
+<span class="material-symbols-outlined text-[20px]">refresh</span>
+</button>
+<button class="flex-1 h-12 bg-black text-white text-[13px] font-bold rounded-xl flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all">
+<span class="material-symbols-outlined text-[18px]">auto_fix_high</span>
+                8개 생성하기
+            </button>
+</div>
+</div>
+<nav class="fixed bottom-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-xl border-t border-gray-100 pb-safe shadow-sm">
+<div class="max-w-md mx-auto h-[84px] px-8 flex items-center justify-between relative">
+<button class="flex flex-col items-center gap-1.5 w-12 group">
+<span class="material-symbols-outlined text-gray-300 text-[26px] font-light transition-colors group-hover:text-black">home</span>
+<span class="text-[10px] font-bold text-gray-300 font-korean transition-colors group-hover:text-black">홈</span>
+</button>
+<button class="flex flex-col items-center gap-1.5 w-12 group">
+<span class="material-symbols-outlined text-gray-300 text-[26px] font-light transition-colors group-hover:text-black">explore</span>
+<span class="text-[10px] font-bold text-gray-300 font-korean transition-colors group-hover:text-black">둘러보기</span>
+</button>
+<div class="relative -top-5 flex flex-col items-center">
+<button class="w-[58px] h-[58px] bg-black rounded-full flex items-center justify-center shadow-2xl shadow-black/30 hover:scale-105 active:scale-95 transition-all">
+<span class="material-symbols-outlined text-white text-[32px] font-light">add</span>
+</button>
+</div>
+<button class="flex flex-col items-center gap-1.5 w-12 group">
+<span class="material-symbols-outlined text-gray-300 text-[26px] font-light transition-colors group-hover:text-black">bookmark</span>
+<span class="text-[10px] font-bold text-gray-300 font-korean transition-colors group-hover:text-black">보관함</span>
+</button>
+<button class="flex flex-col items-center gap-1.5 w-12 group">
+<span class="material-symbols-outlined text-gray-300 text-[26px] font-light transition-colors group-hover:text-black">person</span>
+<span class="text-[10px] font-bold text-gray-300 font-korean transition-colors group-hover:text-black">마이</span>
+</button>
+</div>
+</nav>
+
+</body></html>

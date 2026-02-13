@@ -1,0 +1,24 @@
+{
+  "mcpServers": {
+    "paypal": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@paypal/mcp",
+        "--tools=all"
+      ],
+      "env": {
+        "PAYPAL_ACCESS_TOKEN": "A21AAL4R9lPhi6ykBDYq7NW5_fJDFe63al8jjUZUUMrYxVHTcGqP4JLD2Gt1bXIOfS3srM2zMOTqcWeIAQ0uqOJAa1tw54CMA",
+        "PAYPAL_ENVIRONMENT": "SANDBOX"
+      }
+    },
+    "stitch": {
+      "type": "sse",
+      "url": "https://stitch.googleapis.com/mcp",
+      "headers": {
+        "X-Goog-Api-Key": "AQ.Ab8RN6IArQX3THI3hYhtN29WhV0cFenW0vJP9ecY7WyUhSBqsA"
+      }
+    }
+  }
+}

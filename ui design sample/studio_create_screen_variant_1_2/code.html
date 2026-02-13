@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html class="" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MyStyleAI - Share Confirmation</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1978e5",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#111821",
+                        "neutral-ink": "#1a1a1a",
+                    },
+                    fontFamily: {
+                        "display": ["Sora", "sans-serif"],
+                        "korean": ["Noto Sans KR", "sans-serif"],
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+<style type="text/tailwindcss">
+        @layer base {
+            body {
+                @apply font-display bg-background-light dark:bg-background-dark text-gray-900;
+            }
+        }
+        .ios-bottom-sheet {
+            box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.08);
+        }
+        .glass-nav {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .custom-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .social-gradient-ig {
+            background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%);
+        }
+    </style>
+<style>
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="antialiased relative overflow-hidden h-screen bg-background-light">
+<div aria-hidden="true" class="absolute inset-0 z-0 bg-white/40 blur-md pointer-events-none scale-105">
+<div class="w-full max-w-md mx-auto h-full flex flex-col bg-white overflow-hidden shadow-2xl">
+<div class="w-full flex flex-col items-center pt-10 pb-4">
+<span class="font-display font-extrabold text-[13px] tracking-[0.2em] text-gray-400 mb-1">MY-STYLE.AI</span>
+<h2 class="text-[22px] font-bold text-gray-900 tracking-tight font-korean">게시하기</h2>
+</div>
+<div class="px-8 space-y-8">
+<div class="w-full aspect-[3/4] bg-gray-100 rounded-2xl overflow-hidden">
+<img alt="Preview" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAnJDHGB6wxrH_5maF4xphlXtnPlkDsZOxVP_2U9g4k_UGohfOrPk5DY9ct492_VnKvyH2vdA7o55E1q9RmFHP2HU3_CmtTklW7pBaUysHDgLBqHqJb_BG4LQt6gSV6GpR1giQD6T-jUTdWoLBJx_m51gQMh2B9T_Byv3WqR5TykhoZonKne27RqWIBio1PHlp1CRVjJZrsZipkyrlaAbN6So0Tg0OKUPCTIaz49zHI9OZ3VLOVS0QPrFySLfyIUtHGoALXCtIPRys"/>
+</div>
+<div class="h-10 w-full border-b border-gray-200"></div>
+<div class="h-10 w-full border-b border-gray-200"></div>
+<div class="flex gap-2">
+<div class="h-8 w-20 bg-gray-100 rounded-full"></div>
+<div class="h-8 w-20 bg-gray-100 rounded-full"></div>
+</div>
+</div>
+<nav class="mt-auto glass-nav border-t border-gray-100 px-6 pt-3 pb-8 flex justify-between items-center">
+<div class="w-10 h-10 bg-gray-100 rounded-full"></div>
+<div class="w-10 h-10 bg-gray-100 rounded-full"></div>
+<div class="w-14 h-14 bg-gray-200 rounded-full -mt-6"></div>
+<div class="w-10 h-10 bg-gray-100 rounded-full"></div>
+<div class="w-10 h-10 bg-gray-100 rounded-full"></div>
+</nav>
+</div>
+</div>
+<div class="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/30 backdrop-blur-[2px]">
+<div class="w-full max-w-[340px] bg-white rounded-[2.5rem] p-10 flex flex-col items-center text-center shadow-[0_20px_60px_-15px_rgba(0,0,0,0.15)] animate-in fade-in zoom-in duration-300">
+<div class="mb-6 w-16 h-16 bg-black rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-[32px]">check_circle</span>
+</div>
+<div class="space-y-2 mb-8">
+<h3 class="text-[24px] font-bold text-gray-900 tracking-tight font-korean">게시 완료!</h3>
+<p class="text-[15px] text-gray-500 leading-relaxed font-korean">이 멋진 스타일을<br/>친구들에게 공유할까요?</p>
+</div>
+<div class="flex items-center justify-center gap-6 mb-10">
+<button class="w-12 h-12 rounded-2xl flex items-center justify-center social-gradient-ig shadow-sm active:scale-90 transition-transform">
+<svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+<path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"></path></svg>
+</button>
+<button class="w-12 h-12 rounded-2xl flex items-center justify-center bg-black shadow-sm active:scale-90 transition-transform">
+<svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+<path d="M12.525.02c1.31 0 2.591.233 3.812.63v4.511c-.524-.262-1.099-.448-1.717-.531a5.846 5.846 0 0 0-2.095.101v5.093c.77-.333 1.62-.513 2.503-.513.883 0 1.728.18 2.498.513V4.318c2.985.127 5.447 2.224 5.925 5.094.025.132.046.262.062.395v4.542c-1.313 0-2.522-.442-3.493-1.185v5.82c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9c.174 0 .346.005.516.015V.02h.001z"></path>
+</svg>
+</button>
+<button class="w-12 h-12 rounded-2xl flex items-center justify-center bg-gray-900 shadow-sm active:scale-90 transition-transform">
+<svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+<path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932 6.064-6.932zm-1.292 19.49h2.039L6.486 3.24H4.298l13.311 17.403z"></path>
+</svg>
+</button>
+</div>
+<div class="w-full space-y-4">
+<button class="w-full py-5 bg-black text-white rounded-2xl font-bold text-[16px] active:scale-[0.98] transition-all font-korean shadow-lg shadow-black/10">
+                    공유하기
+                </button>
+<button class="text-[14px] text-gray-400 font-medium hover:text-gray-900 transition-colors font-korean">
+                    나중에 하기
+                </button>
+</div>
+</div>
+</div>
+<div class="fixed inset-0 pointer-events-none opacity-0">
+<header class="pt-12 px-8 pb-4 border-b border-gray-100 flex flex-col items-center">
+<h1 class="font-display font-extrabold text-[13px] tracking-[0.2em] text-gray-400 mb-1">MY-STYLE.AI</h1>
+<h2 class="text-[20px] font-bold text-gray-900 tracking-tight font-korean">게시하기</h2>
+</header>
+<nav class="absolute bottom-0 left-0 right-0 glass-nav border-t border-gray-100 px-6 pt-3 pb-8 flex justify-between items-center z-[60]">
+<div class="flex flex-col items-center gap-1 w-14 cursor-pointer opacity-40">
+<span class="material-symbols-outlined text-[26px]">home</span>
+<span class="text-[10px] font-bold font-korean">홈</span>
+</div>
+<div class="flex flex-col items-center gap-1 w-14 cursor-pointer opacity-40">
+<span class="material-symbols-outlined text-[26px]">explore</span>
+<span class="text-[10px] font-bold font-korean">둘러보기</span>
+</div>
+<div class="relative -top-8">
+<button class="w-16 h-16 bg-black rounded-full flex items-center justify-center border-[6px] border-white">
+<span class="material-symbols-outlined text-white text-[32px]">add</span>
+</button>
+</div>
+<div class="flex flex-col items-center gap-1 w-14 cursor-pointer opacity-40">
+<span class="material-symbols-outlined text-[26px]">bookmark</span>
+<span class="text-[10px] font-bold font-korean">보관함</span>
+</div>
+<div class="flex flex-col items-center gap-1 w-14 cursor-pointer opacity-40">
+<span class="material-symbols-outlined text-[26px]">person</span>
+<span class="text-[10px] font-bold font-korean">마이</span>
+</div>
+</nav>
+</div>
+
+</body></html>

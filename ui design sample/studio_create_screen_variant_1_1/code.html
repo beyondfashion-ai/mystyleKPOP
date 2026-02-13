@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html class="" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Discovery Gallery Screen - MyStyleAI</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1978e5",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#111821",
+                        "neutral-border": "#E5E7EB",
+                    },
+                    fontFamily: {
+                        "display": ["Sora", "sans-serif"],
+                        "korean": ["Noto Sans KR", "sans-serif"],
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+<style type="text/tailwindcss">
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .glass-header {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-white dark:bg-background-dark text-black antialiased pb-24">
+<header class="fixed top-0 left-0 right-0 z-50 glass-header border-b border-gray-100">
+<div class="max-w-md mx-auto px-5">
+<div class="flex justify-between items-center pt-14 pb-4">
+<h1 class="text-[11px] font-bold tracking-[0.1em] font-display uppercase text-black">
+                MY-STYLE.AI
+            </h1>
+<div class="flex items-center gap-4">
+<button aria-label="Search" class="text-black">
+<span class="material-symbols-outlined text-[24px]">search</span>
+</button>
+<button aria-label="Notifications" class="text-black relative">
+<span class="material-symbols-outlined text-[24px]">notifications</span>
+<span class="absolute top-0.5 right-0.5 w-[7px] h-[7px] bg-[#FF3B30] rounded-full border border-white"></span>
+</button>
+</div>
+</div>
+<div class="flex items-center justify-between pb-6">
+<h2 class="text-3xl font-bold text-black font-korean tracking-tight">갤러리</h2>
+<button class="flex items-center gap-1.5 text-[13px] font-medium bg-gray-50 border border-gray-100 px-4 py-2 rounded-full hover:bg-gray-100 transition-colors">
+<span class="material-symbols-outlined text-[18px]">tune</span>
+                필터
+            </button>
+</div>
+<div class="flex gap-7">
+<button class="pb-3 text-[15px] font-bold text-black border-b-2 border-black">
+                추천
+            </button>
+<button class="pb-3 text-[15px] font-medium text-gray-400 hover:text-black transition-colors">
+                최신
+            </button>
+<button class="pb-3 text-[15px] font-medium text-gray-400 hover:text-black transition-colors">
+                팔로잉
+            </button>
+</div>
+</div>
+</header>
+<main class="max-w-md mx-auto pt-[210px] px-5 space-y-6">
+<section class="overflow-x-auto no-scrollbar -mx-5 px-5">
+<div class="flex gap-2 w-max">
+<button class="px-4 py-1.5 text-xs font-semibold bg-black text-white rounded-full whitespace-nowrap">
+                #아이브_스타일
+            </button>
+<button class="px-4 py-1.5 text-xs font-medium bg-white border border-gray-200 text-gray-600 rounded-full whitespace-nowrap">
+                #Y2K패션
+            </button>
+<button class="px-4 py-1.5 text-xs font-medium bg-white border border-gray-200 text-gray-600 rounded-full whitespace-nowrap">
+                #무대의상
+            </button>
+<button class="px-4 py-1.5 text-xs font-medium bg-white border border-gray-200 text-gray-600 rounded-full whitespace-nowrap">
+                #공항패션
+            </button>
+<button class="px-4 py-1.5 text-xs font-medium bg-white border border-gray-200 text-gray-600 rounded-full whitespace-nowrap">
+                #스트릿
+            </button>
+</div>
+</section>
+<section class="grid grid-cols-2 gap-4 pb-8">
+<div class="group relative">
+<div class="relative aspect-[3/4] rounded-xl overflow-hidden bg-gray-100">
+<img alt="K-pop style generation" class="w-full h-full object-cover" loading="lazy" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCXyFemVacvZ6Yk-yUOzK_J5cDtffgWOsOIpCaU87-MogsrhFX-HzHwTfQNILhOsXPkr26DNgurhKE3Dpi2kOtBYEUPC7qb20KVtAHJ5Jncl5GGJsl--QqL9nurH7ZWHMNUpuhuDTuKFbBSp_9OgEvhliL-D7kFXR8rrEhU_eR9uNXtIAW3y1TV1FmxWS4yKtraBl7jORNjhlF-8xkrmVTn292EtjX2VZagi9BBZInDQXE7qmJITwpePEn94Cbp_9lgPLAQwZT3rDc"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<button class="absolute top-3 right-3 p-1.5 bg-white/20 backdrop-blur-md rounded-full text-white opacity-0 group-hover:opacity-100 transition-all">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">favorite</span>
+</button>
+</div>
+<div class="mt-2.5 flex justify-between items-start px-0.5">
+<div>
+<h3 class="text-[13px] font-bold text-black leading-tight">네온 사이버펑크</h3>
+<p class="text-[11px] text-gray-400 mt-1 uppercase font-display tracking-wider">@jennie_ai</p>
+</div>
+<button class="text-gray-300 hover:text-red-500 transition-colors">
+<span class="material-symbols-outlined text-[18px]">favorite</span>
+</button>
+</div>
+</div>
+<div class="group relative">
+<div class="relative aspect-[3/4] rounded-xl overflow-hidden bg-gray-100">
+<img alt="K-pop style generation" class="w-full h-full object-cover" loading="lazy" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAYuudgfDypVmisEwfg7KcV7f0_rjldqqeNwtraq3_bwBxKXXcVrAMeWTVdkjWobOkh9LP5fHOo9CH22y6HGp4izJhna1lVKso6Oqi3nT2_PYSF38wHB6_kUnHYdH62iSDHLKHsLM_CCV46JMWJqLs3qMOab2jUJ-KQyG9MSUjHYOR91wiJUhI66MliNkw6uKhN_-bcFIiGgL5JPZMdXYXHV2vHMnEKnS9O8FxpvFnWVle5xMpWZazI6J5pXNHkIws8EgalPrnSkZw"/>
+<button class="absolute top-3 right-3 p-1.5 bg-white/20 backdrop-blur-md rounded-full text-white opacity-0 group-hover:opacity-100 transition-all">
+<span class="material-symbols-outlined text-[20px]">favorite</span>
+</button>
+</div>
+<div class="mt-2.5 flex justify-between items-start px-0.5">
+<div>
+<h3 class="text-[13px] font-bold text-black leading-tight">레트로 팝</h3>
+<p class="text-[11px] text-gray-400 mt-1 uppercase font-display tracking-wider">@style_creator</p>
+</div>
+<button class="text-gray-300 hover:text-red-500 transition-colors">
+<span class="material-symbols-outlined text-[18px]">favorite</span>
+</button>
+</div>
+</div>
+<div class="group relative">
+<div class="relative aspect-[3/4] rounded-xl overflow-hidden bg-gray-100">
+<img alt="K-pop style generation" class="w-full h-full object-cover" loading="lazy" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC6_oXrDeYcv3AUwxfKkiCN_BKMI53_BeMEt915rs3y7dF6-508L_nhUNzVDHIoDCJtKqUvE3XxTFbJcxhkcfAyn3eHJkwZ-6R8HPzcJkYOaLOsuINiTHHnn5QL9eBIKBmq3IP_4kgMDknrZHHBE_EuLLLV89DGYs3CjqiGkO6Lqp1jLbJ5zH5lSMHKmR6aTTt6O4RF7WLR_WaZECCiBG__bAT7ay2XCmC5NekpSDpjlXRMrChR0rKKLsmCNZ8CmXoEXPkEWlwjwXw"/>
+<div class="absolute top-3 left-3 bg-black/70 backdrop-blur-sm rounded-sm px-1.5 py-0.5">
+<span class="text-[9px] font-bold text-white tracking-widest uppercase">HOT</span>
+</div>
+</div>
+<div class="mt-2.5 flex justify-between items-start px-0.5">
+<div>
+<h3 class="text-[13px] font-bold text-black leading-tight">소프트 하이틴</h3>
+<p class="text-[11px] text-gray-400 mt-1 uppercase font-display tracking-wider">@vibe_ai</p>
+</div>
+<button class="text-red-500">
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">favorite</span>
+</button>
+</div>
+</div>
+<div class="group relative">
+<div class="relative aspect-[3/4] rounded-xl overflow-hidden bg-gray-100">
+<img alt="K-pop style generation" class="w-full h-full object-cover" loading="lazy" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCXCyjzqiZynHpFalw47O0gw8dsQ1Hfm7c4SE5xx07aSoxrjVQDWIHyCxPc3kM2FE3rwiqkxVM7oWNiY-_yhl7o5p549AUOjHDddmcCS8Vzqcm3xTYm4rwNwNF2lp8RngsSBHZxOvI9PfEmSXrS-hcoi0AYKdPLRuhPI0E4jMzI7XMux9kRTCqt2qod89Swn5Jcaq6S-7CEQWltzJv23l962faO14htkNplckEu6FpiIcxsM7Xo5UF6-x5IgTZ_PGUfxwubm7Vv_a8"/>
+</div>
+<div class="mt-2.5 flex justify-between items-start px-0.5">
+<div>
+<h3 class="text-[13px] font-bold text-black leading-tight">시크 레더룩</h3>
+<p class="text-[11px] text-gray-400 mt-1 uppercase font-display tracking-wider">@dark_mode</p>
+</div>
+<button class="text-gray-300 hover:text-red-500 transition-colors">
+<span class="material-symbols-outlined text-[18px]">favorite</span>
+</button>
+</div>
+</div>
+</section>
+<div class="flex justify-center pb-12">
+<div class="w-5 h-5 border-2 border-gray-100 border-t-black rounded-full animate-spin"></div>
+</div>
+</main>
+<nav class="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-gray-100 pb-safe">
+<div class="max-w-md mx-auto flex justify-around items-center h-16">
+<button class="flex flex-col items-center p-2 text-gray-300">
+<span class="material-symbols-outlined text-[26px]">home</span>
+</button>
+<button class="flex flex-col items-center p-2 text-black">
+<span class="material-symbols-outlined text-[26px]" style="font-variation-settings: 'FILL' 1;">explore</span>
+</button>
+<button class="relative -mt-10">
+<div class="w-[56px] h-[56px] bg-black rounded-full flex items-center justify-center shadow-2xl text-white">
+<span class="material-symbols-outlined text-[32px]">add</span>
+</div>
+</button>
+<button class="flex flex-col items-center p-2 text-gray-300">
+<span class="material-symbols-outlined text-[26px]">bookmark</span>
+</button>
+<button class="flex flex-col items-center p-2 text-gray-300">
+<span class="material-symbols-outlined text-[26px]">person</span>
+</button>
+</div>
+</nav>
+
+</body></html>

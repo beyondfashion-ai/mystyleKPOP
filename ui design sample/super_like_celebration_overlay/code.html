@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html class="" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1978e5",
+                        "accent-purple": "#a855f7",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#111821",
+                    },
+                    fontFamily: {
+                        "display": ["Sora", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style type="text/tailwindcss">
+        @layer utilities {
+            .glass-blur {
+                backdrop-filter: blur(20px);
+                -webkit-backdrop-filter: blur(20px);
+            }
+            .neon-glow {
+                filter: drop-shadow(0 0 15px rgba(168, 85, 247, 0.6));
+            }
+            .diamond-gradient {
+                background: linear-gradient(135deg, #a855f7 0%, #d8b4fe 100%);
+            }
+        }
+    </style>
+<style>
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display overflow-hidden">
+<div class="relative w-full h-screen max-w-[430px] mx-auto bg-white dark:bg-slate-900 overflow-hidden shadow-2xl">
+<div class="p-6 pt-12">
+<div class="flex items-center justify-between mb-6">
+<span class="material-icons text-slate-800 dark:text-slate-100">arrow_back_ios</span>
+<span class="font-bold text-lg text-slate-800 dark:text-slate-100 uppercase tracking-tight">Outfit Detail</span>
+<span class="material-icons text-slate-800 dark:text-slate-100">more_horiz</span>
+</div>
+<div class="rounded-xl overflow-hidden mb-4 aspect-[3/4] relative">
+<img class="w-full h-full object-cover" data-alt="Premium K-pop street fashion outfit showcase" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA6R6xKx8AmfASISL8gSbIDtSRQ8IeUKUHZzqaCQhE_EYlTV_NA_PfkI7Cfvyju-ip2MtA0B3LizwPLN-FeWL-fztnZZQftbfuW3EFs9wdRCM_2E6zGzEPX1SgtdiSgCdCznf_yfTW-B5lhTbovc8G634crR_79nIfInHTzu12GIZUkGfFQBcQKxbb8acsN2dgJUl5V_AGTnVpAG5gcnvA6yRoMFNLuub0iIdSlC7HxIBXxm4NPsLobNmip3cuOQ63yXfl1j_qWf2U"/>
+</div>
+<div class="flex items-center gap-3 mb-2">
+<div class="w-10 h-10 rounded-full bg-slate-200 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="User profile picture of Style Master" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDjWBfYRvoMfGANvk1MNIFFfpe9mZuCK8qqUgK9HnKNUltuP9ym0iPWOoOZfpYGICUo9a6vmABCges7HIbhqL6XiIOO_M1VxVRvAhnfbesRXQULcJO_Vm8z-7TL7IQsufbaz1S7tJYlNH4tCTXDQwMG8m52kQQ0cp2wQdUhUp47Dndyil3WHaMhXcL1am9OXS9D3WXhVQ2ps2u0G4q1I53ZJBZdm9Syx2wYCkoAm-O1PUDQDwO-96qRRJyOEyK44fpgcGzrpiDfu9g"/>
+</div>
+<div>
+<p class="font-bold text-sm text-slate-800 dark:text-slate-100">@스타일마스터</p>
+<p class="text-xs text-slate-500">Seoul, South Korea</p>
+</div>
+</div>
+<p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300">Cyberpunk-inspired techwear look for the upcoming world tour. #KPOP #Techwear #Streetstyle</p>
+</div>
+<div class="absolute bottom-0 w-full p-6 flex justify-around items-center border-t border-slate-100 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80">
+<span class="material-icons text-slate-400">favorite_border</span>
+<span class="material-icons text-slate-400">chat_bubble_outline</span>
+<span class="material-icons text-accent-purple scale-125">stars</span>
+<span class="material-icons text-slate-400">bookmark_border</span>
+<span class="material-icons text-slate-400">ios_share</span>
+</div>
+<div class="absolute inset-0 z-50 glass-blur bg-white/40 dark:bg-black/60 flex items-center justify-center p-8">
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full pointer-events-none">
+<span class="material-icons absolute top-[25%] left-[20%] text-accent-purple/40 scale-75">auto_awesome</span>
+<span class="material-icons absolute top-[35%] right-[15%] text-accent-purple/60 scale-110">star_outline</span>
+<span class="material-icons absolute bottom-[30%] left-[10%] text-accent-purple/50 scale-90">auto_awesome</span>
+<span class="material-icons absolute bottom-[20%] right-[25%] text-accent-purple/30">auto_awesome</span>
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-accent-purple/10 rounded-full blur-3xl"></div>
+</div>
+<div class="relative w-full text-center">
+<div class="relative inline-block mb-10">
+<div class="w-24 h-24 diamond-gradient rounded-xl rotate-45 flex items-center justify-center neon-glow mx-auto border-4 border-white/50">
+<span class="material-icons text-white text-5xl -rotate-45">stars</span>
+</div>
+<span class="material-icons absolute -top-4 -right-4 text-accent-purple neon-glow">auto_awesome</span>
+<span class="material-icons absolute -bottom-2 -left-6 text-accent-purple/60">auto_awesome</span>
+</div>
+<div class="space-y-3 mb-12">
+<h2 class="text-2xl font-extrabold text-black dark:text-white tracking-tight">
+                        슈퍼스타를 보냈습니다!
+                    </h2>
+<p class="text-slate-600 dark:text-slate-300 font-medium px-4">
+<span class="text-black dark:text-white font-bold">@스타일마스터</span> 님에게<br/>팬심이 전달되었습니다.
+                    </p>
+</div>
+<button class="w-full bg-black dark:bg-white text-white dark:text-black font-bold py-4 rounded-xl shadow-xl active:scale-95 transition-transform duration-100 flex items-center justify-center gap-2">
+<span>확인</span>
+</button>
+<p class="mt-6 text-xs text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] font-bold">MYSTYLE AI PREMIUM</p>
+</div>
+</div>
+<div class="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-32 h-1 bg-black/10 dark:bg-white/10 rounded-full z-[60]"></div>
+</div>
+
+</body></html>
