@@ -7,6 +7,7 @@ import {
     GoogleAuthProvider,
     signInWithPopup,
     signInWithRedirect,
+    getRedirectResult,
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
     updateProfile,
@@ -44,6 +45,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             setLoading(false);
             return;
         }
+
+        // Handle signInWithRedirect result (when returning from Google OAuth)
+        getRedirectResult(auth).catch((error) => {
+            console.error("Redirect sign-in failed:", error);
+        });
+
         const unsubscribe = onAuthStateChanged(auth, (user) => {
             setUser(user);
             setLoading(false);
@@ -53,7 +60,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const signInWithGoogle = async (): Promise<{ error?: string }> => {
         if (!auth) {
-            return { error: "Auth is not configured. Check environment variables." };
+            return { error: "인증 서비스가 설정되지 않았습니다. 환경변수를 확인해주세요." };
         }
         const provider = new GoogleAuthProvider();
         try {
@@ -63,28 +70,35 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             console.error("Error signing in with Google", error);
             const code = (error as { code?: string })?.code || "";
             if (code === "auth/popup-closed-by-user") {
-                return { error: "Google sign-in was cancelled." };
+                return { error: "Google 로그인이 취소되었습니다." };
             }
             if (code === "auth/cancelled-popup-request") {
-                return { error: "Another sign-in popup is already open. Please finish that one first." };
+                return { error: "이미 로그인 팝업이 열려있습니다. 기존 팝업을 먼저 닫아주세요." };
             }
             if (code === "auth/popup-blocked") {
-                await signInWithRedirect(auth, provider);
+                // Popup blocked — fall back to redirect
+                try {
+                    await signInWithRedirect(auth, provider);
+                } catch {
+                    return { error: "팝업이 차단되었습니다. 브라우저 팝업 허용 후 다시 시도해주세요." };
+                }
                 return {};
             }
             if (code === "auth/unauthorized-domain") {
-                return { error: "This domain is not allowed in Firebase Auth settings." };
+                const domain = typeof window !== "undefined" ? window.location.hostname : "unknown";
+                console.error(`Firebase unauthorized domain: ${domain}. Add it to Firebase Console → Authentication → Settings → Authorized domains.`);
+                return { error: `현재 도메인(${domain})이 Firebase 승인 도메인에 등록되지 않았습니다. 관리자에게 문의해주세요.` };
             }
             if (code === "auth/operation-not-allowed") {
-                return { error: "Google provider is disabled in Firebase Authentication settings." };
+                return { error: "Google 로그인이 비활성화되어 있습니다. Firebase 설정을 확인해주세요." };
             }
             if (code === "auth/network-request-failed") {
-                return { error: "Network request failed. Check your connection and try again." };
+                return { error: "네트워크 오류가 발생했습니다. 인터넷 연결을 확인 후 다시 시도해주세요." };
             }
             if (code === "auth/invalid-api-key") {
-                return { error: "Invalid Firebase API key in NEXT_PUBLIC_FIREBASE_API_KEY." };
+                return { error: "Firebase API 키가 유효하지 않습니다." };
             }
-            return { error: `Google sign-in failed (${code || "unknown"}).` };
+            return { error: `Google 로그인에 실패했습니다. (${code || "알 수 없는 오류"})` };
         }
     };
 
