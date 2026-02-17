@@ -85,19 +85,7 @@ const CONCEPT_STYLES = [
   { id: "girlcrush", label: "걸크러쉬", color: "from-red-800 via-rose-900 to-gray-900", prompt: "girl crush edgy", icon: "🔥", mood: "Powerful, fierce", girlOnly: true },
 ];
 
-// 해시태그 — 갤러리 HASHTAG_FILTERS의 concept 값과 연동
-const HASHTAGS = [
-  { label: "#무대의상", keyword: "무대의상" },
-  { label: "#Y2K패션", keyword: "Y2K" },
-  { label: "#스트릿", keyword: "스트릿" },
-  { label: "#시퀸드레스", keyword: "시퀸 드레스" },
-  { label: "#크롭탑", keyword: "크롭탑" },
-  { label: "#오버사이즈", keyword: "오버사이즈" },
-  { label: "#레더재킷", keyword: "레더 재킷" },
-  { label: "#네온컬러", keyword: "네온 컬러" },
-  { label: "#플리츠스커트", keyword: "플리츠 스커트" },
-  { label: "#하이부츠", keyword: "하이부츠" },
-];
+const MAX_SELECTED_TAGS = 15;
 
 const IMAGE_COUNT_OPTIONS = [1, 2, 4];
 const STUDIO_LOADING_AD_SLOT = process.env.NEXT_PUBLIC_ADSENSE_SLOT_STUDIO_LOADING || "demo-studio-loading-slot";
@@ -132,7 +120,6 @@ function getAdDwellTargetMs(generationCount: number) {
 export default function StudioPage() {
   const { user } = useAuth();
   const router = useRouter();
-  const [prompt, setPrompt] = useState("");
   const [idolType, setIdolType] = useState("girlgroup");
   const [conceptStyle, setConceptStyle] = useState<string | null>(null);
   const [imageCount, setImageCount] = useState(1);
@@ -141,7 +128,17 @@ export default function StudioPage() {
   const [generatedImages, setGeneratedImages] = useState<{ url: string; index: number }[]>([]);
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
   const [showToast, setShowToast] = useState(false);
-  const [selectedHashtags, setSelectedHashtags] = useState<string[]>([]);
+  const [toastMessage, setToastMessage] = useState("");
+
+  // Tag-centric state (replaces prompt + selectedHashtags)
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [freeInputText, setFreeInputText] = useState("");
+  const [showFreeInput, setShowFreeInput] = useState(false);
+  const [conceptTags, setConceptTags] = useState<string[]>([]);
+  const [recommendedTags, setRecommendedTags] = useState<string[]>([]);
+  const [popularKeywords, setPopularKeywords] = useState<string[]>([]);
+  const [isTagsLoading, setIsTagsLoading] = useState(false);
+  const tagCacheRef = useRef<Map<string, { conceptTags: string[]; recommendedTags: string[] }>>(new Map());
 
   // Preview section ref for auto-scroll
   const previewRef = useRef<HTMLDivElement>(null);
@@ -249,6 +246,67 @@ export default function StudioPage() {
     return () => clearTimeout(timer);
   }, [groupTag]);
 
+  // Fetch popular keywords on mount
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("/api/tags/popular?type=keywords&limit=5");
+        const data = await res.json();
+        if (data.tags?.length) {
+          setPopularKeywords(data.tags.map((t: { displayName: string }) => t.displayName));
+        }
+      } catch {
+        // ignore
+      }
+    })();
+  }, []);
+
+  // Fetch AI tags when concept changes
+  useEffect(() => {
+    if (!conceptStyle) {
+      setConceptTags([]);
+      setRecommendedTags([]);
+      return;
+    }
+
+    const cacheKey = `${idolType}_${conceptStyle}`;
+    const cached = tagCacheRef.current.get(cacheKey);
+    if (cached) {
+      setConceptTags(cached.conceptTags);
+      setRecommendedTags(cached.recommendedTags);
+      // Reset concept/recommended tag selections on concept change
+      setSelectedTags((prev) => prev.filter((t) => popularKeywords.includes(t)));
+      return;
+    }
+
+    setIsTagsLoading(true);
+    // Reset concept/recommended tag selections on concept change
+    setSelectedTags((prev) => prev.filter((t) => popularKeywords.includes(t)));
+
+    (async () => {
+      try {
+        const res = await fetch("/api/tags/suggest", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ idolType, conceptStyle }),
+        });
+        const data = await res.json();
+        const ct = data.conceptTags || [];
+        const rt = data.recommendedTags || [];
+        setConceptTags(ct);
+        setRecommendedTags(rt);
+        tagCacheRef.current.set(cacheKey, { conceptTags: ct, recommendedTags: rt });
+      } catch {
+        // fallback handled by API
+        setConceptTags([]);
+        setRecommendedTags([]);
+      } finally {
+        setIsTagsLoading(false);
+      }
+    })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [idolType, conceptStyle]);
+
   // Reset girlcrush when switching away from girlgroup
   useEffect(() => {
     if (idolType !== "girlgroup" && conceptStyle === "girlcrush") {
@@ -269,17 +327,24 @@ export default function StudioPage() {
     return () => clearInterval(interval);
   }, [isGenerating]);
 
-  const toggleHashtag = (keyword: string) => {
-    const tag = `#${keyword.replace(/\s+/g, "")}`;
-    if (prompt.includes(tag)) {
-      // Remove tag from prompt text
-      setPrompt((prev) => prev.replace(tag, "").replace(/\s{2,}/g, " ").trim());
-      setSelectedHashtags((prev) => prev.filter((h) => h !== keyword));
+  const toggleTag = (tag: string) => {
+    if (selectedTags.includes(tag)) {
+      setSelectedTags((prev) => prev.filter((t) => t !== tag));
     } else {
-      // Append tag naturally to prompt text
-      setPrompt((prev) => (prev.trim() ? `${prev.trim()} ${tag}` : tag));
-      setSelectedHashtags((prev) => [...prev, keyword]);
+      if (selectedTags.length >= MAX_SELECTED_TAGS) {
+        setToastMessage(`태그는 최대 ${MAX_SELECTED_TAGS}개까지 선택 가능합니다`);
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 3000);
+        return;
+      }
+      setSelectedTags((prev) => [...prev, tag]);
     }
+  };
+
+  const showToastMsg = (msg: string) => {
+    setToastMessage(msg);
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 3000);
   };
 
   const fetchStylistFeedback = async (firstImageUrl?: string) => {
@@ -297,7 +362,7 @@ export default function StudioPage() {
         body: JSON.stringify({
           idolType: selectedIdol?.label || idolType,
           concept: selectedConcept?.label || conceptStyle || "general",
-          keywords: selectedHashtags.join(", "),
+          keywords: selectedTags.join(", "),
           imageUrl: firstImageUrl || undefined,
         }),
       });
@@ -314,7 +379,7 @@ export default function StudioPage() {
     }
   };
 
-  const fullPrompt = prompt.trim();
+  const fullPrompt = [...selectedTags, freeInputText.trim()].filter(Boolean).join(", ");
 
   const handleGenerate = async (stylistAdvice?: string, overridePrompt?: string) => {
     const effectivePrompt = (overridePrompt || fullPrompt).trim();
@@ -373,8 +438,7 @@ export default function StudioPage() {
       }
     } catch (error) {
       console.error("Generate error:", error);
-      setShowToast(true);
-      setTimeout(() => setShowToast(false), 4000);
+      showToastMsg("오류가 발생했습니다. 다시 시도해주세요.");
     } finally {
       let generationCount = 1;
       if (typeof window !== "undefined") {
@@ -403,9 +467,10 @@ export default function StudioPage() {
   const handleAdviceRegenerate = (feedback: string) => {
     const stylist = stylistFeedbacks.find((f) => f.feedback === feedback);
     const styleDirections = extractStyleDirections(feedback);
+    const currentPrompt = fullPrompt;
     const enhanced = styleDirections
-      ? `${prompt}, ${styleDirections}`
-      : prompt;
+      ? `${currentPrompt}, ${styleDirections}`
+      : currentPrompt;
     setAdviceModalPrompt(enhanced);
     setAdviceModalFeedback(feedback);
     setAdviceModalStylist(stylist?.fullName || "");
@@ -415,7 +480,6 @@ export default function StudioPage() {
   const handleConfirmAdviceGenerate = () => {
     const editedPrompt = adviceModalPrompt.trim();
     if (!editedPrompt) return;
-    setPrompt(editedPrompt);
     setShowAdviceModal(false);
     autoPublishRef.current = true;
     handleGenerate(undefined, editedPrompt);
@@ -446,7 +510,7 @@ export default function StudioPage() {
           imageUrls: selectedImages,
           prompt: fullPrompt,
           concept: selectedConcept?.label || "general",
-          keywords: selectedHashtags.join(","),
+          keywords: selectedTags.join(","),
           groupTag: groupTag.trim() || null,
           ownerUid: user?.uid || "anonymous",
           ownerHandle: user?.displayName || "Guest Designer",
@@ -463,8 +527,7 @@ export default function StudioPage() {
       setShowPublishSuccess(true);
     } catch (error) {
       console.error("Publish error:", error);
-      setShowToast(true);
-      setTimeout(() => setShowToast(false), 4000);
+      showToastMsg("업로드 중 오류가 발생했습니다.");
     } finally {
       setIsPublishing(false);
     }
@@ -483,6 +546,9 @@ export default function StudioPage() {
     setGroupTagSuggestions([]);
     setStylistFeedbacks([]);
     setSelectedStylistId(null);
+    setSelectedTags([]);
+    setFreeInputText("");
+    setShowFreeInput(false);
   };
 
   const handleCopyLink = () => {
@@ -702,48 +768,128 @@ export default function StudioPage() {
             </div>
           </div>
 
-          {/* Step 3: Keywords / Prompt + Hashtags */}
-          <div className="space-y-3">
+          {/* Step 3: Style Tags */}
+          <div className="space-y-4">
             <label className="text-[13px] font-bold text-gray-500 flex items-center gap-2.5">
               <span className="w-6 h-6 rounded-full bg-black text-white text-[11px] font-black flex items-center justify-center">3</span>
-              키워드 입력
+              스타일 태그
+              {selectedTags.length > 0 && (
+                <span className="text-[11px] text-gray-400 font-medium ml-auto">
+                  {selectedTags.length}/{MAX_SELECTED_TAGS}
+                </span>
+              )}
             </label>
-            <div className="relative">
-              <textarea
-                value={prompt}
-                onChange={(e) => {
-                  setPrompt(e.target.value);
-                  // Sync selectedHashtags state with actual text content
-                  setSelectedHashtags((prev) =>
-                    prev.filter((kw) => e.target.value.includes(`#${kw.replace(/\s+/g, "")}`))
-                  );
-                }}
-                placeholder="원하는 스타일을 자유롭게 적어주세요!"
-                maxLength={500}
-                rows={3}
-                className="w-full px-4 py-3.5 bg-white border border-gray-200 rounded-xl text-sm text-black placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent resize-none"
-              />
-              <span className="absolute bottom-3 right-3 text-[10px] text-gray-300 font-medium">
-                {prompt.length}/500
-              </span>
-            </div>
 
-            {/* Hashtag suggestions */}
-            <div className="overflow-x-auto no-scrollbar -mx-5 px-5">
-              <div className="flex gap-2 w-max pb-1">
-                {HASHTAGS.map((tag) => (
-                  <button
-                    key={tag.keyword}
-                    onClick={() => toggleHashtag(tag.keyword)}
-                    className={`px-3.5 py-1.5 text-[12px] font-semibold rounded-full whitespace-nowrap transition-colors ${selectedHashtags.includes(tag.keyword)
-                      ? "bg-black text-white"
-                      : "bg-white border border-gray-200 text-gray-500 hover:border-black hover:text-black"
+            {!conceptStyle && (
+              <p className="text-[12px] text-gray-400 py-4 text-center">
+                컨셉을 선택하면 스타일 태그가 추천됩니다
+              </p>
+            )}
+
+            {/* Concept Tags */}
+            {conceptStyle && (
+              <div className="space-y-2">
+                <p className="text-[11px] font-bold text-gray-400 flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-[14px]">style</span>
+                  컨셉 태그
+                  {isTagsLoading && (
+                    <span className="inline-block w-3 h-3 border border-gray-300 border-t-gray-600 rounded-full animate-spin ml-1"></span>
+                  )}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {conceptTags.map((tag) => (
+                    <button
+                      key={tag}
+                      onClick={() => toggleTag(tag)}
+                      className={`px-3 py-1.5 text-[12px] font-semibold rounded-full transition-colors ${
+                        selectedTags.includes(tag)
+                          ? "bg-black text-white"
+                          : "bg-white border border-gray-200 text-gray-600 hover:border-black hover:text-black"
                       }`}
-                  >
-                    {tag.label}
-                  </button>
-                ))}
+                    >
+                      {tag}
+                    </button>
+                  ))}
+                </div>
               </div>
+            )}
+
+            {/* Recommended Tags */}
+            {conceptStyle && recommendedTags.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-[11px] font-bold text-gray-400 flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-[14px]">auto_awesome</span>
+                  추천 태그
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {recommendedTags.map((tag) => (
+                    <button
+                      key={tag}
+                      onClick={() => toggleTag(tag)}
+                      className={`px-3 py-1.5 text-[12px] font-semibold rounded-full transition-colors ${
+                        selectedTags.includes(tag)
+                          ? "bg-black text-white"
+                          : "bg-gray-50 border border-gray-200 text-gray-500 hover:border-black hover:text-black"
+                      }`}
+                    >
+                      {tag}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Popular Keywords */}
+            {popularKeywords.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-[11px] font-bold text-gray-400 flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-[14px]" style={{ fontVariationSettings: "'FILL' 1" }}>local_fire_department</span>
+                  인기 태그
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {popularKeywords.map((tag) => (
+                    <button
+                      key={tag}
+                      onClick={() => toggleTag(tag)}
+                      className={`px-3 py-1.5 text-[12px] font-semibold rounded-full transition-colors ${
+                        selectedTags.includes(tag)
+                          ? "bg-black text-white"
+                          : "bg-orange-50 border border-orange-200 text-orange-600 hover:border-orange-400"
+                      }`}
+                    >
+                      #{tag}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Free Input (collapsible) */}
+            <div>
+              <button
+                onClick={() => setShowFreeInput(!showFreeInput)}
+                className="text-[12px] text-gray-400 font-semibold flex items-center gap-1 hover:text-black transition-colors"
+              >
+                <span className="material-symbols-outlined text-[16px]">
+                  {showFreeInput ? "expand_less" : "edit_note"}
+                </span>
+                {showFreeInput ? "자유 입력 접기" : "자유 입력 열기"}
+              </button>
+              {showFreeInput && (
+                <div className="relative mt-2">
+                  <textarea
+                    value={freeInputText}
+                    onChange={(e) => setFreeInputText(e.target.value)}
+                    placeholder="태그 외에 추가하고 싶은 스타일을 자유롭게 적어주세요"
+                    maxLength={300}
+                    rows={2}
+                    className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm text-black placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent resize-none"
+                  />
+                  <span className="absolute bottom-3 right-3 text-[10px] text-gray-300 font-medium">
+                    {freeInputText.length}/300
+                  </span>
+                </div>
+              )}
             </div>
           </div>
 
@@ -775,7 +921,7 @@ export default function StudioPage() {
           {/* Generate button */}
           <button
             onClick={() => handleGenerate()}
-            disabled={isGenerating || !fullPrompt}
+            disabled={isGenerating || (selectedTags.length === 0 && !freeInputText.trim())}
             className="w-full py-4 bg-black text-white text-[15px] font-bold rounded-full hover:bg-gray-900 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2.5 active:scale-[0.98]"
           >
             {isGenerating ? (
@@ -894,8 +1040,7 @@ export default function StudioPage() {
               <button
                 onClick={() => {
                   if (selectedImages.length === 0) {
-                    setShowToast(true);
-                    setTimeout(() => setShowToast(false), 3000);
+                    showToastMsg("공개할 이미지를 선택해주세요");
                     return;
                   }
                   setShowPublishModal(true);
@@ -996,9 +1141,9 @@ export default function StudioPage() {
         {/* Toast */}
         {showToast && (
           <div className="fixed bottom-28 left-1/2 -translate-x-1/2 z-50 bg-gray-900 text-white px-5 py-3 rounded-full text-[13px] font-bold shadow-xl">
-            {generatedImages.length > 0 && selectedImages.length === 0
+            {toastMessage || (generatedImages.length > 0 && selectedImages.length === 0
               ? "공개할 이미지를 선택해주세요"
-              : "오류가 발생했습니다. 다시 시도해주세요."}
+              : "오류가 발생했습니다. 다시 시도해주세요.")}
           </div>
         )}
       </main>
@@ -1161,7 +1306,7 @@ export default function StudioPage() {
                     {CONCEPT_STYLES.find((s) => s.id === conceptStyle)?.label}
                   </span>
                 )}
-                {selectedHashtags.map((tag) => (
+                {selectedTags.map((tag) => (
                   <span key={tag} className="px-3 py-1 bg-gray-100 text-[12px] font-bold text-black rounded-full">
                     #{tag.replace(/\s+/g, "")}
                   </span>

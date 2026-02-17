@@ -15,58 +15,73 @@ interface TagCount {
 }
 
 /**
- * Aggregate groupTag counts from designs collection.
- * Returns top N popular group tags sorted by usage count.
+ * Aggregate groupTag or keyword counts from designs collection.
+ * ?type=keywords → aggregate fashion keywords from designs.keywords field
+ * default → aggregate groupTag counts
+ * Returns top N sorted by usage count.
  */
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = request.nextUrl;
     const limitParam = Math.min(Number(searchParams.get("limit")) || 10, 30);
+    const type = searchParams.get("type"); // "keywords" or default (groupTag)
 
     const tagMap = new Map<string, { displayName: string; count: number }>();
 
-    function addTag(groupTag: string) {
-      const normalized = groupTag.toLowerCase().replace(/\s+/g, "");
+    function addTag(tag: string) {
+      const normalized = tag.toLowerCase().replace(/\s+/g, "");
+      if (!normalized) return;
       const existing = tagMap.get(normalized);
       if (existing) {
         existing.count += 1;
-        // Keep the most-used display form (heuristic: longer = more specific)
-        if (groupTag.length > existing.displayName.length) {
-          existing.displayName = groupTag;
+        if (tag.length > existing.displayName.length) {
+          existing.displayName = tag;
         }
       } else {
-        tagMap.set(normalized, { displayName: groupTag, count: 1 });
+        tagMap.set(normalized, { displayName: tag, count: 1 });
       }
     }
+
+    function extractFromDoc(data: Record<string, unknown>) {
+      if (type === "keywords") {
+        // keywords field: comma-separated string
+        const kw = data.keywords as string | undefined;
+        if (kw) {
+          kw.split(",").forEach((k) => {
+            const trimmed = k.trim().replace(/^#/, "");
+            if (trimmed) addTag(trimmed);
+          });
+        }
+      } else {
+        const tag = data.groupTag as string | undefined;
+        if (tag) addTag(tag);
+      }
+    }
+
+    const selectFields = type === "keywords" ? "keywords" : "groupTag";
 
     // Admin SDK path
     if (adminDb) {
       const snapshot = await adminDb
         .collection("designs")
         .where("visibility", "==", "public")
-        .select("groupTag")
+        .select(selectFields)
         .get();
 
-      snapshot.docs.forEach((doc) => {
-        const tag = doc.data().groupTag;
-        if (tag) addTag(tag);
-      });
+      snapshot.docs.forEach((doc) => extractFromDoc(doc.data()));
     } else if (db) {
       // Client SDK fallback
       const q = query(collection(db, "designs"), where("visibility", "==", "public"));
       const snapshot = await getDocs(q);
-      snapshot.docs.forEach((doc) => {
-        const tag = doc.data().groupTag;
-        if (tag) addTag(tag);
-      });
+      snapshot.docs.forEach((doc) => extractFromDoc(doc.data() as Record<string, unknown>));
     } else {
       // Local JSON fallback
       try {
         const raw = await fs.readFile(LOCAL_DB_PATH, "utf-8");
         const designs: Record<string, unknown>[] = JSON.parse(raw);
         designs
-          .filter((d) => d.visibility === "public" && d.groupTag)
-          .forEach((d) => addTag(d.groupTag as string));
+          .filter((d) => d.visibility === "public")
+          .forEach((d) => extractFromDoc(d));
       } catch {
         // no local data
       }
