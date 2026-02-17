@@ -40,7 +40,7 @@ interface Design {
 
   // ─── Engagement (server-managed, atomic) ───
   likeCount: number;             // Like count (atomic increment via POST /api/like/[designId])
-  boostCount: number;            // Phase 2: separate from likeCount, always 0 in Phase 1
+  boostCount: number;            // Superstar tally (1 Superstar = ranking weight 10)
 
   // ─── Moderation ───
   status: "active" | "hidden" | "removed";
@@ -90,6 +90,52 @@ interface Vote {
 
 ---
 
+## Collection: `boosts`
+
+Tracks Superstar usage per user per design with weekly cooldown.
+
+**Document ID:** `{designId}_{uid}`
+
+```typescript
+interface Boost {
+  designId: string;
+  uid: string;
+  count: number;                 // Lifetime boost count from this user to this design
+  lastBoostAt: Timestamp;        // Cooldown anchor (must be at least 7 days old to boost again)
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+```
+
+### Policy
+
+- Stores per-design Superstar history.
+- Ranking score uses: `likeCount + (boostCount * 10)`.
+
+---
+
+## Collection: `boostUsers`
+
+Tracks global Superstar cooldown by user.
+
+**Document ID:** `{uid}`
+
+```typescript
+interface BoostUser {
+  uid: string;
+  totalBoostCount: number;       // Lifetime Superstar sends
+  lastBoostAt: Timestamp;        // Global cooldown anchor (7 days)
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+```
+
+### Policy
+
+- One user can send Superstar once every 7 days across the entire platform.
+
+---
+
 ## Collection: `generationLimits`
 
 Tracks daily generation usage per user.
@@ -132,8 +178,8 @@ interface MonthlyRanking {
     rank: number;                // 1-50
     designId: string;
     likeCount: number;
-    boostCount: number;          // Phase 2: separate tally
-    totalScore: number;          // Phase 1: same as likeCount
+    boostCount: number;          // Superstar tally
+    totalScore: number;          // likeCount + (boostCount * 10)
     ownerUid: string;
     ownerHandle: string;
     imageUrl: string;            // Representative image URL
@@ -154,7 +200,7 @@ interface MonthlyRanking {
   deliveredAt?: Timestamp;
 
   // ─── Metadata ───
-  scoreFormula: string;          // e.g., "likeCount"
+  scoreFormula: string;          // e.g., "likeCount + (boostCount * 10)"
   snapshotAt: Timestamp;
   snapshotMethod: "auto_cron" | "manual_admin";
 }

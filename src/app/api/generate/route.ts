@@ -7,6 +7,40 @@ fal.config({
     credentials: process.env.FAL_KEY,
 });
 
+// Extract English fashion terms and translate key Korean style words from stylist advice
+function extractStyleKeywords(advice: string): string {
+    // 1. Pull out English fashion terms already in the advice (Silhouette, Layering, etc.)
+    const englishTerms = advice.match(/[A-Za-z][A-Za-z\-]{2,}/g) || [];
+
+    // 2. Map common Korean fashion terms to English
+    const koToEn: Record<string, string> = {
+        "크롭": "cropped", "와이드": "wide", "오버사이즈": "oversized",
+        "슬림": "slim fit", "타이트": "tight fit",
+        "레더": "leather", "새틴": "satin", "시어": "sheer",
+        "메쉬": "mesh", "오간자": "organza", "벨벳": "velvet",
+        "데님": "denim", "실크": "silk", "트위드": "tweed",
+        "홀로그래픽": "holographic", "메탈릭": "metallic", "크롬": "chrome",
+        "시퀸": "sequin", "글리터": "glitter", "PVC": "PVC",
+        "체인": "chain", "벨트": "belt", "초커": "choker",
+        "부츠": "boots", "하이힐": "high heels",
+        "네온": "neon", "파스텔": "pastel", "모노크롬": "monochrome",
+        "핫핑크": "hot pink", "라임": "lime green", "블랙": "black",
+        "올블랙": "all-black", "화이트": "white",
+        "프린지": "fringe", "러플": "ruffle", "플리츠": "pleated",
+        "드레이핑": "draped", "컷아웃": "cutout", "슬릿": "slit",
+        "파워 숄더": "power shoulder", "퍼프 슬리브": "puff sleeve",
+        "스포티": "sporty", "스트릿": "streetwear",
+    };
+
+    const translated: string[] = [];
+    for (const [ko, en] of Object.entries(koToEn)) {
+        if (advice.includes(ko)) translated.push(en);
+    }
+
+    const combined = [...new Set([...translated, ...englishTerms.filter(t => t.length > 2)])];
+    return combined.slice(0, 12).join(", ");
+}
+
 export async function POST(request: Request) {
     try {
         let body;
@@ -16,7 +50,7 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
         }
 
-        const { prompt, idolType, conceptStyle, conceptPrompt, imageCount: requestedCount } = body;
+        const { prompt, idolType, conceptStyle, conceptPrompt, imageCount: requestedCount, stylistAdvice } = body;
 
         if (!prompt || typeof prompt !== "string") {
             return NextResponse.json(
@@ -39,57 +73,30 @@ export async function POST(request: Request) {
             );
         }
 
-        // Build natural language prompt for flux-2/turbo
+        // Build photorealistic fancam-style prompt for flux-2/turbo
         const idolLabel = idolType || "K-POP idol";
         const conceptKeywords = conceptPrompt || "";
         const conceptMood = conceptStyle || "charismatic, stylish, energetic";
-
-        // Pose / angle / framing pools for variation
-        const POSES = [
-            "standing confident with one hand on hip",
-            "walking forward mid-stride, dynamic motion",
-            "sitting on a tall stool, legs crossed elegantly",
-            "leaning against a wall, arms folded, cool attitude",
-            "turning to look over shoulder, back partially visible",
-            "kneeling on one knee, dramatic low angle",
-            "dancing mid-move, arms extended, hair flowing",
-            "hands in pockets, relaxed swagger",
-            "pointing at camera with a wink",
-            "arms raised above head, powerful stage presence",
-        ];
-        const ANGLES = [
-            "eye level shot",
-            "slight low angle, looking up",
-            "high angle looking down, dramatic",
-            "three-quarter view from the left",
-            "three-quarter view from the right",
-            "straight frontal shot",
-        ];
-        const FRAMINGS = [
-            "full body shot showing head to toe",
-            "full body vertical composition",
-            "wide shot with environment visible",
-            "medium-full shot from knees up",
-        ];
 
         const pick = <T,>(arr: T[]) => arr[Math.floor(Math.random() * arr.length)];
 
         // Generate 1-4 images based on requested count
         const count = Math.min(Math.max(Number(requestedCount) || 1, 1), 4);
 
-        const buildPrompt = () => {
-            const pose = pick(POSES);
-            const angle = pick(ANGLES);
-            const framing = pick(FRAMINGS);
+        // Extract style keywords from Korean stylist advice for prompt enhancement
+        const adviceKeywords = stylistAdvice ? extractStyleKeywords(stylistAdvice) : "";
 
+        const buildPrompt = () => {
             return [
-                `A ${idolLabel} wearing a K-pop stage costume, ${prompt}.`,
-                conceptKeywords ? `Style: ${conceptKeywords}.` : "",
+                `Live concert fancam photo of a real Korean ${idolLabel} performing on stage, wearing ${prompt}.`,
+                conceptKeywords ? `${conceptKeywords} concept.` : "",
                 `Mood: ${conceptMood}.`,
-                `${framing}, ${pose}, ${angle}.`,
-                "Broadcast photography, telephoto 85-135mm f/2.8 lens, sharp focus on face and outfit.",
-                "Vibrant stage lighting, rim lighting, bright backlights, bokeh background.",
-                "Vivid color saturation, soft glow on skin, blurred geometric stage lights in background.",
+                adviceKeywords ? `Style details: ${adviceKeywords}.` : "",
+                "Korean beauty standards, k-pop makeup, glitters, colored contact lenses.",
+                "Full body shot from head to shoes.",
+                "Real person, natural skin texture, real hair.",
+                "Concert stage with LED panels and moving lights in background.",
+                "Telephoto lens, 4K fancam quality, photorealistic.",
             ].filter(Boolean).join(" ");
         };
 
@@ -100,7 +107,7 @@ export async function POST(request: Request) {
             return fal.subscribe("fal-ai/flux-2/turbo", {
                 input: {
                     prompt: variedPrompt,
-                    image_size: "square_hd" as const,
+                    image_size: "portrait_4_3" as const,
                     num_inference_steps: 8,
                     guidance_scale: 3.5,
                     seed: Math.floor(Math.random() * 2147483647),

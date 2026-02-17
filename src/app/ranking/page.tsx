@@ -14,6 +14,7 @@ interface Design {
     ownerHandle: string;
     concept: string;
     boostCount?: number;
+    totalScore?: number;
     rank?: number;
 }
 
@@ -39,7 +40,7 @@ export default function RankingPage() {
     return (
         <div className="bg-white text-black font-display min-h-screen pb-24 relative">
             <Header
-                pageTitle="랭킹"
+                pageTitle="명예의 전당"
                 tabs={
                     <div className="flex gap-6 overflow-x-auto no-scrollbar">
                         <button className="pb-3 text-[15px] font-bold text-black border-b-2 border-black whitespace-nowrap">주간 베스트</button>
@@ -49,7 +50,7 @@ export default function RankingPage() {
                 }
             />
 
-            <main className="max-w-md mx-auto pt-[200px] px-6">
+            <main className="max-w-md mx-auto pt-2 px-6">
                 {loading ? (
                     <div className="flex justify-center py-20">
                         <div className="w-5 h-5 border-2 border-gray-100 border-t-black rounded-full animate-spin"></div>
@@ -64,7 +65,7 @@ export default function RankingPage() {
                                         {index + 1}
                                     </div>
                                     <div className="relative w-16 h-20 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
-                                        <Image src={imgSrc} alt={`Design by ${design.ownerHandle}`} fill className="object-cover" />
+                                        <Image src={imgSrc} alt={`Design by ${design.ownerHandle}`} fill className="object-cover" unoptimized />
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <h3 className="text-[14px] font-bold text-black truncate group-hover:text-primary transition-colors">{design.concept || "Stage Outfit"}</h3>
@@ -74,12 +75,13 @@ export default function RankingPage() {
                                                 <span className="material-symbols-outlined text-[14px] text-red-500 fill-current">favorite</span>
                                                 <span className="text-[12px] font-bold text-gray-600">{design.likeCount || 0}</span>
                                             </div>
-                                            {design.boostCount ? (
-                                                <div className="flex items-center gap-1">
-                                                    <span className="material-symbols-outlined text-[14px] text-superstar">star</span>
-                                                    <span className="text-[12px] font-bold text-gray-600">{design.boostCount}</span>
-                                                </div>
-                                            ) : null}
+                                            <div className="flex items-center gap-1">
+                                                <span className="material-symbols-outlined text-[14px] text-superstar">star</span>
+                                                <span className="text-[12px] font-bold text-gray-600">{design.boostCount || 0}</span>
+                                            </div>
+                                            <span className="text-[11px] font-black text-black">
+                                                점수 {(design.totalScore || 0).toLocaleString()}
+                                            </span>
                                         </div>
                                     </div>
                                 </Link>
@@ -94,8 +96,8 @@ export default function RankingPage() {
                 )}
 
                 <footer className="mt-12 border-t border-gray-100 pt-6 pb-8 text-center">
-                    <p className="text-[11px] text-gray-400 font-medium">Phase 1 랭킹 산정 기준: Like 수 (높은 순)</p>
-                    <p className="text-[10px] text-gray-300 mt-1">Boost 투표는 Phase 2에서 도입됩니다.</p>
+                    <p className="text-[11px] text-gray-400 font-medium">랭킹 점수 = 좋아요 + (슈퍼스타 × 10)</p>
+                    <p className="text-[10px] text-gray-300 mt-1">슈퍼스타는 계정당 주 1회 사용 가능합니다.</p>
                 </footer>
             </main>
 

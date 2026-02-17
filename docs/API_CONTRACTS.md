@@ -285,7 +285,7 @@ Retrieves the current or specified month's ranking.
 {
   "success": true,
   "month": "2026-02",
-  "scoreFormula": "likeCount",
+  "scoreFormula": "likeCount + (boostCount * 10)",
   "daysRemaining": 17,
   "rankings": [
     {
@@ -295,11 +295,62 @@ Retrieves the current or specified month's ranking.
       "imageUrl": "https://...",
       "likeCount": 142,
       "boostCount": 0,
-      "totalScore": 142
+      "totalScore": 162
     }
   ],
   "totalEntries": 50,
   "winner": null
+}
+```
+
+---
+
+### `GET /api/boost/[designId]`
+
+Checks current user's Superstar availability for a design.
+
+**Auth:** Optional (uid query required for personalized result)
+
+**Response (200):**
+```json
+{
+  "boosted": true,
+  "userBoostCount": 3,
+  "canBoost": false,
+  "nextAvailableAt": "2026-02-22T03:30:00.000Z"
+}
+```
+
+---
+
+### `POST /api/boost/[designId]`
+
+Submits one Superstar vote.
+
+**Auth:** Required
+
+**Policy:**
+- 1 user can send Superstar only once every 7 days (global per-account limit).
+- Ranking score weight: `1 Superstar = 10 Likes`.
+
+**Response (200):**
+```json
+{
+  "boosted": true,
+  "boostAdded": 1,
+  "boostCount": 21,
+  "userBoostCount": 2,
+  "canBoost": false,
+  "nextAvailableAt": "2026-02-22T03:30:00.000Z"
+}
+```
+
+**Error (429 — Cooldown):**
+```json
+{
+  "error": "슈퍼스타는 주 1회만 보낼 수 있어요.",
+  "code": "BOOST_COOLDOWN",
+  "nextAvailableAt": "2026-02-22T03:30:00.000Z"
 }
 ```
 
@@ -474,6 +525,7 @@ All errors follow a consistent format:
 | 404         | `NOT_FOUND`       | Resource not found                |
 | 409         | `CONFLICT`        | Duplicate (e.g., already voted)   |
 | 429         | `RATE_LIMITED`    | Daily limit exceeded              |
+| 429         | `BOOST_COOLDOWN`  | Superstar weekly cooldown active  |
 | 500         | `INTERNAL_ERROR`  | Server error                      |
 
 ---

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
 import { useAuth } from "@/context/AuthContext";
@@ -14,7 +15,12 @@ interface Post {
     authorPhoto: string | null;
     likeCount: number;
     isAdmin: boolean;
-    createdAt: { _seconds?: number; seconds?: number } | null;
+    createdAt: { _seconds?: number; seconds?: number } | string | null;
+    sourceType?: string;
+    designId?: string;
+    designOwnerHandle?: string;
+    designConcept?: string;
+    designImageUrl?: string;
 }
 
 export default function CommunityPage() {
@@ -90,6 +96,19 @@ export default function CommunityPage() {
 
     const formatTime = (ts: Post["createdAt"]) => {
         if (!ts) return "";
+        if (typeof ts === "string") {
+            const date = new Date(ts);
+            if (Number.isNaN(date.getTime())) return "";
+            const now = new Date();
+            const diff = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+            if (diff < 60) return "방금 전";
+            if (diff < 3600) return `${Math.floor(diff / 60)}분 전`;
+            if (diff < 86400) return `${Math.floor(diff / 3600)}시간 전`;
+            if (diff < 604800) return `${Math.floor(diff / 86400)}일 전`;
+            return `${date.getMonth() + 1}/${date.getDate()}`;
+        }
+
         const seconds = ts._seconds || ts.seconds || 0;
         if (!seconds) return "";
         const date = new Date(seconds * 1000);
@@ -105,9 +124,9 @@ export default function CommunityPage() {
 
     return (
         <div className="bg-white text-black antialiased pb-24 min-h-screen font-korean">
-            <Header pageTitle="커뮤니티" />
+            <Header pageTitle="커뮤니티" subtitle="팬들과 자유롭게 소통하세요" />
 
-            <main className="max-w-md mx-auto pt-[140px] px-5 space-y-4">
+            <main className="max-w-md mx-auto pt-4 px-5 space-y-4">
                 {/* Compose Button */}
                 {!showCompose ? (
                     <button
@@ -209,6 +228,34 @@ export default function CommunityPage() {
                                             <p className="text-[14px] text-gray-800 leading-relaxed whitespace-pre-wrap break-words">
                                                 {post.content}
                                             </p>
+                                            {post.sourceType === "design-comment" && post.designId && (
+                                                <Link
+                                                    href={`/design/${post.designId}`}
+                                                    className="mt-3 block border border-gray-100 rounded-xl p-2.5 hover:bg-gray-50 transition-colors"
+                                                >
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="relative w-14 h-14 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                                                            <Image
+                                                                src={post.designImageUrl || "/images/placeholder.png"}
+                                                                alt={post.designConcept || "Design preview"}
+                                                                fill
+                                                                className="object-cover"
+                                                                sizes="56px"
+                                                                unoptimized
+                                                            />
+                                                        </div>
+                                                        <div className="min-w-0">
+                                                            <p className="text-[11px] text-gray-400 font-semibold">스타일픽 댓글</p>
+                                                            <p className="text-[13px] font-bold text-black truncate">
+                                                                {post.designConcept || "Stage Outfit"}
+                                                            </p>
+                                                            <p className="text-[11px] text-gray-500 truncate">
+                                                                @{post.designOwnerHandle || "designer"}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </Link>
+                                            )}
 
                                             {/* Actions */}
                                             <div className="flex items-center gap-5 mt-3">

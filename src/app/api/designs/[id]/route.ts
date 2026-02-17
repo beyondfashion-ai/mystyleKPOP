@@ -24,6 +24,7 @@ function safeDesign(id: string, data: Record<string, unknown>) {
     ownerUid: data.ownerUid,
     ownerHandle: data.ownerHandle,
     concept: data.concept,
+    groupTag: data.groupTag || null,
     imageUrls: data.imageUrls,
     representativeIndex: data.representativeIndex,
     likeCount: data.likeCount || 0,
@@ -32,6 +33,8 @@ function safeDesign(id: string, data: Record<string, unknown>) {
     publishedAt: data.publishedAt,
     createdAt: data.createdAt,
     status: data.status,
+    stylistFeedbacks: data.stylistFeedbacks || [],
+    selectedStylistId: data.selectedStylistId || null,
   };
 }
 
@@ -52,7 +55,7 @@ export async function GET(
       const design = safeDesign(snap.id, snap.data() as Record<string, unknown>);
 
       // Creator's other designs
-      let creatorDesigns: { id: string; imageUrls?: unknown }[] = [];
+      let creatorDesigns: { id: string; imageUrls?: unknown; likeCount: number; boostCount: number }[] = [];
       try {
         const cSnap = await adminDb
           .collection("designs")
@@ -64,11 +67,16 @@ export async function GET(
         creatorDesigns = cSnap.docs
           .filter((d) => d.id !== id)
           .slice(0, 4)
-          .map((d) => ({ id: d.id, imageUrls: d.data().imageUrls }));
+          .map((d) => ({
+            id: d.id,
+            imageUrls: d.data().imageUrls,
+            likeCount: Number(d.data().likeCount || 0),
+            boostCount: Number(d.data().boostCount || 0),
+          }));
       } catch { /* index may not exist */ }
 
       // Recommended
-      let recommended: { id: string; imageUrls?: unknown }[] = [];
+      let recommended: { id: string; imageUrls?: unknown; likeCount: number; boostCount: number }[] = [];
       try {
         const rSnap = await adminDb
           .collection("designs")
@@ -79,7 +87,12 @@ export async function GET(
         recommended = rSnap.docs
           .filter((d) => d.id !== id)
           .slice(0, 3)
-          .map((d) => ({ id: d.id, imageUrls: d.data().imageUrls }));
+          .map((d) => ({
+            id: d.id,
+            imageUrls: d.data().imageUrls,
+            likeCount: Number(d.data().likeCount || 0),
+            boostCount: Number(d.data().boostCount || 0),
+          }));
       } catch { /* index may not exist */ }
 
       return NextResponse.json({ design, creatorDesigns, recommended });
@@ -99,12 +112,22 @@ export async function GET(
         const creatorDesigns = designs
           .filter((d) => d.ownerUid === design.ownerUid && d.id !== id && d.visibility === "public")
           .slice(0, 4)
-          .map((d) => ({ id: d.id as string, imageUrls: d.imageUrls }));
+          .map((d) => ({
+            id: d.id as string,
+            imageUrls: d.imageUrls,
+            likeCount: Number(d.likeCount || 0),
+            boostCount: Number(d.boostCount || 0),
+          }));
         const recommended = designs
           .filter((d) => d.id !== id && d.visibility === "public")
           .sort((a, b) => ((b.likeCount as number) || 0) - ((a.likeCount as number) || 0))
           .slice(0, 3)
-          .map((d) => ({ id: d.id as string, imageUrls: d.imageUrls }));
+          .map((d) => ({
+            id: d.id as string,
+            imageUrls: d.imageUrls,
+            likeCount: Number(d.likeCount || 0),
+            boostCount: Number(d.boostCount || 0),
+          }));
         return NextResponse.json({ design, creatorDesigns, recommended });
       } catch {
         return NextResponse.json({ error: "Design not found" }, { status: 404 });
@@ -119,7 +142,7 @@ export async function GET(
 
     const design = safeDesign(docSnap.id, docSnap.data() as Record<string, unknown>);
 
-    let creatorDesigns: { id: string; imageUrls?: unknown }[] = [];
+    let creatorDesigns: { id: string; imageUrls?: unknown; likeCount: number; boostCount: number }[] = [];
     try {
       const cQuery = query(
         collection(db, "designs"),
@@ -132,10 +155,15 @@ export async function GET(
       creatorDesigns = cSnap.docs
         .filter((d) => d.id !== id)
         .slice(0, 4)
-        .map((d) => ({ id: d.id, imageUrls: d.data().imageUrls }));
+        .map((d) => ({
+          id: d.id,
+          imageUrls: d.data().imageUrls,
+          likeCount: Number(d.data().likeCount || 0),
+          boostCount: Number(d.data().boostCount || 0),
+        }));
     } catch { /* skip */ }
 
-    let recommended: { id: string; imageUrls?: unknown }[] = [];
+    let recommended: { id: string; imageUrls?: unknown; likeCount: number; boostCount: number }[] = [];
     try {
       const rQuery = query(
         collection(db, "designs"),
@@ -147,7 +175,12 @@ export async function GET(
       recommended = rSnap.docs
         .filter((d) => d.id !== id)
         .slice(0, 3)
-        .map((d) => ({ id: d.id, imageUrls: d.data().imageUrls }));
+        .map((d) => ({
+          id: d.id,
+          imageUrls: d.data().imageUrls,
+          likeCount: Number(d.data().likeCount || 0),
+          boostCount: Number(d.data().boostCount || 0),
+        }));
     } catch { /* skip */ }
 
     return NextResponse.json({ design, creatorDesigns, recommended });

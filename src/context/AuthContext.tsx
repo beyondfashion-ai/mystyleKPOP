@@ -6,6 +6,7 @@ import {
     User,
     GoogleAuthProvider,
     signInWithPopup,
+    signInWithRedirect,
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
     updateProfile,
@@ -16,7 +17,7 @@ import { auth } from "@/lib/firebase";
 interface AuthContextType {
     user: User | null;
     loading: boolean;
-    signInWithGoogle: () => Promise<void>;
+    signInWithGoogle: () => Promise<{ error?: string }>;
     signInWithEmail: (email: string, password: string) => Promise<{ error?: string }>;
     signUpWithEmail: (email: string, password: string, displayName?: string) => Promise<{ error?: string }>;
     logout: () => Promise<void>;
@@ -25,7 +26,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({
     user: null,
     loading: true,
-    signInWithGoogle: async () => { },
+    signInWithGoogle: async () => ({}),
     signInWithEmail: async () => ({}),
     signUpWithEmail: async () => ({}),
     logout: async () => { },
@@ -50,16 +51,40 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return () => unsubscribe();
     }, []);
 
-    const signInWithGoogle = async () => {
+    const signInWithGoogle = async (): Promise<{ error?: string }> => {
         if (!auth) {
-            console.warn("Firebase Auth is unavailable.");
-            return;
+            return { error: "Auth is not configured. Check environment variables." };
         }
         const provider = new GoogleAuthProvider();
         try {
             await signInWithPopup(auth, provider);
+            return {};
         } catch (error) {
             console.error("Error signing in with Google", error);
+            const code = (error as { code?: string })?.code || "";
+            if (code === "auth/popup-closed-by-user") {
+                return { error: "Google sign-in was cancelled." };
+            }
+            if (code === "auth/cancelled-popup-request") {
+                return { error: "Another sign-in popup is already open. Please finish that one first." };
+            }
+            if (code === "auth/popup-blocked") {
+                await signInWithRedirect(auth, provider);
+                return {};
+            }
+            if (code === "auth/unauthorized-domain") {
+                return { error: "This domain is not allowed in Firebase Auth settings." };
+            }
+            if (code === "auth/operation-not-allowed") {
+                return { error: "Google provider is disabled in Firebase Authentication settings." };
+            }
+            if (code === "auth/network-request-failed") {
+                return { error: "Network request failed. Check your connection and try again." };
+            }
+            if (code === "auth/invalid-api-key") {
+                return { error: "Invalid Firebase API key in NEXT_PUBLIC_FIREBASE_API_KEY." };
+            }
+            return { error: `Google sign-in failed (${code || "unknown"}).` };
         }
     };
 

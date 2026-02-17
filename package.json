@@ -19,6 +19,7 @@
   "license": "ISC",
   "dependencies": {
     "@fal-ai/client": "^1.9.1",
+    "@google/generative-ai": "^0.24.1",
     "@paypal/react-paypal-js": "^8.9.2",
     "@tailwindcss/postcss": "^4.1.18",
     "@types/node": "^25.2.3",

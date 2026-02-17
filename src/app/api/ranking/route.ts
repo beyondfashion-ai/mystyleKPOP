@@ -5,7 +5,6 @@ import {
   collection,
   getDocs,
   query,
-  orderBy,
   limit,
   where,
 } from "firebase/firestore";
@@ -13,13 +12,18 @@ import {
 export const dynamic = "force-dynamic";
 
 function stripPrivate(id: string, data: Record<string, unknown>, rank: number) {
+  const likeCount = Number(data.likeCount || 0);
+  const boostCount = Number(data.boostCount || 0);
+  const totalScore = likeCount + boostCount * 10;
+
   return {
     rank,
     id,
     imageUrls: data.imageUrls,
     imageUrl: data.imageUrl,
-    likeCount: data.likeCount || 0,
-    boostCount: data.boostCount || 0,
+    likeCount,
+    boostCount,
+    totalScore,
     ownerHandle: data.ownerHandle,
     concept: data.concept,
     createdAt: data.createdAt,
@@ -33,13 +37,20 @@ export async function GET() {
       const snap = await adminDb
         .collection("designs")
         .where("visibility", "==", "public")
-        .orderBy("likeCount", "desc")
-        .limit(50)
         .get();
 
-      const rankings = snap.docs.map((d, i) =>
-        stripPrivate(d.id, d.data() as Record<string, unknown>, i + 1)
-      );
+      const rows = snap.docs.map((d) => ({ id: d.id, data: d.data() as Record<string, unknown> }));
+      rows.sort((a, b) => {
+        const aLike = Number(a.data.likeCount || 0);
+        const bLike = Number(b.data.likeCount || 0);
+        const aBoost = Number(a.data.boostCount || 0);
+        const bBoost = Number(b.data.boostCount || 0);
+        const aScore = aLike + aBoost * 10;
+        const bScore = bLike + bBoost * 10;
+        if (bScore !== aScore) return bScore - aScore;
+        return bLike - aLike;
+      });
+      const rankings = rows.slice(0, 50).map((row, i) => stripPrivate(row.id, row.data, i + 1));
       return NextResponse.json({ rankings });
     }
 
@@ -50,13 +61,21 @@ export async function GET() {
     const q = query(
       collection(db, "designs"),
       where("visibility", "==", "public"),
-      orderBy("likeCount", "desc"),
       limit(50)
     );
     const snap = await getDocs(q);
-    const rankings = snap.docs.map((d, i) =>
-      stripPrivate(d.id, d.data() as Record<string, unknown>, i + 1)
-    );
+    const rows = snap.docs.map((d) => ({ id: d.id, data: d.data() as Record<string, unknown> }));
+    rows.sort((a, b) => {
+      const aLike = Number(a.data.likeCount || 0);
+      const bLike = Number(b.data.likeCount || 0);
+      const aBoost = Number(a.data.boostCount || 0);
+      const bBoost = Number(b.data.boostCount || 0);
+      const aScore = aLike + aBoost * 10;
+      const bScore = bLike + bBoost * 10;
+      if (bScore !== aScore) return bScore - aScore;
+      return bLike - aLike;
+    });
+    const rankings = rows.slice(0, 50).map((row, i) => stripPrivate(row.id, row.data, i + 1));
 
     return NextResponse.json({ rankings });
   } catch (error) {

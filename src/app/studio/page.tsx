@@ -2,25 +2,87 @@
 
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import BottomNav from "@/components/BottomNav";
 import Header from "@/components/Header";
+import CheeringBadge from "@/components/CheeringBadge";
+import AdBanner from "@/components/ads/AdBanner";
+import StylistFeedbackCard from "@/components/StylistFeedbackCard";
+import type { StylistFeedback } from "@/lib/stylist-personas";
+
+// Extract actionable style keywords from stylist advice and reformat as prompt text
+function extractStyleDirections(advice: string): string {
+  const found: string[] = [];
+
+  // Material / texture terms
+  const materials = [
+    "홀로그래픽 오간자", "홀로그래픽 PVC", "리퀴드 메탈", "매트 카프스킨",
+    "홀로그래픽", "크롬", "메탈릭", "새틴", "시어", "메쉬", "오간자",
+    "벨벳", "데님", "실크", "레더", "카프스킨", "램스킨", "PVC", "트위드",
+    "시퀸", "글리터", "네오프렌", "오가닉 코튼", "리넨", "나일론",
+    "워싱 데님", "로우 데님", "합성 레더",
+  ];
+
+  // Silhouette / fit
+  const fits = [
+    "오버사이즈 핏", "크롭 상의", "와이드 하의", "슬림 핏", "A라인",
+    "오버사이즈", "크롭", "와이드", "슬림", "타이트", "루즈",
+    "스트레이트", "플레어", "스키니", "박시", "드롭숄더",
+    "파워 숄더", "퍼프 슬리브",
+  ];
+
+  // Accessories
+  const accessories = [
+    "청키 체인 벨트", "체인 벨트", "빈티지 체인 벨트",
+    "초커", "부츠", "하이힐", "이어링", "뱅글", "브로치", "벨트", "글러브",
+  ];
+
+  // Color terms
+  const colors = [
+    "핫핑크", "라임", "네온 그린", "네온", "파스텔", "올블랙",
+    "모노크롬", "톤온톤", "새틴 레드",
+  ];
+
+  // Check longer phrases first (to avoid partial matches)
+  const allTerms = [...materials, ...fits, ...accessories, ...colors];
+  for (const term of allTerms) {
+    if (advice.includes(term) && !found.some((f) => f.includes(term) || term.includes(f))) {
+      found.push(term);
+    }
+  }
+
+  // Extract measurement patterns (e.g., "3cm", "1.5cm")
+  const measurements = advice.match(/\d+(?:\.\d+)?cm/g) || [];
+
+  // Extract "X 기장" patterns
+  const lengthMatch = advice.match(/([가-힣]+)\s*기장/g) || [];
+
+  // Extract proportion patterns (e.g., "8대2 비율", "1.2배")
+  const proportions = advice.match(/\d+(?:대\d+)?\s*비율|\d+(?:\.\d+)?배/g) || [];
+
+  const extras = [...measurements, ...lengthMatch, ...proportions].filter(
+    (e) => !found.some((f) => f.includes(e))
+  );
+
+  const all = [...found, ...extras].slice(0, 8);
+  return all.join(", ");
+}
 
 const IDOL_TYPES = [
   { id: "girlgroup", label: "걸그룹", prompt: "K-POP girl group", icon: "👩‍🎤" },
-  { id: "boygroup", label: "보이그룹", prompt: "K-POP boy group", icon: "🧑‍🎤" },
-  { id: "solo", label: "솔로", prompt: "K-POP solo artist", icon: "🎤" },
+  { id: "boygroup", label: "보이그룹", prompt: "K-POP boy group", icon: "🕺" },
+  // { id: "solo", label: "솔로", prompt: "K-POP solo artist", icon: "🎤" },
 ];
 
 const CONCEPT_STYLES = [
-  { id: "cyber", label: "사이버펑크", color: "from-violet-600 via-purple-700 to-blue-900", prompt: "cyberpunk, futuristic, metallic textures, tech-wear", icon: "🔮", mood: "Futuristic, electric, digital" },
-  { id: "y2k", label: "Y2K", color: "from-pink-400 via-fuchsia-300 to-yellow-300", prompt: "Y2K retro, glossy, playful accessories, chunky jewelry", icon: "✨", mood: "Playful, nostalgic, cute" },
-  { id: "highteen", label: "하이틴", color: "from-sky-400 via-cyan-300 to-pink-200", prompt: "high teen, youthful, school-inspired, preppy style", icon: "🎀", mood: "Youthful, bright, fresh" },
-  { id: "sexy", label: "섹시", color: "from-rose-600 via-red-500 to-pink-400", prompt: "sexy, alluring, body-hugging silhouette, sheer fabrics, confident", icon: "💋", mood: "Sultry, confident, glamorous" },
-  { id: "suit", label: "수트", color: "from-slate-700 via-gray-600 to-slate-800", prompt: "tailored suit, sharp, formal, structured shoulders, power look", icon: "🤵", mood: "Sharp, powerful, refined" },
-  { id: "street", label: "스트릿", color: "from-gray-600 via-gray-800 to-gray-950", prompt: "street fashion, urban, oversized, hip-hop inspired, casual", icon: "🧢", mood: "Urban, cool, casual" },
-  { id: "girlcrush", label: "걸크러쉬", color: "from-red-800 via-rose-900 to-gray-900", prompt: "girl crush, powerful, leather, bold, edgy, fierce", icon: "🔥", mood: "Powerful, bold, fierce", girlOnly: true },
+  { id: "cyber", label: "미래지향적", color: "from-violet-600 via-purple-700 to-blue-900", prompt: "cyberpunk futuristic", icon: "🌌", mood: "Futuristic, electric" },
+  { id: "y2k", label: "Y2K", color: "from-pink-400 via-fuchsia-300 to-yellow-300", prompt: "Y2K retro", icon: "✨", mood: "Playful, nostalgic" },
+  { id: "highteen", label: "하이틴", color: "from-sky-400 via-cyan-300 to-pink-200", prompt: "high teen preppy", icon: "🎀", mood: "Youthful, bright" },
+  { id: "sexy", label: "섹시", color: "from-rose-600 via-red-500 to-pink-400", prompt: "sexy glamorous", icon: "💋", mood: "Sultry, confident" },
+  { id: "suit", label: "수트", color: "from-slate-700 via-gray-600 to-slate-800", prompt: "tailored suit formal", icon: "🤵", mood: "Sharp, powerful" },
+  { id: "street", label: "스트릿", color: "from-gray-600 via-gray-800 to-gray-950", prompt: "streetwear urban", icon: "🧢", mood: "Urban, cool" },
+  { id: "girlcrush", label: "걸크러쉬", color: "from-red-800 via-rose-900 to-gray-900", prompt: "girl crush edgy", icon: "🔥", mood: "Powerful, fierce", girlOnly: true },
 ];
 
 // 해시태그 — 갤러리 HASHTAG_FILTERS의 concept 값과 연동
@@ -38,15 +100,34 @@ const HASHTAGS = [
 ];
 
 const IMAGE_COUNT_OPTIONS = [1, 2, 4];
+const STUDIO_LOADING_AD_SLOT = process.env.NEXT_PUBLIC_ADSENSE_SLOT_STUDIO_LOADING || "demo-studio-loading-slot";
+const AD_DWELL_STORAGE_KEY = "studio_ad_dwell_count";
+const STUDIO_ENTRY_INTRO_STORAGE_KEY = "studio_entry_intro_seen_v1";
+const STUDIO_ENTRY_INTRO_MS = 3150;
+const STUDIO_ENTRY_INTRO_EXIT_MS = 720;
+const ONBOARDING_GENERATIONS = 3;
+const BASE_MIN_AD_DWELL_MS = 7000;
+const SHORT_MIN_AD_DWELL_MS = 2500;
+const EXTRA_DWELL_EVERY_N = 3;
+const EXTRA_DWELL_MS = 3000;
 
-// 생성 중 로딩 메시지
-const GENERATION_LOADING_MESSAGES = [
-  "실루엣과 스테이지 무드를 잡고 있어요...",
-  "패브릭 텍스처, 컬러, 광택을 조합 중...",
-  "퍼포먼스에 어울리는 디테일을 구성 중...",
-  "악세서리를 매치하고 컨셉을 다듬는 중...",
-  "마지막 터치: 더 대담하고 선명하게...",
+// 생성 중 로딩 메시지 + 아이콘
+const GENERATION_LOADING_STEPS = [
+  { msg: "실루엣과 스테이지 무드를 잡고 있어요...", icon: "checkroom" },
+  { msg: "패브릭 텍스처, 컬러, 광택을 조합 중...", icon: "palette" },
+  { msg: "퍼포먼스에 어울리는 디테일을 구성 중...", icon: "design_services" },
+  { msg: "악세서리를 매치하고 컨셉을 다듬는 중...", icon: "diamond" },
+  { msg: "마지막 터치: 더 대담하고 선명하게...", icon: "auto_awesome" },
 ];
+
+function getAdDwellTargetMs(generationCount: number) {
+  const base =
+    generationCount <= ONBOARDING_GENERATIONS
+      ? BASE_MIN_AD_DWELL_MS
+      : SHORT_MIN_AD_DWELL_MS;
+  const bonus = generationCount % EXTRA_DWELL_EVERY_N === 0 ? EXTRA_DWELL_MS : 0;
+  return base + bonus;
+}
 
 export default function StudioPage() {
   const { user } = useAuth();
@@ -62,6 +143,9 @@ export default function StudioPage() {
   const [showToast, setShowToast] = useState(false);
   const [selectedHashtags, setSelectedHashtags] = useState<string[]>([]);
 
+  // Preview section ref for auto-scroll
+  const previewRef = useRef<HTMLDivElement>(null);
+
   // Fullscreen preview
   const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
 
@@ -71,10 +155,99 @@ export default function StudioPage() {
   const [publishDesc, setPublishDesc] = useState("");
   const [isPublishing, setIsPublishing] = useState(false);
 
+  // Group Tag State
+  const [groupTag, setGroupTag] = useState("");
+  const [groupTagSuggestions, setGroupTagSuggestions] = useState<{ displayName: string; count: number }[]>([]);
+  const [showTagSuggestions, setShowTagSuggestions] = useState(false);
+
+  // Stylist Feedback State
+  const [stylistFeedbacks, setStylistFeedbacks] = useState<StylistFeedback[]>([]);
+  const [selectedStylistId, setSelectedStylistId] = useState<string | null>(null);
+  const [isFeedbackLoading, setIsFeedbackLoading] = useState(false);
+
+  // Advice Regeneration State
+  const [showAdviceModal, setShowAdviceModal] = useState(false);
+  const [adviceModalPrompt, setAdviceModalPrompt] = useState("");
+  const [adviceModalFeedback, setAdviceModalFeedback] = useState("");
+  const [adviceModalStylist, setAdviceModalStylist] = useState("");
+  const autoPublishRef = useRef(false);
+
   // Publish Success State
   const [showPublishSuccess, setShowPublishSuccess] = useState(false);
   const [publishedDesignId, setPublishedDesignId] = useState<string | null>(null);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [showEntryIntro, setShowEntryIntro] = useState(false);
+  const [entryIntroPhase, setEntryIntroPhase] = useState<"enter" | "exit">("enter");
+  const entryIntroExitTimerRef = useRef<number | null>(null);
+  const entryIntroHideTimerRef = useRef<number | null>(null);
+
+  const closeEntryIntro = (exitMs = STUDIO_ENTRY_INTRO_EXIT_MS) => {
+    setEntryIntroPhase("exit");
+    if (entryIntroHideTimerRef.current !== null) {
+      window.clearTimeout(entryIntroHideTimerRef.current);
+    }
+    entryIntroHideTimerRef.current = window.setTimeout(() => {
+      setShowEntryIntro(false);
+    }, exitMs);
+  };
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    let alreadySeen = false;
+    try {
+      alreadySeen = localStorage.getItem(STUDIO_ENTRY_INTRO_STORAGE_KEY) === "1";
+    } catch {
+      alreadySeen = false;
+    }
+
+    if (alreadySeen) return;
+
+    setShowEntryIntro(true);
+    setEntryIntroPhase("enter");
+    try {
+      localStorage.setItem(STUDIO_ENTRY_INTRO_STORAGE_KEY, "1");
+    } catch {
+      // Ignore storage write failures and still show once per mount.
+    }
+
+    const prefersReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    const introDuration = prefersReducedMotion ? 700 : STUDIO_ENTRY_INTRO_MS;
+    const exitDuration = prefersReducedMotion ? 180 : STUDIO_ENTRY_INTRO_EXIT_MS;
+
+    entryIntroExitTimerRef.current = window.setTimeout(() => {
+      setEntryIntroPhase("exit");
+      entryIntroHideTimerRef.current = window.setTimeout(() => {
+        setShowEntryIntro(false);
+      }, exitDuration);
+    }, Math.max(0, introDuration - exitDuration));
+
+    return () => {
+      if (entryIntroExitTimerRef.current !== null) {
+        window.clearTimeout(entryIntroExitTimerRef.current);
+      }
+      if (entryIntroHideTimerRef.current !== null) {
+        window.clearTimeout(entryIntroHideTimerRef.current);
+      }
+    };
+  }, []);
+
+  // Fetch tag suggestions when typing group tag
+  useEffect(() => {
+    if (!groupTag.trim() || groupTag.trim().length < 1) {
+      setGroupTagSuggestions([]);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/tags/search?q=${encodeURIComponent(groupTag.trim())}&limit=5`);
+        const data = await res.json();
+        setGroupTagSuggestions(data.tags || []);
+      } catch {
+        setGroupTagSuggestions([]);
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [groupTag]);
 
   // Reset girlcrush when switching away from girlgroup
   useEffect(() => {
@@ -90,7 +263,7 @@ export default function StudioPage() {
     }
     const interval = setInterval(() => {
       setLoadingMessageIndex((prev) =>
-        prev < GENERATION_LOADING_MESSAGES.length - 1 ? prev + 1 : prev
+        prev < GENERATION_LOADING_STEPS.length - 1 ? prev + 1 : prev
       );
     }, 3000);
     return () => clearInterval(interval);
@@ -109,10 +282,45 @@ export default function StudioPage() {
     }
   };
 
+  const fetchStylistFeedback = async (firstImageUrl?: string) => {
+    setIsFeedbackLoading(true);
+    setStylistFeedbacks([]);
+    setSelectedStylistId(null);
+
+    const selectedIdol = IDOL_TYPES.find((t) => t.id === idolType);
+    const selectedConcept = CONCEPT_STYLES.find((c) => c.id === conceptStyle);
+
+    try {
+      const res = await fetch("/api/stylist/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          idolType: selectedIdol?.label || idolType,
+          concept: selectedConcept?.label || conceptStyle || "general",
+          keywords: selectedHashtags.join(", "),
+          imageUrl: firstImageUrl || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (data.feedbacks?.length) {
+        setStylistFeedbacks(data.feedbacks);
+        // Auto-select the first persona
+        setSelectedStylistId(data.feedbacks[0].personaId);
+      }
+    } catch (err) {
+      console.error("Stylist feedback error:", err);
+    } finally {
+      setIsFeedbackLoading(false);
+    }
+  };
+
   const fullPrompt = prompt.trim();
 
-  const handleGenerate = async () => {
-    if (!fullPrompt) return;
+  const handleGenerate = async (stylistAdvice?: string, overridePrompt?: string) => {
+    const effectivePrompt = (overridePrompt || fullPrompt).trim();
+    if (!effectivePrompt) return;
+    const generateStartedAt = Date.now();
+    const isAdviceRegen = autoPublishRef.current;
 
     setIsGenerating(true);
     setGeneratedImages([]);
@@ -127,11 +335,12 @@ export default function StudioPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          prompt: fullPrompt,
+          prompt: effectivePrompt,
           idolType: selectedIdol?.prompt || "K-POP idol",
           conceptStyle: selectedConcept?.mood || "Charismatic, stylish, energetic",
           conceptPrompt: selectedConcept?.prompt || "",
           imageCount,
+          ...(stylistAdvice ? { stylistAdvice } : {}),
         }),
       });
 
@@ -141,17 +350,75 @@ export default function StudioPage() {
       const urls: string[] = data.urls || [];
       const images = urls.map((url, index) => ({ url, index }));
       setGeneratedImages(images);
-      // Auto-select first image only
-      if (images.length > 0) {
+
+      if (isAdviceRegen && images.length > 0) {
+        // Advice regeneration: auto-select first image, skip feedback fetch
         setSelectedImages([images[0].url]);
+      } else {
+        // Normal flow
+        if (images.length === 1) {
+          setSelectedImages([images[0].url]);
+        }
+
+        if (images.length > 0) {
+          setTimeout(() => {
+            previewRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+          }, 100);
+
+          // 1장이면 자동 피드백, 2장 이상이면 유저 선택 후 버튼으로
+          if (images.length === 1) {
+            fetchStylistFeedback(images[0].url);
+          }
+        }
       }
     } catch (error) {
       console.error("Generate error:", error);
       setShowToast(true);
       setTimeout(() => setShowToast(false), 4000);
     } finally {
+      let generationCount = 1;
+      if (typeof window !== "undefined") {
+        const prevRaw = sessionStorage.getItem(AD_DWELL_STORAGE_KEY) || "0";
+        const prev = Number(prevRaw);
+        generationCount = Number.isFinite(prev) && prev > 0 ? prev + 1 : 1;
+        sessionStorage.setItem(AD_DWELL_STORAGE_KEY, String(generationCount));
+      }
+
+      const targetMs = getAdDwellTargetMs(generationCount);
+      const elapsedMs = Date.now() - generateStartedAt;
+      const remainMs = targetMs - elapsedMs;
+      if (remainMs > 0) {
+        await new Promise((resolve) => setTimeout(resolve, remainMs));
+      }
       setIsGenerating(false);
+
+      // After advice-based regeneration, auto-open publish modal
+      if (autoPublishRef.current) {
+        autoPublishRef.current = false;
+        setShowPublishModal(true);
+      }
     }
+  };
+
+  const handleAdviceRegenerate = (feedback: string) => {
+    const stylist = stylistFeedbacks.find((f) => f.feedback === feedback);
+    const styleDirections = extractStyleDirections(feedback);
+    const enhanced = styleDirections
+      ? `${prompt}, ${styleDirections}`
+      : prompt;
+    setAdviceModalPrompt(enhanced);
+    setAdviceModalFeedback(feedback);
+    setAdviceModalStylist(stylist?.fullName || "");
+    setShowAdviceModal(true);
+  };
+
+  const handleConfirmAdviceGenerate = () => {
+    const editedPrompt = adviceModalPrompt.trim();
+    if (!editedPrompt) return;
+    setPrompt(editedPrompt);
+    setShowAdviceModal(false);
+    autoPublishRef.current = true;
+    handleGenerate(undefined, editedPrompt);
   };
 
   const toggleImageSelection = (url: string) => {
@@ -180,8 +447,11 @@ export default function StudioPage() {
           prompt: fullPrompt,
           concept: selectedConcept?.label || "general",
           keywords: selectedHashtags.join(","),
+          groupTag: groupTag.trim() || null,
           ownerUid: user?.uid || "anonymous",
           ownerHandle: user?.displayName || "Guest Designer",
+          stylistFeedbacks: stylistFeedbacks.length > 0 ? stylistFeedbacks : undefined,
+          selectedStylistId: selectedStylistId || undefined,
         }),
       });
 
@@ -209,6 +479,10 @@ export default function StudioPage() {
     setLinkCopied(false);
     setPublishTitle("");
     setPublishDesc("");
+    setGroupTag("");
+    setGroupTagSuggestions([]);
+    setStylistFeedbacks([]);
+    setSelectedStylistId(null);
   };
 
   const handleCopyLink = () => {
@@ -229,7 +503,7 @@ export default function StudioPage() {
         title: "내가 디자인한 K-POP 무대의상",
         text: "AI로 만든 K-POP 무대의상을 확인해보세요!",
         url,
-      }).catch(() => {});
+      }).catch(() => { });
     } else {
       handleCopyLink();
     }
@@ -244,16 +518,17 @@ export default function StudioPage() {
     return (
       <div className="bg-white text-black antialiased min-h-screen pb-24 font-korean">
         <Header />
-        <main className="max-w-md mx-auto pt-[80px] px-5">
+        <main className="max-w-md mx-auto pt-4 px-5">
           {/* Published images */}
           {selectedImages.length === 1 ? (
-            <div className="relative w-full aspect-square rounded-2xl overflow-hidden bg-gray-100 mb-6">
+            <div className="relative w-full aspect-[3/4] rounded-2xl overflow-hidden bg-gray-100 mb-6">
               <Image
                 src={selectedImages[0]}
                 alt="Published design"
                 fill
                 className="object-cover"
                 sizes="(max-width: 768px) 100vw, 400px"
+                unoptimized
               />
               <div className="absolute top-3 left-3 bg-black/70 backdrop-blur-sm text-white px-3 py-1.5 rounded-full text-[11px] font-bold flex items-center gap-1.5">
                 <span className="material-symbols-outlined text-[14px]" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
@@ -263,8 +538,8 @@ export default function StudioPage() {
           ) : selectedImages.length > 1 ? (
             <div className="grid grid-cols-2 gap-2 mb-6">
               {selectedImages.map((url, i) => (
-                <div key={i} className="relative aspect-square rounded-xl overflow-hidden bg-gray-100">
-                  <Image src={url} alt={`Published ${i + 1}`} fill className="object-cover" sizes="200px" />
+                <div key={i} className="relative aspect-[3/4] rounded-xl overflow-hidden bg-gray-100">
+                  <Image src={url} alt={`Published ${i + 1}`} fill className="object-cover" sizes="200px" unoptimized />
                   {i === 0 && (
                     <div className="absolute top-2 left-2 bg-black/70 backdrop-blur-sm text-white px-2 py-1 rounded-full text-[10px] font-bold flex items-center gap-1">
                       <span className="material-symbols-outlined text-[12px]" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
@@ -278,54 +553,70 @@ export default function StudioPage() {
 
           {/* Success message */}
           <div className="text-center mb-8">
-            <h2 className="text-xl font-black font-korean mb-2">갤러리에 공개되었어요!</h2>
+            <h2 className="text-xl font-black font-korean mb-2">스타일 픽에 공개되었어요!</h2>
+            {groupTag && (
+              <div className="flex justify-center my-4">
+                <CheeringBadge
+                  userName={user?.displayName || "Guest Designer"}
+                  idolName={groupTag}
+                  variant="modal"
+                />
+              </div>
+            )}
             <p className="text-[13px] text-gray-500">친구에게 공유하고 투표를 받아보세요.</p>
           </div>
 
-          {/* Share buttons */}
-          <div className="space-y-3 mb-8">
-            <button
-              onClick={handleShareNative}
-              className="w-full py-3.5 bg-black text-white text-[14px] font-bold rounded-full flex items-center justify-center gap-2.5 active:scale-[0.98] transition-transform"
-            >
-              <span className="material-symbols-outlined text-[22px]">ios_share</span>
-              친구에게 공유하기
-            </button>
+
+          {/* Share Section */}
+          <div className="mb-10">
+            <h3 className="text-[13px] font-bold text-gray-400 text-center mb-4 uppercase tracking-widest">친구에게 자랑하기</h3>
 
             <div className="grid grid-cols-3 gap-3">
+              {/* X (Twitter) */}
               <button
                 onClick={() => {
                   const url = publishedDesignId ? `${window.location.origin}/design/${publishedDesignId}` : window.location.origin;
-                  window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent("AI로 만든 K-POP 무대의상을 확인해보세요!")}&url=${encodeURIComponent(url)}`, "_blank");
+                  window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent("내가 만든 K-POP 무대의상, 어때요? 👀 #MyStyleAI")}&url=${encodeURIComponent(url)}`, "_blank");
                 }}
-                className="py-3 bg-gray-50 border border-gray-200 rounded-xl flex flex-col items-center gap-1.5 hover:bg-gray-100 transition-colors"
+                className="group relative flex flex-col items-center justify-center py-4 bg-black text-white rounded-2xl hover:bg-gray-900 transition-all active:scale-[0.98]"
               >
-                <span className="text-[18px] font-bold">𝕏</span>
-                <span className="text-[10px] text-gray-500 font-bold">X</span>
+                <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+                  <span className="text-[18px] font-bold">𝕏</span>
+                </div>
+                <span className="text-[11px] font-bold">트위터</span>
               </button>
+
+              {/* KakaoTalk */}
+              <button
+                onClick={() => {
+                  const url = publishedDesignId ? `${window.location.origin}/design/${publishedDesignId}` : window.location.origin;
+                  window.open(`https://sharer.kakao.com/talk/friends/picker/link?url=${encodeURIComponent(url)}`, "_blank");
+                }}
+                className="group relative flex flex-col items-center justify-center py-4 bg-[#fff3e0] text-black border border-[#ffe0b2] rounded-2xl hover:bg-[#ffe0b2]/50 transition-all active:scale-[0.98]"
+              >
+                <div className="w-10 h-10 rounded-full bg-[#fae100] flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+                  <span className="material-symbols-outlined text-[10px]" style={{ fontVariationSettings: "'FILL' 1" }}>chat_bubble</span>
+                </div>
+                <span className="text-[11px] font-bold">카카오톡</span>
+              </button>
+
+              {/* Copy Link */}
               <button
                 onClick={handleCopyLink}
-                className="py-3 bg-gray-50 border border-gray-200 rounded-xl flex flex-col items-center gap-1.5 hover:bg-gray-100 transition-colors"
+                className="group relative flex flex-col items-center justify-center py-4 bg-gray-50 border border-gray-100 rounded-2xl hover:bg-gray-100 transition-all active:scale-[0.98]"
               >
-                <span className="material-symbols-outlined text-[20px] text-gray-700">
-                  {linkCopied ? "check" : "link"}
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 transition-transform group-hover:scale-110 ${linkCopied ? "bg-green-100 text-green-600" : "bg-white border border-gray-200 text-black"}`}>
+                  <span className="material-symbols-outlined text-[20px]">
+                    {linkCopied ? "check" : "link"}
+                  </span>
+                </div>
+                <span className={`text-[11px] font-bold ${linkCopied ? "text-green-600" : "text-gray-500"}`}>
+                  {linkCopied ? "복사완료" : "링크복사"}
                 </span>
-                <span className="text-[10px] text-gray-500 font-bold">
-                  {linkCopied ? "복사됨!" : "링크 복사"}
-                </span>
-              </button>
-              <button
-                onClick={() => {
-                  const url = publishedDesignId ? `${window.location.origin}/design/${publishedDesignId}` : window.location.origin;
-                  window.open(`https://story.kakao.com/share?url=${encodeURIComponent(url)}`, "_blank");
-                }}
-                className="py-3 bg-gray-50 border border-gray-200 rounded-xl flex flex-col items-center gap-1.5 hover:bg-gray-100 transition-colors"
-              >
-                <span className="text-[18px]">💬</span>
-                <span className="text-[10px] text-gray-500 font-bold">카카오</span>
               </button>
             </div>
           </div>
+
 
           {/* Navigation buttons */}
           <div className="flex gap-3">
@@ -352,9 +643,9 @@ export default function StudioPage() {
 
   return (
     <div className="bg-white text-black antialiased pb-24 min-h-screen font-korean">
-      <Header />
+      <Header pageTitle="메이킹 룸" subtitle="AI로 무대 의상을 디자인하세요" />
 
-      <main className="max-w-md mx-auto pt-[80px] px-5 space-y-6">
+      <main className="max-w-md mx-auto pt-2 px-5 space-y-6">
         {/* ────── Input Form (always visible) ────── */}
         <section className="space-y-8">
           {/* Step 1: Idol Type */}
@@ -368,11 +659,10 @@ export default function StudioPage() {
                 <button
                   key={type.id}
                   onClick={() => setIdolType(type.id)}
-                  className={`py-4 rounded-xl text-[13px] font-bold transition-all flex flex-col items-center gap-2 ${
-                    idolType === type.id
-                      ? "bg-black text-white shadow-lg"
-                      : "bg-white text-gray-600 border border-gray-200 hover:border-black"
-                  }`}
+                  className={`py-4 rounded-xl text-[13px] font-bold transition-all flex flex-col items-center gap-2 ${idolType === type.id
+                    ? "bg-black text-white shadow-lg"
+                    : "bg-white text-gray-600 border border-gray-200 hover:border-black"
+                    }`}
                 >
                   <span className="text-2xl">{type.icon}</span>
                   <span>{type.label}</span>
@@ -392,11 +682,10 @@ export default function StudioPage() {
                 <button
                   key={style.id}
                   onClick={() => setConceptStyle(conceptStyle === style.id ? null : style.id)}
-                  className={`relative overflow-hidden rounded-xl py-4 px-2 text-center transition-all ${
-                    conceptStyle === style.id
-                      ? "ring-2 ring-black shadow-lg scale-[1.02]"
-                      : "bg-white border border-gray-200 hover:border-black"
-                  }`}
+                  className={`relative overflow-hidden rounded-xl py-4 px-2 text-center transition-all ${conceptStyle === style.id
+                    ? "ring-2 ring-black shadow-lg scale-[1.02]"
+                    : "bg-white border border-gray-200 hover:border-black"
+                    }`}
                 >
                   <div className={`absolute inset-0 bg-gradient-to-br ${style.color} ${conceptStyle === style.id ? "opacity-25" : "opacity-[0.07]"}`}></div>
                   <div className="relative flex flex-col items-center gap-1.5">
@@ -446,11 +735,10 @@ export default function StudioPage() {
                   <button
                     key={tag.keyword}
                     onClick={() => toggleHashtag(tag.keyword)}
-                    className={`px-3.5 py-1.5 text-[12px] font-semibold rounded-full whitespace-nowrap transition-colors ${
-                      selectedHashtags.includes(tag.keyword)
-                        ? "bg-black text-white"
-                        : "bg-white border border-gray-200 text-gray-500 hover:border-black hover:text-black"
-                    }`}
+                    className={`px-3.5 py-1.5 text-[12px] font-semibold rounded-full whitespace-nowrap transition-colors ${selectedHashtags.includes(tag.keyword)
+                      ? "bg-black text-white"
+                      : "bg-white border border-gray-200 text-gray-500 hover:border-black hover:text-black"
+                      }`}
                   >
                     {tag.label}
                   </button>
@@ -470,11 +758,10 @@ export default function StudioPage() {
                 <button
                   key={count}
                   onClick={() => setImageCount(count)}
-                  className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${
-                    imageCount === count
-                      ? "bg-black text-white shadow-lg"
-                      : "bg-white text-gray-600 border border-gray-200 hover:border-black"
-                  }`}
+                  className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${imageCount === count
+                    ? "bg-black text-white shadow-lg"
+                    : "bg-white text-gray-600 border border-gray-200 hover:border-black"
+                    }`}
                 >
                   <span className="material-symbols-outlined text-[20px]">
                     {count === 1 ? "image" : count === 2 ? "photo_library" : "grid_view"}
@@ -487,7 +774,7 @@ export default function StudioPage() {
 
           {/* Generate button */}
           <button
-            onClick={handleGenerate}
+            onClick={() => handleGenerate()}
             disabled={isGenerating || !fullPrompt}
             className="w-full py-4 bg-black text-white text-[15px] font-bold rounded-full hover:bg-gray-900 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2.5 active:scale-[0.98]"
           >
@@ -507,7 +794,7 @@ export default function StudioPage() {
 
         {/* ────── Preview Section (appears below form after generation) ────── */}
         {generatedImages.length > 0 && (
-          <section className="space-y-5 pt-2">
+          <section ref={previewRef} className="space-y-5 pt-2">
             {/* Divider */}
             <div className="flex items-center gap-3">
               <div className="flex-1 h-px bg-gray-200"></div>
@@ -529,11 +816,10 @@ export default function StudioPage() {
                   {/* Image — tap opens fullscreen */}
                   <button
                     onClick={() => setFullscreenImage(img.url)}
-                    className={`relative w-full ${generatedImages.length === 1 ? "aspect-[3/4]" : "aspect-[3/4]"} rounded-xl overflow-hidden bg-gray-100 border-2 transition-all ${
-                      selectedImages.includes(img.url)
-                        ? "border-black ring-2 ring-black/10"
-                        : "border-gray-200"
-                    }`}
+                    className={`relative w-full ${generatedImages.length === 1 ? "aspect-[3/4]" : "aspect-[3/4]"} rounded-xl overflow-hidden bg-gray-100 border-2 transition-all ${selectedImages.includes(img.url)
+                      ? "border-black ring-2 ring-black/10"
+                      : "border-gray-200"
+                      }`}
                   >
                     <Image
                       src={img.url}
@@ -541,17 +827,17 @@ export default function StudioPage() {
                       fill
                       className="object-cover"
                       sizes={generatedImages.length === 1 ? "(max-width: 768px) 100vw, 400px" : "(max-width: 768px) 50vw, 200px"}
+                      unoptimized
                     />
                   </button>
                   {/* Selection checkbox — top right */}
                   {generatedImages.length > 1 && (
                     <button
                       onClick={() => toggleImageSelection(img.url)}
-                      className={`absolute top-2.5 right-2.5 w-7 h-7 rounded-full flex items-center justify-center transition-all ${
-                        selectedImages.includes(img.url)
-                          ? "bg-black text-white"
-                          : "bg-white/80 backdrop-blur-sm border border-gray-300 text-transparent"
-                      }`}
+                      className={`absolute top-2.5 right-2.5 w-7 h-7 rounded-full flex items-center justify-center transition-all ${selectedImages.includes(img.url)
+                        ? "bg-black text-white"
+                        : "bg-white/80 backdrop-blur-sm border border-gray-300 text-transparent"
+                        }`}
                       aria-label={selectedImages.includes(img.url) ? "선택 해제" : "선택"}
                     >
                       <span className="material-symbols-outlined text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>check</span>
@@ -560,6 +846,41 @@ export default function StudioPage() {
                 </div>
               ))}
             </div>
+
+            {/* Stylist Feedback */}
+            {isFeedbackLoading && (
+              <div className="flex items-center gap-3 px-4 py-4 bg-gray-50 rounded-2xl">
+                <div className="w-5 h-5 border-2 border-gray-200 border-t-gray-600 rounded-full animate-spin"></div>
+                <p className="text-[12px] text-gray-400 font-medium">엔터사 출신 AI스타일리스트가 분석 중...</p>
+              </div>
+            )}
+
+            {/* Multi-image: show feedback request button if no feedback yet */}
+            {generatedImages.length > 1 && stylistFeedbacks.length === 0 && !isFeedbackLoading && (
+              <button
+                onClick={() => {
+                  const targetUrl = selectedImages[0] || generatedImages[0]?.url;
+                  fetchStylistFeedback(targetUrl);
+                }}
+                disabled={selectedImages.length === 0}
+                className="w-full py-3.5 bg-gradient-to-r from-gray-900 to-gray-800 text-white text-[13px] font-bold rounded-xl hover:from-black hover:to-gray-900 transition-all active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-40"
+              >
+                <span className="material-symbols-outlined text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>rate_review</span>
+                {selectedImages.length === 0
+                  ? "이미지를 선택하면 스타일리스트 평가를 받을 수 있어요"
+                  : "선택한 이미지로 스타일리스트 평가 받기"}
+              </button>
+            )}
+
+            {stylistFeedbacks.length > 0 && !isFeedbackLoading && (
+              <StylistFeedbackCard
+                feedbacks={stylistFeedbacks}
+                mode="select"
+                selectedPersonaId={selectedStylistId || undefined}
+                onSelect={(id) => setSelectedStylistId(id)}
+                onRegenerate={handleAdviceRegenerate}
+              />
+            )}
 
             {/* Action buttons */}
             <div className="flex gap-3">
@@ -582,7 +903,7 @@ export default function StudioPage() {
                 className="flex-1 py-3.5 bg-black text-white text-sm font-bold rounded-full hover:bg-gray-900 transition-colors flex items-center justify-center gap-2"
               >
                 <span className="material-symbols-outlined text-[20px]">publish</span>
-                {selectedImages.length > 1 ? `${selectedImages.length}장 공개` : "갤러리에 공개"}
+                {selectedImages.length > 1 ? `${selectedImages.length}장 공개` : "스타일 픽에 공개"}
               </button>
             </div>
           </section>
@@ -591,11 +912,84 @@ export default function StudioPage() {
         {/* Loading overlay */}
         {isGenerating && (
           <div className="fixed inset-0 z-50 bg-white/95 backdrop-blur-sm flex flex-col items-center justify-center px-8">
-            <div className="w-16 h-16 border-[3px] border-gray-100 border-t-black rounded-full animate-spin mb-8"></div>
-            <p className="text-[15px] font-bold text-black text-center mb-2">AI가 디자인하는 중...</p>
-            <p className="text-[13px] text-gray-400 text-center transition-opacity duration-500">
-              {GENERATION_LOADING_MESSAGES[loadingMessageIndex]}
+            {/* Animated fashion loader */}
+            <div className="relative w-24 h-24 mb-6">
+              {/* Outer pulsing gradient ring */}
+              <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-violet-200 via-pink-200 to-amber-200 animate-pulse opacity-60" />
+              {/* Middle dashed ring — slow spin */}
+              <div className="absolute inset-2 rounded-full border-2 border-dashed border-gray-200 animate-[spin_8s_linear_infinite]" />
+              {/* Center icon area */}
+              <div className="absolute inset-4 rounded-full bg-white shadow-sm flex items-center justify-center">
+                <span
+                  key={loadingMessageIndex}
+                  className="material-symbols-outlined text-[28px] text-gray-800 animate-[fadeInUp_0.4s_ease-out]"
+                  style={{ fontVariationSettings: "'FILL' 1" }}
+                >
+                  {GENERATION_LOADING_STEPS[loadingMessageIndex].icon}
+                </span>
+              </div>
+            </div>
+
+            <p className="text-[15px] font-bold text-black text-center mb-1.5">패션 전문 AI가 디자인하는 중...</p>
+            <p
+              key={loadingMessageIndex}
+              className="text-[13px] text-gray-400 text-center animate-[fadeInUp_0.4s_ease-out]"
+            >
+              {GENERATION_LOADING_STEPS[loadingMessageIndex].msg}
             </p>
+
+            {/* Progress dots */}
+            <div className="flex gap-2.5 mt-5">
+              {GENERATION_LOADING_STEPS.map((_, i) => (
+                <div
+                  key={i}
+                  className={`h-1.5 rounded-full transition-all duration-700 ${
+                    i <= loadingMessageIndex
+                      ? "w-6 bg-black"
+                      : "w-1.5 bg-gray-200"
+                  }`}
+                />
+              ))}
+            </div>
+
+            <div className="w-full max-w-[320px] mt-8">
+              <p className="text-[10px] text-gray-300 font-bold text-center uppercase tracking-widest mb-2">Advertisement</p>
+              <AdBanner slot={STUDIO_LOADING_AD_SLOT} className="rounded-xl border border-gray-100 p-2" />
+            </div>
+          </div>
+        )}
+
+        {/* Entry intro overlay (first visit only) */}
+        {showEntryIntro && (
+          <div
+            className={`studio-intro-overlay fixed inset-0 z-[80] overflow-hidden backdrop-blur-[2px] text-white flex items-center justify-center px-7 ${entryIntroPhase === "exit" ? "studio-intro-overlay-exit" : ""}`}
+            role="dialog"
+            aria-label="Studio entry intro"
+            onClick={() => closeEntryIntro(220)}
+          >
+            <div className="studio-intro-glow absolute -top-14 left-1/2 h-56 w-56 -translate-x-1/2 rounded-full bg-white/10 blur-3xl" />
+            <div className="studio-intro-shine absolute left-1/2 top-1/2 h-[62vh] w-[62vh] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/20" />
+            <div className="relative text-center">
+              <p className="studio-intro-title text-[26px] leading-tight font-black font-korean tracking-tight">
+                심장이 반짝이는 순간,
+                <br />
+                오늘의 무대가 피어납니다
+              </p>
+              <p className="studio-intro-sub mt-4 text-[12px] text-white/70 font-semibold tracking-wide">
+                가볍게 터치하면 바로 시작돼요
+              </p>
+            </div>
+            {[...Array(12)].map((_, i) => (
+              <span
+                key={i}
+                className="studio-intro-star absolute block h-1.5 w-1.5 rounded-full bg-white/90"
+                style={{
+                  left: `${8 + ((i * 7) % 84)}%`,
+                  top: `${10 + ((i * 13) % 76)}%`,
+                  animationDelay: `${(i % 6) * 0.17}s`,
+                }}
+              />
+            ))}
           </div>
         )}
 
@@ -630,16 +1024,16 @@ export default function StudioPage() {
               className="object-contain"
               sizes="100vw"
               priority
+              unoptimized
             />
           </div>
           {/* Select / deselect from fullscreen */}
           {generatedImages.length > 1 && fullscreenImage && (
             <button
-              className={`absolute bottom-8 left-1/2 -translate-x-1/2 px-6 py-3 rounded-full text-[13px] font-bold transition-all ${
-                selectedImages.includes(fullscreenImage)
-                  ? "bg-white text-black"
-                  : "bg-white/20 backdrop-blur-sm text-white hover:bg-white/30"
-              }`}
+              className={`absolute bottom-8 left-1/2 -translate-x-1/2 px-6 py-3 rounded-full text-[13px] font-bold transition-all ${selectedImages.includes(fullscreenImage)
+                ? "bg-white text-black"
+                : "bg-white/20 backdrop-blur-sm text-white hover:bg-white/30"
+                }`}
               onClick={(e) => {
                 e.stopPropagation();
                 toggleImageSelection(fullscreenImage);
@@ -658,6 +1052,69 @@ export default function StudioPage() {
         </div>
       )}
 
+      {/* ────── Advice Prompt Edit Modal ────── */}
+      {showAdviceModal && (
+        <div className="fixed inset-0 z-[65] bg-black/60 backdrop-blur-sm flex items-end justify-center" onClick={() => setShowAdviceModal(false)}>
+          <div
+            className="bg-white w-full max-w-md rounded-t-3xl max-h-[85vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="shrink-0 pt-3 pb-2 px-6">
+              <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-4"></div>
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-black font-korean">조언 반영하기</h3>
+                <button onClick={() => setShowAdviceModal(false)} className="p-1" aria-label="닫기">
+                  <span className="material-symbols-outlined text-[24px] text-gray-400">close</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="px-6 pt-2 pb-4 space-y-3 overflow-y-auto flex-1 min-h-0">
+              <p className="text-[12px] text-gray-500 font-korean leading-relaxed">
+                스타일리스트 추천 키워드가 반영된 프롬프트예요. 자유롭게 수정해보세요.
+              </p>
+              <div className="relative">
+                <textarea
+                  value={adviceModalPrompt}
+                  onChange={(e) => setAdviceModalPrompt(e.target.value)}
+                  rows={5}
+                  maxLength={800}
+                  className="w-full px-4 py-3.5 bg-white border border-gray-200 rounded-xl text-sm text-black placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black resize-none font-korean leading-relaxed"
+                  placeholder="프롬프트를 입력하세요"
+                />
+                <span className="absolute bottom-3 right-3 text-[10px] text-gray-300 font-medium">
+                  {adviceModalPrompt.length}/800
+                </span>
+              </div>
+
+              {/* Collapsible original advice for reference */}
+              {adviceModalFeedback && (
+                <details className="group">
+                  <summary className="text-[11px] text-gray-400 cursor-pointer flex items-center gap-1 select-none">
+                    <span className="material-symbols-outlined text-[14px] transition-transform group-open:rotate-90">chevron_right</span>
+                    {adviceModalStylist} 원본 조언 보기
+                  </summary>
+                  <p className="mt-2 px-3 py-2.5 bg-gray-50 rounded-lg text-[12px] text-gray-500 leading-relaxed font-korean">
+                    {adviceModalFeedback}
+                  </p>
+                </details>
+              )}
+            </div>
+
+            <div className="shrink-0 px-6 pt-3 pb-6 border-t border-gray-100 bg-white">
+              <button
+                onClick={handleConfirmAdviceGenerate}
+                disabled={!adviceModalPrompt.trim()}
+                className="w-full py-4 bg-black text-white text-[15px] font-bold rounded-full hover:bg-gray-900 transition-all disabled:opacity-40 flex items-center justify-center gap-2.5 active:scale-[0.98]"
+              >
+                <span className="material-symbols-outlined text-[20px]">auto_awesome</span>
+                조언 반영하여 디자인하기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ────── Publish Modal ────── */}
       {showPublishModal && (
         <div className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm flex items-end justify-center" onClick={() => setShowPublishModal(false)}>
@@ -669,7 +1126,7 @@ export default function StudioPage() {
             <div className="shrink-0 pt-3 pb-2 px-6">
               <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-4"></div>
               <div className="flex justify-between items-center">
-                <h3 className="text-lg font-black font-korean">갤러리에 공개하기</h3>
+                <h3 className="text-lg font-black font-korean">스타일 픽에 공개하기</h3>
                 <button
                   onClick={() => setShowPublishModal(false)}
                   className="p-1"
@@ -684,14 +1141,14 @@ export default function StudioPage() {
             <div className="px-6 pt-2 pb-4 space-y-5 overflow-y-auto overscroll-contain flex-1 min-h-0">
               {/* Image preview */}
               {selectedImages.length === 1 ? (
-                <div className="relative w-full aspect-square rounded-xl overflow-hidden bg-gray-100">
-                  <Image src={selectedImages[0]} alt="Publish preview" fill className="object-cover" sizes="400px" />
+                <div className="relative w-full aspect-[3/4] rounded-xl overflow-hidden bg-gray-100">
+                  <Image src={selectedImages[0]} alt="Publish preview" fill className="object-cover" sizes="400px" unoptimized />
                 </div>
               ) : selectedImages.length > 1 ? (
                 <div className="grid grid-cols-2 gap-2">
                   {selectedImages.map((url, i) => (
-                    <div key={i} className="relative aspect-square rounded-lg overflow-hidden bg-gray-100">
-                      <Image src={url} alt={`Preview ${i + 1}`} fill className="object-cover" sizes="200px" />
+                    <div key={i} className="relative aspect-[3/4] rounded-lg overflow-hidden bg-gray-100">
+                      <Image src={url} alt={`Preview ${i + 1}`} fill className="object-cover" sizes="200px" unoptimized />
                     </div>
                   ))}
                 </div>
@@ -709,6 +1166,61 @@ export default function StudioPage() {
                     #{tag.replace(/\s+/g, "")}
                   </span>
                 ))}
+              </div>
+
+              {/* Group Tag Input with autocomplete */}
+              <div className="space-y-2">
+                <label className="text-[13px] font-bold text-gray-500 flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[16px]">favorite</span>
+                  어떤 그룹을 위한 디자인인가요?
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={groupTag}
+                    onChange={(e) => {
+                      setGroupTag(e.target.value);
+                      setShowTagSuggestions(true);
+                    }}
+                    onFocus={() => setShowTagSuggestions(true)}
+                    onBlur={() => setTimeout(() => setShowTagSuggestions(false), 200)}
+                    placeholder="예: NewJeans, aespa, BTS"
+                    maxLength={30}
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-black placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black focus:bg-white"
+                  />
+                  {groupTag.trim() && (
+                    <button
+                      onClick={() => { setGroupTag(""); setGroupTagSuggestions([]); }}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5"
+                      aria-label="태그 지우기"
+                    >
+                      <span className="material-symbols-outlined text-[18px] text-gray-400">close</span>
+                    </button>
+                  )}
+                  {/* Autocomplete dropdown */}
+                  {showTagSuggestions && groupTagSuggestions.length > 0 && (
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-10 overflow-hidden">
+                      {groupTagSuggestions.map((tag) => (
+                        <button
+                          key={tag.displayName}
+                          onMouseDown={() => {
+                            setGroupTag(tag.displayName);
+                            setShowTagSuggestions(false);
+                          }}
+                          className="w-full px-4 py-2.5 text-left flex items-center justify-between hover:bg-gray-50 transition-colors"
+                        >
+                          <span className="text-sm font-semibold text-black">#{tag.displayName}</span>
+                          <span className="text-[11px] text-gray-400">{tag.count}개 디자인</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                {groupTag.trim() && (
+                  <p className="text-[11px] text-gray-400">
+                    @{user?.displayName || "Guest Designer"}님이 <span className="font-bold text-black">{groupTag.trim()}</span>를 응원합니다
+                  </p>
+                )}
               </div>
 
               <input
@@ -745,7 +1257,7 @@ export default function StudioPage() {
                 ) : (
                   <>
                     <span className="material-symbols-outlined text-[20px]">publish</span>
-                    갤러리에 공개하기
+                    스타일 픽에 공개하기
                   </>
                 )}
               </button>

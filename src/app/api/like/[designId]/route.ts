@@ -9,6 +9,14 @@ import {
 import { FieldValue } from "firebase-admin/firestore";
 import { verifyAuthToken } from "@/lib/auth-helpers";
 
+function getClientIp(request: Request): string {
+  const xff = request.headers.get("x-forwarded-for");
+  if (xff) return xff.split(",")[0].trim();
+  const realIp = request.headers.get("x-real-ip");
+  if (realIp) return realIp;
+  return "unknown";
+}
+
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ designId: string }> }
@@ -19,14 +27,10 @@ export async function POST(
       return NextResponse.json({ error: "Design ID required" }, { status: 400 });
     }
 
-    // Auth: prefer token, fall back to body uid
+    // Auth: prefer token, fall back to body uid, fall back to IP
     const decoded = await verifyAuthToken(request);
     const body = await request.json().catch(() => ({}));
-    const uid = decoded?.uid || body.uid;
-
-    if (!uid) {
-      return NextResponse.json({ error: "Authentication required" }, { status: 401 });
-    }
+    const uid = decoded?.uid || body.uid || `ip_${getClientIp(request)}`;
 
     const likeId = `${designId}_${uid}`;
 
@@ -43,7 +47,9 @@ export async function POST(
 
         const likeSnap = await tx.get(likeRef);
         const alreadyLiked = likeSnap.exists;
-        const currentCount = designSnap.data()?.likeCount || 0;
+        const designData = designSnap.data();
+        const currentCount = designData?.likeCount || 0;
+        const ownerUid = designData?.ownerUid;
 
         if (alreadyLiked) {
           tx.delete(likeRef);
@@ -56,6 +62,21 @@ export async function POST(
             createdAt: FieldValue.serverTimestamp(),
           });
           tx.update(designRef, { likeCount: currentCount + 1 });
+
+          // Trigger Notification (only if not self-like and owner exists)
+          if (ownerUid && ownerUid !== uid && !ownerUid.startsWith("simulation_")) {
+            // Create a new notification doc
+            const notiRef = adminDb.collection("notifications").doc();
+            tx.set(notiRef, {
+              userId: ownerUid,
+              type: "like",
+              message: "회원님의 디자인을 누군가 좋아합니다!", // In real app, we might want to consolidate likes
+              relatedId: designId,
+              createdAt: FieldValue.serverTimestamp(),
+              read: false
+            });
+          }
+
           return { liked: true, likeCount: currentCount + 1 };
         }
       });
@@ -109,9 +130,9 @@ export async function GET(
   try {
     const { designId } = await params;
     const { searchParams } = new URL(request.url);
-    const uid = searchParams.get("uid");
+    const uid = searchParams.get("uid") || `ip_${getClientIp(request)}`;
 
-    if (!uid || !designId) {
+    if (!designId) {
       return NextResponse.json({ liked: false });
     }
 

@@ -21,6 +21,7 @@ interface MyDesign {
     imageUrl?: string;
     concept?: string;
     likeCount: number;
+    boostCount?: number;
     createdAt?: { _seconds?: number; seconds?: number };
 }
 
@@ -84,8 +85,8 @@ export default function MyPage() {
     if (!user) {
         return (
             <div className="bg-white font-display text-black min-h-screen pb-24">
-                <Header pageTitle="마이페이지" />
-                <main className="max-w-md mx-auto pt-[160px] px-6 flex flex-col items-center text-center gap-6">
+                <Header pageTitle="룩북" subtitle="나의 디자인과 활동을 기록하세요" />
+                <main className="max-w-md mx-auto pt-4 px-6 flex flex-col items-center text-center gap-6">
                     <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center">
                         <span className="material-symbols-outlined text-[40px] text-gray-300">person</span>
                     </div>
@@ -96,7 +97,7 @@ export default function MyPage() {
                         </p>
                     </div>
                     <Link
-                        href="/login"
+                        href="/login?next=/mypage"
                         className="flex items-center gap-2 px-8 py-3 bg-black text-white rounded-xl text-[14px] font-bold hover:opacity-90 active:scale-[0.98] transition-all"
                     >
                         <span className="material-symbols-outlined text-[18px]">login</span>
@@ -110,15 +111,15 @@ export default function MyPage() {
 
     return (
         <div className="bg-white font-display text-black min-h-screen pb-24">
-            <Header pageTitle="마이페이지" />
+            <Header pageTitle="룩북" subtitle="나의 디자인과 활동을 기록하세요" />
 
-            <main className="max-w-md mx-auto pt-28 w-full">
+            <main className="max-w-md mx-auto w-full">
                 {/* Profile Section */}
                 <section className="px-6 py-8">
                     <div className="flex items-center gap-6">
                         <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden border border-gray-100">
                             {user.photoURL ? (
-                                <Image src={user.photoURL} alt="Profile" width={80} height={80} className="w-full h-full object-cover rounded-full" />
+                                <Image src={user.photoURL} alt="Profile" width={80} height={80} className="w-full h-full object-cover rounded-full" unoptimized />
                             ) : (
                                 <span className="material-symbols-outlined text-4xl text-gray-400">person</span>
                             )}
@@ -174,17 +175,19 @@ export default function MyPage() {
                                     const imgSrc = design.imageUrls?.[0]?.url || design.imageUrl || "";
                                     return (
                                         <Link key={design.id} href={`/design/${design.id}`} className="block">
-                                            <div className="relative aspect-square rounded-lg overflow-hidden bg-gray-100">
+                                            <div className="relative aspect-[3/4] rounded-lg overflow-hidden bg-gray-100">
                                                 {imgSrc ? (
-                                                    <Image src={imgSrc} alt="" fill className="object-cover" sizes="33vw" />
+                                                    <Image src={imgSrc} alt="" fill className="object-cover" sizes="33vw" unoptimized />
                                                 ) : (
                                                     <div className="w-full h-full flex items-center justify-center">
                                                         <span className="material-symbols-outlined text-gray-300">image</span>
                                                     </div>
                                                 )}
-                                                <div className="absolute bottom-1 right-1 flex items-center gap-0.5 bg-black/50 backdrop-blur-sm rounded-full px-1.5 py-0.5">
+                                                <div className="absolute bottom-1 right-1 flex items-center gap-1 bg-black/50 backdrop-blur-sm rounded-full px-1.5 py-0.5">
                                                     <span className="material-symbols-outlined text-white text-[10px]">favorite</span>
                                                     <span className="text-white text-[9px] font-bold">{design.likeCount || 0}</span>
+                                                    <span className="material-symbols-outlined text-white text-[10px]">star</span>
+                                                    <span className="text-white text-[9px] font-bold">{design.boostCount || 0}</span>
                                                 </div>
                                             </div>
                                         </Link>
@@ -196,7 +199,7 @@ export default function MyPage() {
                                 <span className="material-symbols-outlined text-[40px] text-gray-200">palette</span>
                                 <p className="text-[13px] text-gray-400">아직 게시한 디자인이 없습니다</p>
                                 <Link href="/studio" className="px-5 py-2 bg-black text-white text-[12px] font-bold rounded-full">
-                                    첫 디자인 만들기
+                                    메이킹 룸으로 이동
                                 </Link>
                             </div>
                         )
@@ -217,7 +220,7 @@ export default function MyPage() {
                                 <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center">
                                     <span className="material-symbols-outlined text-gray-600 text-[22px]">emoji_events</span>
                                 </div>
-                                <span className="text-[15px] font-medium">랭킹</span>
+                                <span className="text-[15px] font-medium">명예의 전당</span>
                             </div>
                             <span className="material-symbols-outlined text-gray-300 group-hover:translate-x-1 transition-transform">chevron_right</span>
                         </Link>

@@ -27,7 +27,7 @@ async function writeLocalDb(data: Record<string, unknown>[]) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { imageUrl, imageUrls: rawImageUrls, prompt, concept, keywords, ownerHandle } = body;
+    const { imageUrl, imageUrls: rawImageUrls, prompt, concept, keywords, ownerHandle, groupTag, stylistFeedbacks, selectedStylistId } = body;
 
     // Support single imageUrl or multiple imageUrls
     const imageUrls: string[] = rawImageUrls?.length ? rawImageUrls : imageUrl ? [imageUrl] : [];
@@ -44,6 +44,10 @@ export async function POST(request: Request) {
     const uid = decoded?.uid || body.ownerUid || "anonymous";
     const handle = decoded?.name || ownerHandle || "Guest Designer";
 
+    // Normalize group tag: trim, remove #, lowercase for search
+    const cleanGroupTag = groupTag ? String(groupTag).trim().replace(/^#/, "") : "";
+    const normalizedGroupTag = cleanGroupTag ? cleanGroupTag.toLowerCase().replace(/\s+/g, "") : "";
+
     const designData = {
       ownerUid: uid,
       ownerHandle: handle,
@@ -52,12 +56,16 @@ export async function POST(request: Request) {
       systemPrompt: prompt,
       concept: concept || "general",
       keywords: keywords || "",
+      groupTag: cleanGroupTag || null,
+      groupTagNormalized: normalizedGroupTag || null,
       imageUrls: imageUrls.map((url: string, index: number) => ({ url, index })),
       representativeIndex: 0,
       visibility: "public",
       likeCount: 0,
       boostCount: 0,
       status: "active",
+      stylistFeedbacks: Array.isArray(stylistFeedbacks) ? stylistFeedbacks : [],
+      selectedStylistId: selectedStylistId || null,
     };
 
     // Use Admin SDK if available, otherwise fall back to client SDK

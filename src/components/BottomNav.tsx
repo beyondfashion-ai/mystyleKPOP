@@ -7,6 +7,8 @@ export default function BottomNav() {
     const pathname = usePathname();
 
     const isActive = (path: string) => pathname === path;
+    const isStylePickActive =
+        pathname === "/gallery" || pathname.startsWith("/design/");
 
     return (
         <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-xl border-t border-gray-100 pb-safe shadow-sm">
@@ -16,21 +18,22 @@ export default function BottomNav() {
                     <span className={`text-[10px] font-bold font-korean transition-colors ${isActive("/") ? "text-black" : "text-gray-300 group-hover:text-black"}`}>홈</span>
                 </Link>
                 <Link href="/gallery" className="flex flex-col items-center gap-1.5 w-12 group">
-                    <span className={`material-symbols-outlined text-[26px] font-light transition-colors ${isActive("/gallery") ? "text-black fill-current" : "text-gray-300 group-hover:text-black"}`}>explore</span>
-                    <span className={`text-[10px] font-bold font-korean transition-colors ${isActive("/gallery") ? "text-black" : "text-gray-300 group-hover:text-black"}`}>둘러보기</span>
+                    <span className={`material-symbols-outlined text-[26px] font-light transition-colors ${isStylePickActive ? "text-black fill-current" : "text-gray-300 group-hover:text-black"}`}>favorite</span>
+                    <span className={`text-[10px] font-bold font-korean transition-colors ${isStylePickActive ? "text-black" : "text-gray-300 group-hover:text-black"}`}>스타일 픽</span>
                 </Link>
                 <div className="relative -top-5 flex flex-col items-center">
                     <Link href="/studio" className="w-[58px] h-[58px] bg-black rounded-full flex items-center justify-center shadow-2xl shadow-black/30 hover:scale-105 active:scale-95 transition-all border-4 border-white">
-                        <span className="material-symbols-outlined text-white text-[32px] font-light">add</span>
+                        <span className="material-symbols-outlined text-white text-[32px] font-light">styler</span>
                     </Link>
+                    <span className="absolute -bottom-5 text-[10px] font-bold font-korean text-black">메이킹 룸</span>
                 </div>
                 <Link href="/community" className="flex flex-col items-center gap-1.5 w-12 group">
                     <span className={`material-symbols-outlined text-[26px] font-light transition-colors ${isActive("/community") ? "text-black fill-current" : "text-gray-300 group-hover:text-black"}`}>forum</span>
                     <span className={`text-[10px] font-bold font-korean transition-colors ${isActive("/community") ? "text-black" : "text-gray-300 group-hover:text-black"}`}>커뮤니티</span>
                 </Link>
                 <Link href="/mypage" className="flex flex-col items-center gap-1.5 w-12 group">
-                    <span className={`material-symbols-outlined text-[26px] font-light transition-colors ${isActive("/mypage") ? "text-black fill-current" : "text-gray-300 group-hover:text-black"}`}>person</span>
-                    <span className={`text-[10px] font-bold font-korean transition-colors ${isActive("/mypage") ? "text-black" : "text-gray-300 group-hover:text-black"}`}>마이</span>
+                    <span className={`material-symbols-outlined text-[26px] font-light transition-colors ${isActive("/mypage") ? "text-black fill-current" : "text-gray-300 group-hover:text-black"}`}>book_2</span>
+                    <span className={`text-[10px] font-bold font-korean transition-colors ${isActive("/mypage") ? "text-black" : "text-gray-300 group-hover:text-black"}`}>룩북</span>
                 </Link>
             </div>
         </nav>
