@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { getConceptTags } from "@/lib/tag-constants";
+import { getConceptTags, getRandomConceptTags } from "@/lib/tag-constants";
 
 const GEMINI_API_KEY = process.env.GOOGLE_GEMINI_API_KEY;
 
@@ -41,12 +41,13 @@ export async function POST(request: Request) {
 
     const fallback = getConceptTags(conceptStyle, idolType);
 
-    // Initial load (no exclude): always return local fallback instantly
+    // Initial load (no exclude): return random subset from expanded pool
     // Gemini is only used for "태그 추천 더받기" (has exclude list)
     if (excludeList.length === 0) {
+      const random = getRandomConceptTags(conceptStyle, idolType);
       return NextResponse.json({
-        conceptTags: fallback.conceptTags,
-        recommendedTags: fallback.recommendedTags,
+        conceptTags: random.conceptTags,
+        recommendedTags: random.recommendedTags,
         source: "fallback" as const,
       });
     }

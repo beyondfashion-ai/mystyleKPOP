@@ -167,7 +167,7 @@ export default function StudioPage() {
   const [popularKeywords, setPopularKeywords] = useState<string[]>([]);
   const [favoriteTags, setFavoriteTags] = useState<string[]>([]);
   const [isTagsLoading, setIsTagsLoading] = useState(false);
-  const tagCacheRef = useRef<Map<string, { conceptTags: string[]; recommendedTags: string[] }>>(new Map());
+  const [isMoreTagsLoading, setIsMoreTagsLoading] = useState(false);
 
   // Preview section ref for auto-scroll
   const previewRef = useRef<HTMLDivElement>(null);
@@ -192,10 +192,7 @@ export default function StudioPage() {
   const [isFeedbackLoading, setIsFeedbackLoading] = useState(false);
 
   // Advice Regeneration State
-  const [showAdviceModal, setShowAdviceModal] = useState(false);
-  const [adviceModalPrompt, setAdviceModalPrompt] = useState("");
-  const [adviceModalFeedback, setAdviceModalFeedback] = useState("");
-  const [adviceModalStylist, setAdviceModalStylist] = useState("");
+  const [isRefiningPrompt, setIsRefiningPrompt] = useState(false);
   const autoPublishRef = useRef(false);
 
   // Publish Success State
@@ -306,21 +303,11 @@ export default function StudioPage() {
     }
   }, []);
 
-  // Fetch AI tags when concept changes
+  // Fetch AI tags when concept changes (random each time, no cache)
   useEffect(() => {
     if (!conceptStyle) {
       setConceptTags([]);
       setRecommendedTags([]);
-      return;
-    }
-
-    const cacheKey = `${idolType}_${conceptStyle}`;
-    const cached = tagCacheRef.current.get(cacheKey);
-    if (cached) {
-      setConceptTags(cached.conceptTags);
-      setRecommendedTags(cached.recommendedTags);
-      // Reset concept/recommended tag selections on concept change
-      setSelectedTags((prev) => prev.filter((t) => popularKeywords.includes(t)));
       return;
     }
 
@@ -330,6 +317,8 @@ export default function StudioPage() {
 
     (async () => {
       try {
+        // Small delay so loading state is visible (feels like AI is working)
+        await new Promise((r) => setTimeout(r, 1000));
         const res = await fetch("/api/tags/suggest", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -340,7 +329,6 @@ export default function StudioPage() {
         const rt = data.recommendedTags || [];
         setConceptTags(ct);
         setRecommendedTags(rt);
-        tagCacheRef.current.set(cacheKey, { conceptTags: ct, recommendedTags: rt });
       } catch {
         // fallback handled by API
         setConceptTags([]);
@@ -511,25 +499,39 @@ export default function StudioPage() {
     }
   };
 
-  const handleAdviceRegenerate = (feedback: string) => {
-    const stylist = stylistFeedbacks.find((f) => f.feedback === feedback);
-    const styleDirections = extractStyleDirections(feedback);
-    const currentPrompt = fullPrompt;
-    const enhanced = styleDirections
-      ? `${currentPrompt}, ${styleDirections}`
-      : currentPrompt;
-    setAdviceModalPrompt(enhanced);
-    setAdviceModalFeedback(feedback);
-    setAdviceModalStylist(stylist?.fullName || "");
-    setShowAdviceModal(true);
-  };
+  const handleAdviceRegenerate = async (feedback: string) => {
+    setIsRefiningPrompt(true);
 
-  const handleConfirmAdviceGenerate = () => {
-    const editedPrompt = adviceModalPrompt.trim();
-    if (!editedPrompt) return;
-    setShowAdviceModal(false);
-    autoPublishRef.current = true;
-    handleGenerate(undefined, editedPrompt);
+    try {
+      const selectedIdol = IDOL_TYPES.find((t) => t.id === idolType);
+      const selectedConcept = CONCEPT_STYLES.find((c) => c.id === conceptStyle);
+
+      const res = await fetch("/api/stylist/refine-prompt", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          originalPrompt: fullPrompt,
+          advice: feedback,
+          idolType: selectedIdol?.label || "",
+          concept: selectedConcept?.label || "",
+        }),
+      });
+
+      const data = await res.json();
+      const refinedPrompt = data.refinedPrompt || fullPrompt;
+
+      autoPublishRef.current = true;
+      handleGenerate(undefined, refinedPrompt);
+    } catch (err) {
+      console.error("Prompt refine error:", err);
+      // Fallback: use extractStyleDirections
+      const styleDirections = extractStyleDirections(feedback);
+      const enhanced = styleDirections ? `${fullPrompt}, ${styleDirections}` : fullPrompt;
+      autoPublishRef.current = true;
+      handleGenerate(undefined, enhanced);
+    } finally {
+      setIsRefiningPrompt(false);
+    }
   };
 
   const toggleImageSelection = (url: string) => {
@@ -561,8 +563,6 @@ export default function StudioPage() {
           groupTag: groupTag.trim() || null,
           ownerUid: user?.uid || "anonymous",
           ownerHandle: user?.displayName || "Guest Designer",
-          stylistFeedbacks: stylistFeedbacks.length > 0 ? stylistFeedbacks : undefined,
-          selectedStylistId: selectedStylistId || undefined,
         }),
       });
 
@@ -874,25 +874,29 @@ export default function StudioPage() {
                 <p className="text-[11px] font-bold text-gray-400 flex items-center gap-1.5">
                   <span className="material-symbols-outlined text-[14px]">auto_awesome</span>
                   AI추천 컨셉태그
-                  {isTagsLoading && (
-                    <span className="text-[11px] text-gray-400 font-medium ml-1 animate-pulse">AI가 추천태그를 찾고 있어요...</span>
-                  )}
                 </p>
-                <div className="flex flex-wrap gap-2">
-                  {conceptTags.map((tag) => (
-                    <button
-                      key={tag}
-                      onClick={() => toggleTag(tag)}
-                      className={`px-3 py-1.5 text-[12px] font-semibold rounded-full transition-colors ${
-                        selectedTags.includes(tag)
-                          ? "bg-black text-white"
-                          : "bg-white border border-gray-200 text-gray-600 hover:border-black hover:text-black"
-                      }`}
-                    >
-                      {tag}
-                    </button>
-                  ))}
-                </div>
+                {isTagsLoading ? (
+                  <div className="flex items-center gap-3 px-4 py-3.5 bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-100 rounded-xl">
+                    <div className="w-4 h-4 border-2 border-purple-200 border-t-purple-500 rounded-full animate-spin shrink-0" />
+                    <span className="text-[12px] font-semibold text-purple-600 animate-pulse">AI가 추천태그를 찾고 있어요...</span>
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {conceptTags.map((tag) => (
+                      <button
+                        key={tag}
+                        onClick={() => toggleTag(tag)}
+                        className={`px-3 py-1.5 text-[12px] font-semibold rounded-full transition-colors ${
+                          selectedTags.includes(tag)
+                            ? "bg-black text-white"
+                            : "bg-white border border-gray-200 text-gray-600 hover:border-black hover:text-black"
+                        }`}
+                      >
+                        {tag}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
@@ -921,11 +925,12 @@ export default function StudioPage() {
               </div>
             )}
 
-            {/* Refresh tag suggestions — appends new tags */}
+            {/* Refresh tag suggestions — append new tags below existing */}
             {conceptStyle && !isTagsLoading && (
               <button
+                disabled={isMoreTagsLoading}
                 onClick={() => {
-                  setIsTagsLoading(true);
+                  setIsMoreTagsLoading(true);
                   (async () => {
                     try {
                       const res = await fetch("/api/tags/suggest", {
@@ -934,22 +939,30 @@ export default function StudioPage() {
                         body: JSON.stringify({ idolType, conceptStyle, exclude: [...conceptTags, ...recommendedTags] }),
                       });
                       const data = await res.json();
-                      const newCt: string[] = data.conceptTags || [];
-                      const newRt: string[] = data.recommendedTags || [];
-                      // Append unique new tags (no duplicates)
-                      setConceptTags((prev) => [...prev, ...newCt.filter((t) => !prev.includes(t))]);
-                      setRecommendedTags((prev) => [...prev, ...newRt.filter((t) => !prev.includes(t))]);
+                      const newCt: string[] = (data.conceptTags || []).filter((t: string) => !conceptTags.includes(t) && !recommendedTags.includes(t));
+                      const newRt: string[] = (data.recommendedTags || []).filter((t: string) => !conceptTags.includes(t) && !recommendedTags.includes(t));
+                      setConceptTags((prev) => [...prev, ...newCt]);
+                      setRecommendedTags((prev) => [...prev, ...newRt]);
                     } catch {
                       // silent
                     } finally {
-                      setIsTagsLoading(false);
+                      setIsMoreTagsLoading(false);
                     }
                   })();
                 }}
-                className="w-full py-2.5 border border-dashed border-gray-300 rounded-xl text-[13px] font-bold text-gray-500 hover:border-black hover:text-black transition-colors flex items-center justify-center gap-1.5"
+                className="w-full py-2.5 border border-dashed border-gray-300 rounded-xl text-[13px] font-bold text-gray-500 hover:border-black hover:text-black transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50"
               >
-                <span className="material-symbols-outlined text-[18px]">add_circle</span>
-                태그 추천 더받기
+                {isMoreTagsLoading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
+                    태그를 더 찾고 있어요...
+                  </>
+                ) : (
+                  <>
+                    <span className="material-symbols-outlined text-[18px]">add_circle</span>
+                    태그 추천 더받기
+                  </>
+                )}
               </button>
             )}
 
@@ -1216,6 +1229,7 @@ export default function StudioPage() {
                 selectedPersonaId={selectedStylistId || undefined}
                 onSelect={(id) => setSelectedStylistId(id)}
                 onRegenerate={handleAdviceRegenerate}
+                isRegenerating={isRefiningPrompt}
               />
             )}
 
@@ -1385,69 +1399,6 @@ export default function StudioPage() {
               )}
             </button>
           )}
-        </div>
-      )}
-
-      {/* ────── Advice Prompt Edit Modal ────── */}
-      {showAdviceModal && (
-        <div className="fixed inset-0 z-[65] bg-black/60 backdrop-blur-sm flex items-end justify-center" onClick={() => setShowAdviceModal(false)}>
-          <div
-            className="bg-white w-full max-w-md rounded-t-3xl max-h-[85vh] flex flex-col"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="shrink-0 pt-3 pb-2 px-6">
-              <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-4"></div>
-              <div className="flex justify-between items-center">
-                <h3 className="text-lg font-black font-korean">조언 반영하기</h3>
-                <button onClick={() => setShowAdviceModal(false)} className="p-1" aria-label="닫기">
-                  <span className="material-symbols-outlined text-[24px] text-gray-400">close</span>
-                </button>
-              </div>
-            </div>
-
-            <div className="px-6 pt-2 pb-4 space-y-3 overflow-y-auto flex-1 min-h-0">
-              <p className="text-[12px] text-gray-500 font-korean leading-relaxed">
-                스타일리스트 추천 키워드가 반영된 프롬프트예요. 자유롭게 수정해보세요.
-              </p>
-              <div className="relative">
-                <textarea
-                  value={adviceModalPrompt}
-                  onChange={(e) => setAdviceModalPrompt(e.target.value)}
-                  rows={5}
-                  maxLength={800}
-                  className="w-full px-4 py-3.5 bg-white border border-gray-200 rounded-xl text-sm text-black placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black resize-none font-korean leading-relaxed"
-                  placeholder="프롬프트를 입력하세요"
-                />
-                <span className="absolute bottom-3 right-3 text-[10px] text-gray-300 font-medium">
-                  {adviceModalPrompt.length}/800
-                </span>
-              </div>
-
-              {/* Collapsible original advice for reference */}
-              {adviceModalFeedback && (
-                <details className="group">
-                  <summary className="text-[11px] text-gray-400 cursor-pointer flex items-center gap-1 select-none">
-                    <span className="material-symbols-outlined text-[14px] transition-transform group-open:rotate-90">chevron_right</span>
-                    {adviceModalStylist} 원본 조언 보기
-                  </summary>
-                  <p className="mt-2 px-3 py-2.5 bg-gray-50 rounded-lg text-[12px] text-gray-500 leading-relaxed font-korean">
-                    {adviceModalFeedback}
-                  </p>
-                </details>
-              )}
-            </div>
-
-            <div className="shrink-0 px-6 pt-3 pb-6 border-t border-gray-100 bg-white">
-              <button
-                onClick={handleConfirmAdviceGenerate}
-                disabled={!adviceModalPrompt.trim()}
-                className="w-full py-4 bg-black text-white text-[15px] font-bold rounded-full hover:bg-gray-900 transition-all disabled:opacity-40 flex items-center justify-center gap-2.5 active:scale-[0.98]"
-              >
-                <span className="material-symbols-outlined text-[20px]">auto_awesome</span>
-                조언 반영하여 디자인하기
-              </button>
-            </div>
-          </div>
         </div>
       )}
 

@@ -9,6 +9,7 @@ interface StylistFeedbackCardProps {
   selectedPersonaId?: string;
   onSelect?: (personaId: string) => void;
   onRegenerate?: (feedback: string) => void; // Regenerate with this advice
+  isRegenerating?: boolean; // Show spinner on regenerate button
   freeCount?: number; // How many feedbacks are free (default: 1 for select, all for display)
 }
 
@@ -106,6 +107,7 @@ export default function StylistFeedbackCard({
   selectedPersonaId,
   onSelect,
   onRegenerate,
+  isRegenerating,
   freeCount,
 }: StylistFeedbackCardProps) {
   // Default: display mode = all free, select mode = 1 free
@@ -159,7 +161,8 @@ export default function StylistFeedbackCard({
     setAdTargetId(personaId);
     const success = await showAd();
     if (success) {
-      setUnlockedIds((prev) => new Set([...prev, personaId]));
+      // Unlock all stylists with a single ad view
+      setUnlockedIds(new Set(feedbacks.map((f) => f.personaId)));
       if (mode === "select" && onSelect) {
         onSelect(personaId);
       }
@@ -308,15 +311,25 @@ export default function StylistFeedbackCard({
               {mode === "select" && onRegenerate && (
                 <button
                   onClick={() => onRegenerate(activeFb.feedback)}
-                  className="mt-4 w-full py-3 bg-gradient-to-r from-gray-900 to-gray-800 text-white text-[13px] font-bold rounded-xl hover:from-black hover:to-gray-900 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                  disabled={isRegenerating}
+                  className="mt-4 w-full py-3 bg-gradient-to-r from-gray-900 to-gray-800 text-white text-[13px] font-bold rounded-xl hover:from-black hover:to-gray-900 transition-all active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50"
                 >
-                  <span
-                    className="material-symbols-outlined text-[18px]"
-                    style={{ fontVariationSettings: "'FILL' 1" }}
-                  >
-                    refresh
-                  </span>
-                  이 조언 반영해서 다시 만들기
+                  {isRegenerating ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      AI가 조언을 반영하는 중...
+                    </>
+                  ) : (
+                    <>
+                      <span
+                        className="material-symbols-outlined text-[18px]"
+                        style={{ fontVariationSettings: "'FILL' 1" }}
+                      >
+                        refresh
+                      </span>
+                      이 조언 반영해서 다시 만들기
+                    </>
+                  )}
                 </button>
               )}
             </div>
@@ -355,10 +368,10 @@ export default function StylistFeedbackCard({
                     >
                       play_circle
                     </span>
-                    광고 보고 어드바이스 받기
+                    광고 보고 전체 어드바이스 받기
                   </button>
                   <p className="text-[10px] text-gray-300">
-                    약 15초 · 무료로 잠금 해제
+                    약 15초 · 모든 스타일리스트 잠금 해제
                   </p>
                 </>
               )}

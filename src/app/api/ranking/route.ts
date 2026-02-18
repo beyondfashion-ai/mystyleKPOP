@@ -11,6 +11,11 @@ import {
 
 export const dynamic = "force-dynamic";
 
+function getDayStart(): Date {
+  const now = new Date();
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+}
+
 function getWeekStart(): Date {
   const now = new Date();
   const day = now.getUTCDay();
@@ -58,7 +63,7 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = request.nextUrl;
     const period = searchParams.get("period") || "weekly";
-    const cutoff = period === "monthly" ? getMonthStart() : getWeekStart();
+    const cutoff = period === "monthly" ? getMonthStart() : period === "daily" ? getDayStart() : getWeekStart();
     const cutoffSeconds = Math.floor(cutoff.getTime() / 1000);
 
     // Admin SDK path

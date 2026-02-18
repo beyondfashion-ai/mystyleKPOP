@@ -78,13 +78,13 @@ export async function POST(request: Request) {
 ${imageData ? "위 이미지는 유저가 AI로 생성한 K-POP 무대의상 디자인입니다. 이 이미지를 직접 보고 평가하세요." : ""}
 디자인 정보: ${textContext}
 
-최신 패션 트렌드를 검색하여 참고한 뒤, 당신의 관점에서 이 디자인을 평가해주세요. 반드시 한국어로 3~5줄 분량으로 간결하게 작성하세요.`,
+최신 패션 트렌드를 검색하여 참고한 뒤, 당신의 관점에서 이 디자인을 평가해주세요. 반드시 한국어로 2~3줄. 당신만의 말투와 관점으로 짧고 임팩트 있게.`,
           });
 
           const result = await model.generateContent({
             contents: [{ role: "user", parts }],
             generationConfig: {
-              maxOutputTokens: 400,
+              maxOutputTokens: 200,
               temperature: 0.9,
             },
           });

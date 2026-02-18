@@ -105,7 +105,7 @@ function GalleryContent() {
     const searchInputRef = useRef<HTMLInputElement>(null);
 
     // Ranking state
-    const [rankingPeriod, setRankingPeriod] = useState<"weekly" | "monthly">("monthly");
+    const [rankingPeriod, setRankingPeriod] = useState<"daily" | "weekly" | "monthly">("monthly");
     const [rankingDesigns, setRankingDesigns] = useState<RankingDesign[]>([]);
     const [rankingLoading, setRankingLoading] = useState(false);
 
@@ -165,7 +165,7 @@ function GalleryContent() {
     }, [searchQuery]);
 
     // Fetch ranking data
-    const fetchRanking = useCallback(async (period: "weekly" | "monthly") => {
+    const fetchRanking = useCallback(async (period: "daily" | "weekly" | "monthly") => {
         setRankingLoading(true);
         try {
             const res = await fetch(`/api/ranking?period=${period}`);
@@ -342,8 +342,8 @@ function GalleryContent() {
     return (
         <div className="bg-white text-black antialiased pb-24 min-h-screen font-korean">
             <Header
-                pageTitle="스타일 픽"
-                subtitle="마음에 드는 스타일에 투표하고, 슈퍼스타를 선물하세요"
+                pageTitle={activeTab === "ranking" ? "명예의 전당" : "스타일 픽"}
+                subtitle={activeTab === "ranking" ? "월간 랭킹 1위 디자인은 실제 의상으로 제작됩니다" : "마음에 드는 스타일에 투표하고, 슈퍼스타를 선물하세요"}
                 tabs={
                     <div className="flex items-center justify-between">
                         <div className="flex gap-7">
@@ -655,10 +655,14 @@ function GalleryContent() {
 
 /* ============ Ranking Section Component ============ */
 
-function useCountdown(period: "weekly" | "monthly") {
+function useCountdown(period: "daily" | "weekly" | "monthly") {
     const [remaining, setRemaining] = useState("");
 
     useEffect(() => {
+        if (period === "daily") {
+            setRemaining("");
+            return;
+        }
         function calc() {
             const now = new Date();
             let end: Date;
@@ -698,8 +702,8 @@ function RankingSection({
     rankingDesigns,
     rankingLoading,
 }: {
-    rankingPeriod: "weekly" | "monthly";
-    setRankingPeriod: (p: "weekly" | "monthly") => void;
+    rankingPeriod: "daily" | "weekly" | "monthly";
+    setRankingPeriod: (p: "daily" | "weekly" | "monthly") => void;
     rankingDesigns: RankingDesign[];
     rankingLoading: boolean;
 }) {
@@ -732,11 +736,22 @@ function RankingSection({
                     >
                         주간
                     </button>
+                    <button
+                        onClick={() => setRankingPeriod("daily")}
+                        className={`px-4 py-2 text-[13px] font-bold rounded-full transition-colors ${rankingPeriod === "daily"
+                            ? "bg-black text-white"
+                            : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                            }`}
+                    >
+                        실시간
+                    </button>
                 </div>
-                <div className="flex items-center gap-1 text-[12px] text-gray-400 font-medium">
-                    <span className="material-symbols-outlined text-[14px]">schedule</span>
-                    {countdown}
-                </div>
+                {countdown && (
+                    <div className="flex items-center gap-1 text-[12px] text-gray-400 font-medium">
+                        <span className="material-symbols-outlined text-[14px]">schedule</span>
+                        {countdown}
+                    </div>
+                )}
             </div>
 
             {rankingLoading ? (
