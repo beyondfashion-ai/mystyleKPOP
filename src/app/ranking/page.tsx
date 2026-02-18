@@ -87,7 +87,7 @@ export default function RankingPage() {
           <>
             {top1 && (
               <Link href={`/design/${top1.id}`} className="block relative rounded-2xl overflow-hidden bg-gray-100">
-                <div className="relative aspect-[4/3]">
+                <div className="relative aspect-[3/4]">
                   <Image
                     src={top1.imageUrls?.[0]?.url || top1.imageUrl || "/images/placeholder.png"}
                     alt={`Rank 1 by ${top1.ownerHandle || "designer"}`}

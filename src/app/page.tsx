@@ -99,7 +99,7 @@ export default function LandingPage() {
                 <section className="py-12 bg-white border-y border-gray-50">
                     <div className="px-6 flex justify-between items-end mb-6">
                         <h2 className="text-xl font-black font-korean flex items-center gap-2">
-                            월간 랭킹
+                            👑 월간 랭킹
                         </h2>
                         <Link href="/ranking" className="text-xs text-gray-400 font-bold border-b border-gray-200">View All</Link>
                     </div>
@@ -123,7 +123,9 @@ export default function LandingPage() {
                                     <span className="material-symbols-outlined text-4xl">image</span>
                                 </div>
                             )}
-                            <div className="absolute top-3 left-3 bg-black text-white px-3 py-1 text-[11px] font-black rounded-full">1st</div>
+                            <div className="absolute top-3 left-3 bg-yellow-400 text-black px-3 py-1 text-[11px] font-black rounded-full flex items-center gap-1">
+                                <span>👑</span> 1위
+                            </div>
                             <div className="absolute bottom-0 left-0 right-0 p-5 bg-gradient-to-t from-black/80 to-transparent text-white">
                                 <h3 className="font-bold text-lg">{top1?.concept || "Best Design"}</h3>
                                 {top1?.groupTag ? (
@@ -137,7 +139,8 @@ export default function LandingPage() {
                                 ) : (
                                     <span className="text-xs text-gray-300 font-medium mt-1 block">By @{top1?.ownerHandle || "\u2014"}</span>
                                 )}
-                                <div className="flex justify-end items-center mt-1">
+                                <div className="flex items-center justify-between mt-1">
+                                    <p className="text-yellow-300 text-[11px] font-bold">이 의상이 실제로 제작됩니다!</p>
                                     <div className="flex items-center gap-1.5">
                                         <span className="material-symbols-outlined text-sm text-white" style={{ fontVariationSettings: "'FILL' 1" }}>favorite</span>
                                         <span className="text-xs font-bold">{top1 ? formatCount(top1.likeCount || 0) : "0"}</span>

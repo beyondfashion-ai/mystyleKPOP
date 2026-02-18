@@ -105,7 +105,7 @@ function GalleryContent() {
     const searchInputRef = useRef<HTMLInputElement>(null);
 
     // Ranking state
-    const [rankingPeriod, setRankingPeriod] = useState<"weekly" | "monthly">("weekly");
+    const [rankingPeriod, setRankingPeriod] = useState<"weekly" | "monthly">("monthly");
     const [rankingDesigns, setRankingDesigns] = useState<RankingDesign[]>([]);
     const [rankingLoading, setRankingLoading] = useState(false);
 
@@ -715,22 +715,22 @@ function RankingSection({
             <div className="flex items-center justify-between">
                 <div className="flex gap-2">
                     <button
-                        onClick={() => setRankingPeriod("weekly")}
-                        className={`px-4 py-2 text-[13px] font-bold rounded-full transition-colors ${rankingPeriod === "weekly"
-                            ? "bg-black text-white"
-                            : "bg-gray-100 text-gray-500 hover:bg-gray-200"
-                            }`}
-                    >
-                        이번 주
-                    </button>
-                    <button
                         onClick={() => setRankingPeriod("monthly")}
                         className={`px-4 py-2 text-[13px] font-bold rounded-full transition-colors ${rankingPeriod === "monthly"
                             ? "bg-black text-white"
                             : "bg-gray-100 text-gray-500 hover:bg-gray-200"
                             }`}
                     >
-                        이번 달
+                        월간
+                    </button>
+                    <button
+                        onClick={() => setRankingPeriod("weekly")}
+                        className={`px-4 py-2 text-[13px] font-bold rounded-full transition-colors ${rankingPeriod === "weekly"
+                            ? "bg-black text-white"
+                            : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                            }`}
+                    >
+                        주간
                     </button>
                 </div>
                 <div className="flex items-center gap-1 text-[12px] text-gray-400 font-medium">
@@ -748,7 +748,7 @@ function RankingSection({
                     {/* Top 1 spotlight */}
                     {first && (
                         <Link href={`/design/${first.id}`} className="block relative rounded-2xl overflow-hidden bg-gray-100">
-                            <div className="relative aspect-[4/3]">
+                            <div className="relative aspect-[3/4]">
                                 <Image
                                     src={first.imageUrls?.[0]?.url || first.imageUrl || "/images/placeholder.png"}
                                     alt={`Design by ${first.ownerHandle}`}
