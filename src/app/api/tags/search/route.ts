@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase-admin";
 import { db } from "@/lib/firebase";
 import { collection, getDocs, query, where } from "firebase/firestore";
+import { resolveGroupName } from "@/lib/group-aliases";
 import fs from "fs/promises";
 import path from "path";
 
@@ -16,26 +17,29 @@ const LOCAL_DB_PATH = path.join(process.cwd(), "data", "designs.json");
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = request.nextUrl;
-    const searchQuery = (searchParams.get("q") || "").trim().toLowerCase().replace(/\s+/g, "");
+    const rawQuery = (searchParams.get("q") || "").trim();
     const limitParam = Math.min(Number(searchParams.get("limit")) || 5, 20);
 
-    if (searchQuery.length < 1) {
+    if (rawQuery.length < 1) {
       return NextResponse.json({ tags: [] });
     }
+
+    // Resolve query through alias mapping for canonical matching
+    const resolvedQuery = resolveGroupName(rawQuery);
+    const searchCanonical = resolvedQuery.canonical;
 
     const tagMap = new Map<string, { displayName: string; count: number }>();
 
     function addTag(groupTag: string) {
-      const normalized = groupTag.toLowerCase().replace(/\s+/g, "");
-      if (!normalized.includes(searchQuery)) return;
-      const existing = tagMap.get(normalized);
+      // Resolve stored tag to canonical form for grouping
+      const resolved = resolveGroupName(groupTag);
+      const canonical = resolved.canonical;
+      if (!canonical.includes(searchCanonical)) return;
+      const existing = tagMap.get(canonical);
       if (existing) {
         existing.count += 1;
-        if (groupTag.length > existing.displayName.length) {
-          existing.displayName = groupTag;
-        }
       } else {
-        tagMap.set(normalized, { displayName: groupTag, count: 1 });
+        tagMap.set(canonical, { displayName: resolved.displayName, count: 1 });
       }
     }
 

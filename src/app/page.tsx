@@ -5,27 +5,32 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import BottomNav from "@/components/BottomNav";
 import Header from "@/components/Header";
+import CheeringBadge from "@/components/CheeringBadge";
 import { useAuth } from "@/context/AuthContext";
 
-interface GalleryDesign {
+interface RankedDesign {
+    rank?: number;
     id: string;
     imageUrls?: { url: string; index: number }[];
     imageUrl?: string;
     ownerHandle?: string;
     likeCount?: number;
+    boostCount?: number;
+    totalScore?: number;
     concept?: string;
+    groupTag?: string | null;
 }
 
 export default function LandingPage() {
-    const [bestPicks, setBestPicks] = useState<GalleryDesign[]>([]);
+    const [bestPicks, setBestPicks] = useState<RankedDesign[]>([]);
     const [isAdmin, setIsAdmin] = useState(false);
     const { user } = useAuth();
 
     useEffect(() => {
-        fetch("/api/gallery?sort=popular")
+        fetch("/api/ranking?period=monthly")
             .then((res) => res.json())
             .then((data) => {
-                if (data.designs) setBestPicks(data.designs.slice(0, 5));
+                if (data.rankings) setBestPicks(data.rankings.slice(0, 5));
             })
             .catch(() => {});
     }, []);
@@ -53,7 +58,7 @@ export default function LandingPage() {
         };
     }, [user]);
 
-    const getImageUrl = (design: GalleryDesign) => {
+    const getImageUrl = (design: RankedDesign) => {
         if (design.imageUrls && design.imageUrls.length > 0) return design.imageUrls[0].url;
         return design.imageUrl || "";
     };
@@ -82,7 +87,7 @@ export default function LandingPage() {
                         </h1>
                         <p className="text-sm text-gray-600 mb-10 max-w-[280px] mx-auto leading-relaxed">
                             {"\uB0B4 \uCD5C\uC560\uB97C \uC704\uD55C \uBB34\uB300 \uC758\uC0C1\uC744 \uB514\uC790\uC778\uD574\uBCF4\uC138\uC694."}<br />
-                            {"\uC774\uBC88 \uB2EC \uD22C\uD45C 1\uC704 \uB514\uC790\uC778\uC740 \uC2E4\uC81C\uB85C \uC81C\uC791\uB429\uB2C8\uB2E4!"}
+                            {"\uC6D4\uAC04 \uB7AD\uD0B9 1\uC704 \uC6B0\uC2B9\uC791\uC740 K-POP\uC804\uBB38 \uBB34\uB300\uC758\uC0C1 \uC81C\uC791\uD300\uACFC \uD604\uC2E4 \uC81C\uC791\uC73C\uB85C \uC5F0\uACB0\uB429\uB2C8\uB2E4!"}
                         </p>
                         <Link href="/studio" className="w-full bg-black text-white py-4 px-6 rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-transform active:scale-95">
                             <span className="material-symbols-outlined text-lg">edit</span>
@@ -90,13 +95,13 @@ export default function LandingPage() {
                         </Link>
                     </div>
                 </section>
-                {/* Best Picks */}
+                {/* Monthly Ranking */}
                 <section className="py-12 bg-white border-y border-gray-50">
                     <div className="px-6 flex justify-between items-end mb-6">
-                        <h2 className="text-xl font-black font-display flex items-center gap-2 uppercase">
-                            BEST PICKS
+                        <h2 className="text-xl font-black font-korean flex items-center gap-2">
+                            월간 랭킹
                         </h2>
-                        <Link href="/gallery" className="text-xs text-gray-400 font-bold border-b border-gray-200">View All</Link>
+                        <Link href="/ranking" className="text-xs text-gray-400 font-bold border-b border-gray-200">View All</Link>
                     </div>
                     <div className="px-6">
                         {/* 1st place ??portrait 3:4 to match generated images */}
@@ -121,8 +126,18 @@ export default function LandingPage() {
                             <div className="absolute top-3 left-3 bg-black text-white px-3 py-1 text-[11px] font-black rounded-full">1st</div>
                             <div className="absolute bottom-0 left-0 right-0 p-5 bg-gradient-to-t from-black/80 to-transparent text-white">
                                 <h3 className="font-bold text-lg">{top1?.concept || "Best Design"}</h3>
-                                <div className="flex justify-between items-center mt-1">
-                                    <span className="text-xs text-gray-300 font-medium">By @{top1?.ownerHandle || "\u2014"}</span>
+                                {top1?.groupTag ? (
+                                    <div className="mt-1.5">
+                                        <CheeringBadge
+                                            userName={top1.ownerHandle || "Designer"}
+                                            idolName={top1.groupTag}
+                                            variant="card"
+                                        />
+                                    </div>
+                                ) : (
+                                    <span className="text-xs text-gray-300 font-medium mt-1 block">By @{top1?.ownerHandle || "\u2014"}</span>
+                                )}
+                                <div className="flex justify-end items-center mt-1">
                                     <div className="flex items-center gap-1.5">
                                         <span className="material-symbols-outlined text-sm text-white" style={{ fontVariationSettings: "'FILL' 1" }}>favorite</span>
                                         <span className="text-xs font-bold">{top1 ? formatCount(top1.likeCount || 0) : "0"}</span>
@@ -134,7 +149,7 @@ export default function LandingPage() {
                         {/* Runners up ??portrait 3:4 */}
                         <div className="flex gap-3 overflow-x-auto no-scrollbar pb-4">
                             {runners.length > 0 ? runners.map((design, i) => (
-                                <Link key={design.id} href={`/design/${design.id}`} className="min-w-[130px] flex-shrink-0">
+                                <Link key={design.id} href={`/design/${design.id}`} className="w-[130px] flex-shrink-0">
                                     <div className="relative aspect-[3/4] bg-white rounded-lg overflow-hidden border border-gray-100 mb-2">
                                         {getImageUrl(design) ? (
                                             <Image
@@ -153,7 +168,15 @@ export default function LandingPage() {
                                         </div>
                                     </div>
                                     <p className="text-xs font-bold truncate">{design.concept || "Design"}</p>
-                                    <p className="text-[10px] text-gray-500">@{design.ownerHandle || "\u2014"}</p>
+                                    {design.groupTag ? (
+                                        <CheeringBadge
+                                            userName={design.ownerHandle || "Designer"}
+                                            idolName={design.groupTag}
+                                            variant="card"
+                                        />
+                                    ) : (
+                                        <p className="text-[10px] text-gray-500">@{design.ownerHandle || "\u2014"}</p>
+                                    )}
                                 </Link>
                             )) : (
                                 <>
@@ -174,7 +197,7 @@ export default function LandingPage() {
                     <div className="max-w-[380px] mx-auto">
                         <p className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.22em] text-center mb-3">Journey</p>
                         <h2 className="text-2xl font-black mb-12 text-center font-korean leading-snug">
-                            {"\uD32C\uC758 \uC544\uC774\uB514\uC5B4\uAC00"}<br />{"\uBB34\uB300\uAC00 \uB418\uB294 4\uB2E8\uACC4"}
+                            {"\uB2F9\uC2E0\uC758 \uC544\uC774\uB514\uC5B4\uAC00"}<br />{"\uBB34\uB300\uAC00 \uB418\uB294 4\uB2E8\uACC4"}
                         </h2>
 
                         <div className="relative pl-3">
@@ -217,10 +240,10 @@ export default function LandingPage() {
                                     <div className="relative z-10 w-11 h-11 rounded-full bg-vibrant-cyan text-white text-[11px] font-black flex items-center justify-center shrink-0 border-4 border-white shadow-[0_6px_16px_rgba(0,229,255,0.35)]">04</div>
                                     <div className="flex-1 rounded-2xl border border-vibrant-cyan/25 bg-gradient-to-br from-vibrant-cyan/10 to-white p-5 transition-transform duration-200 hover:-translate-y-0.5">
                                         <div className="flex items-start justify-between gap-3">
-                                            <h3 className="font-bold text-[15px] text-vibrant-cyan font-korean">{"\uC6B0\uC2B9 \uB8E9 \uC2E4\uD604"}</h3>
+                                            <h3 className="font-bold text-[15px] text-vibrant-cyan font-korean">{"\uC6B0\uC2B9\uC791 \uD604\uC2E4 \uC81C\uC791"}</h3>
                                             <span className="material-symbols-outlined text-[19px] text-vibrant-cyan animate-pulse">emoji_events</span>
                                         </div>
-                                        <p className="text-[12px] text-gray-600 leading-relaxed mt-2 font-korean">{"\uC6D4\uAC04 1\uC704 \uB514\uC790\uC778\uC740 \uC2E4\uC81C \uC81C\uC791 \uD504\uB85C\uC138\uC2A4\uB85C \uC5F0\uACB0\uB429\uB2C8\uB2E4"}</p>
+                                        <p className="text-[12px] text-gray-600 leading-relaxed mt-2 font-korean">{"\uC6D4\uAC04 1\uC704 \uC6B0\uC2B9\uC791\uC740 K-POP\uC804\uBB38 \uBB34\uB300\uC758\uC0C1 \uC81C\uC791\uD300\uC758 \uD604\uC2E4 \uC81C\uC791 \uD504\uB85C\uC138\uC2A4\uB85C \uC5F0\uACB0\uB429\uB2C8\uB2E4"}</p>
                                     </div>
                                 </article>
                             </div>

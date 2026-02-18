@@ -49,3 +49,13 @@
   - onboarding minimum dwell time
   - post-onboarding minimum dwell time
   - extra dwell cadence and duration
+
+---
+
+## Onboarding Reboot (2026-02-17)
+
+- [ ] Restart onboarding flow planning from scratch.
+- [ ] Draft signup journey inspired by shopcider-style low-friction flow.
+- [ ] Define initial preset set (target: 6 presets) and copy for each.
+- [ ] Create screen-by-screen onboarding script (buttons, helper text, error text).
+- [ ] Prepare A/B test plan for flow order (`survey-first` vs `preset-first`).

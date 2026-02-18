@@ -37,10 +37,67 @@ function stripPrivateFields(id: string, data: Record<string, unknown>) {
     ownerHandle: data.ownerHandle,
     ownerUid: data.ownerUid,
     concept: data.concept,
+    stylePresetId: data.stylePresetId || null,
+    stylePresetLabel: data.stylePresetLabel || null,
+    colorPresetIds: Array.isArray(data.colorPresetIds) ? data.colorPresetIds : [],
+    colorPresetLabels: Array.isArray(data.colorPresetLabels) ? data.colorPresetLabels : [],
+    stageVibeId: data.stageVibeId || null,
+    stageVibeLabel: data.stageVibeLabel || null,
     groupTag: data.groupTag || null,
     createdAt: data.createdAt,
     representativeIndex: data.representativeIndex || 0,
   };
+}
+
+function sortByPopular(a: Record<string, unknown>, b: Record<string, unknown>) {
+  const scoreDiff = weightedScore(b) - weightedScore(a);
+  if (scoreDiff !== 0) return scoreDiff;
+  return ((b.likeCount as number) || 0) - ((a.likeCount as number) || 0);
+}
+
+function sortByNewest(a: Record<string, unknown>, b: Record<string, unknown>) {
+  const aTime = a.createdAt && typeof a.createdAt === "object" && "_seconds" in (a.createdAt as Record<string, unknown>)
+    ? ((a.createdAt as Record<string, number>)._seconds || 0)
+    : 0;
+  const bTime = b.createdAt && typeof b.createdAt === "object" && "_seconds" in (b.createdAt as Record<string, unknown>)
+    ? ((b.createdAt as Record<string, number>)._seconds || 0)
+    : 0;
+  return bTime - aTime;
+}
+
+function applyRecommended(
+  all: Record<string, unknown>[],
+  groups: string[],
+  cursor: string | null
+) {
+  const normalizedGroups = groups.map((g) => g.toLowerCase().replace(/\s+/g, ""));
+
+  // Split into matched vs unmatched
+  const matched: Record<string, unknown>[] = [];
+  const rest: Record<string, unknown>[] = [];
+  for (const d of all) {
+    const norm = (d.groupTagNormalized as string) || "";
+    if (normalizedGroups.includes(norm)) {
+      matched.push(d);
+    } else {
+      rest.push(d);
+    }
+  }
+
+  // Sort each group by score
+  matched.sort(sortByPopular);
+  rest.sort(sortByPopular);
+
+  // Interleave: matched first, then rest
+  const combined = [...matched, ...rest];
+
+  // Cursor-based pagination
+  const cursorIndex = cursor ? combined.findIndex((d) => d.id === cursor) : -1;
+  const start = cursorIndex >= 0 ? cursorIndex + 1 : 0;
+  const page = combined.slice(start, start + PAGE_SIZE);
+  const nextCursor = page.length === PAGE_SIZE ? (page[page.length - 1].id as string) : null;
+
+  return { page, nextCursor };
 }
 
 export async function GET(request: NextRequest) {
@@ -51,6 +108,7 @@ export async function GET(request: NextRequest) {
     const concept = searchParams.get("concept");
     const groupTag = searchParams.get("groupTag");
     const ownerUid = searchParams.get("ownerUid");
+    const groupsParam = searchParams.get("groups"); // comma-separated for recommended
 
     // Use Admin SDK if available (no composite index needed — filter/sort in JS)
     if (adminDb) {
@@ -66,21 +124,23 @@ export async function GET(request: NextRequest) {
       }
       if (concept) all = all.filter((d) => d.concept === concept);
 
+      // Recommended sort with groups prioritization
+      if (sort === "recommended" && groupsParam) {
+        const groups = groupsParam.split(",").map((g) => g.trim()).filter(Boolean);
+        const { page, nextCursor } = applyRecommended(all, groups, cursor);
+        return NextResponse.json({
+          designs: page.map((d) => stripPrivateFields(d.id as string, d)),
+          nextCursor,
+          hasMore: nextCursor !== null,
+        });
+      }
+
       // Sort
-      all.sort((a, b) => {
-        if (sort === "newest") {
-          const aTime = a.createdAt && typeof a.createdAt === "object" && "_seconds" in (a.createdAt as Record<string, unknown>)
-            ? ((a.createdAt as Record<string, number>)._seconds || 0)
-            : 0;
-          const bTime = b.createdAt && typeof b.createdAt === "object" && "_seconds" in (b.createdAt as Record<string, unknown>)
-            ? ((b.createdAt as Record<string, number>)._seconds || 0)
-            : 0;
-          return bTime - aTime;
-        }
-        const scoreDiff = weightedScore(b) - weightedScore(a);
-        if (scoreDiff !== 0) return scoreDiff;
-        return ((b.likeCount as number) || 0) - ((a.likeCount as number) || 0);
-      });
+      if (sort === "newest") {
+        all.sort(sortByNewest);
+      } else {
+        all.sort(sortByPopular);
+      }
 
       // Cursor-based pagination
       const cursorIndex = cursor ? all.findIndex((d) => d.id === cursor) : -1;
@@ -111,15 +171,23 @@ export async function GET(request: NextRequest) {
         }
         if (concept) designs = designs.filter((d) => d.concept === concept);
 
+        // Recommended sort with groups prioritization
+        if (sort === "recommended" && groupsParam) {
+          const groups = groupsParam.split(",").map((g) => g.trim()).filter(Boolean);
+          const { page, nextCursor } = applyRecommended(designs, groups, cursor);
+          return NextResponse.json({
+            designs: page.map((d) => stripPrivateFields(d.id as string, d)),
+            nextCursor,
+            hasMore: nextCursor !== null,
+          });
+        }
+
         // Sort
-        designs.sort((a, b) => {
-          if (sort === "newest") {
-            return String(b.createdAt || "").localeCompare(String(a.createdAt || ""));
-          }
-          const scoreDiff = weightedScore(b) - weightedScore(a);
-          if (scoreDiff !== 0) return scoreDiff;
-          return ((b.likeCount as number) || 0) - ((a.likeCount as number) || 0);
-        });
+        if (sort === "newest") {
+          designs.sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
+        } else {
+          designs.sort(sortByPopular);
+        }
 
         // Paginate
         const cursorIndex = cursor ? designs.findIndex((d) => d.id === cursor) : -1;
@@ -145,20 +213,22 @@ export async function GET(request: NextRequest) {
     const snapshot = await getDocs(q);
     const all: Record<string, unknown>[] = snapshot.docs.map((d) => ({ id: d.id, ...(d.data() as Record<string, unknown>) }));
 
-    all.sort((a, b) => {
-      if (sort === "newest") {
-        const aTime = a.createdAt && typeof a.createdAt === "object" && "_seconds" in (a.createdAt as Record<string, unknown>)
-          ? ((a.createdAt as Record<string, number>)._seconds || 0)
-          : 0;
-        const bTime = b.createdAt && typeof b.createdAt === "object" && "_seconds" in (b.createdAt as Record<string, unknown>)
-          ? ((b.createdAt as Record<string, number>)._seconds || 0)
-          : 0;
-        return bTime - aTime;
-      }
-      const scoreDiff = weightedScore(b) - weightedScore(a);
-      if (scoreDiff !== 0) return scoreDiff;
-      return (Number(b.likeCount || 0) - Number(a.likeCount || 0));
-    });
+    // Recommended sort with groups prioritization
+    if (sort === "recommended" && groupsParam) {
+      const groups = groupsParam.split(",").map((g) => g.trim()).filter(Boolean);
+      const { page: recPage, nextCursor: recCursor } = applyRecommended(all, groups, cursor);
+      return NextResponse.json({
+        designs: recPage.map((d) => stripPrivateFields(d.id as string, d)),
+        nextCursor: recCursor,
+        hasMore: recCursor !== null,
+      });
+    }
+
+    if (sort === "newest") {
+      all.sort(sortByNewest);
+    } else {
+      all.sort(sortByPopular);
+    }
 
     const cursorIndex = cursor ? all.findIndex((d) => d.id === cursor) : -1;
     const start = cursorIndex >= 0 ? cursorIndex + 1 : 0;

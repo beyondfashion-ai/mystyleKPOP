@@ -75,7 +75,7 @@ const IDOL_TYPES = [
   // { id: "solo", label: "솔로", prompt: "K-POP solo artist", icon: "🎤" },
 ];
 
-const CONCEPT_STYLES = [
+const CONCEPT_STYLES: { id: string; label: string; color: string; prompt: string; icon: string; mood: string; girlOnly?: boolean; boyOnly?: boolean }[] = [
   { id: "cyber", label: "미래지향적", color: "from-violet-600 via-purple-700 to-blue-900", prompt: "cyberpunk futuristic", icon: "🌌", mood: "Futuristic, electric" },
   { id: "y2k", label: "Y2K", color: "from-pink-400 via-fuchsia-300 to-yellow-300", prompt: "Y2K retro", icon: "✨", mood: "Playful, nostalgic" },
   { id: "highteen", label: "하이틴", color: "from-sky-400 via-cyan-300 to-pink-200", prompt: "high teen preppy", icon: "🎀", mood: "Youthful, bright" },
@@ -83,7 +83,34 @@ const CONCEPT_STYLES = [
   { id: "suit", label: "수트", color: "from-slate-700 via-gray-600 to-slate-800", prompt: "tailored suit formal", icon: "🤵", mood: "Sharp, powerful" },
   { id: "street", label: "스트릿", color: "from-gray-600 via-gray-800 to-gray-950", prompt: "streetwear urban", icon: "🧢", mood: "Urban, cool" },
   { id: "girlcrush", label: "걸크러쉬", color: "from-red-800 via-rose-900 to-gray-900", prompt: "girl crush edgy", icon: "🔥", mood: "Powerful, fierce", girlOnly: true },
+  { id: "balletcore", label: "발레코어", color: "from-pink-200 via-rose-100 to-amber-100", prompt: "balletcore tulle skirt satin corset ribbon lace-up pointe shoe inspired", icon: "🩰", mood: "Elegant, classical, delicate strength", girlOnly: true },
+  { id: "darkromance", label: "다크 로맨스", color: "from-gray-900 via-rose-950 to-purple-950", prompt: "dark romance gothic lace velvet corset Victorian cape dramatic", icon: "🖤", mood: "Gothic romantic, dramatic, decadent beauty" },
+  { id: "neohanbok", label: "네오한복", color: "from-red-800 via-amber-700 to-yellow-600", prompt: "modernized hanbok jeogori structured jacket goryeo embroidery flowing hanji-textured fabric", icon: "🏮", mood: "Traditional Korean reinvented, cultural pride, avant-garde" },
+  { id: "luxesport", label: "럭스 스포츠", color: "from-blue-900 via-slate-800 to-gray-700", prompt: "luxury athletic wear tailored track jacket technical fabric silk panels premium sportswear couture", icon: "⚡", mood: "Luxury meets athletic energy, couture performance", boyOnly: true },
 ];
+
+const POSE_STYLES = [
+  { id: "standing", label: "스탠딩", icon: "🧍", prompt: "standing naturally facing the camera in a relaxed full-body pose with arms at sides" },
+  { id: "runway", label: "런웨이", icon: "🚶", prompt: "walking confidently toward the camera on a runway, one foot forward, full-body front view" },
+  { id: "hand-on-hip", label: "손 허리", icon: "💃", prompt: "standing with one hand on hip, confident front-facing full-body pose" },
+  { id: "pocket", label: "포켓", icon: "🧥", prompt: "standing casually with one hand in pocket, relaxed front-facing full-body pose" },
+  { id: "one-hand-up", label: "원핸드 업", icon: "🙋", prompt: "standing with one arm raised above head, showing sleeve and top silhouette, front-facing full-body" },
+];
+
+// Map onboarding style preset IDs → Korean labels for favorite tags
+const FAVORITE_STYLE_MAP: Record<string, string> = {
+  y2k: "Y2K",
+  highteen: "하이틴",
+  street: "스트릿",
+  suit: "수트",
+  cyber: "미래지향적",
+  girlcrush: "걸크러쉬",
+  sexy: "섹시",
+  balletcore: "발레코어",
+  darkromance: "다크 로맨스",
+  neohanbok: "네오한복",
+  luxesport: "럭스 스포츠",
+};
 
 const MAX_SELECTED_TAGS = 15;
 
@@ -122,6 +149,7 @@ export default function StudioPage() {
   const router = useRouter();
   const [idolType, setIdolType] = useState("girlgroup");
   const [conceptStyle, setConceptStyle] = useState<string | null>(null);
+  const [selectedPose, setSelectedPose] = useState<string | null>(null);
   const [imageCount, setImageCount] = useState(1);
   const [isGenerating, setIsGenerating] = useState(false);
   const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
@@ -133,10 +161,10 @@ export default function StudioPage() {
   // Tag-centric state (replaces prompt + selectedHashtags)
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [freeInputText, setFreeInputText] = useState("");
-  const [showFreeInput, setShowFreeInput] = useState(false);
   const [conceptTags, setConceptTags] = useState<string[]>([]);
   const [recommendedTags, setRecommendedTags] = useState<string[]>([]);
   const [popularKeywords, setPopularKeywords] = useState<string[]>([]);
+  const [favoriteTags, setFavoriteTags] = useState<string[]>([]);
   const [isTagsLoading, setIsTagsLoading] = useState(false);
   const tagCacheRef = useRef<Map<string, { conceptTags: string[]; recommendedTags: string[] }>>(new Map());
 
@@ -250,7 +278,7 @@ export default function StudioPage() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch("/api/tags/popular?type=keywords&limit=5");
+        const res = await fetch("/api/tags/popular?type=keywords&limit=5&period=week");
         const data = await res.json();
         if (data.tags?.length) {
           setPopularKeywords(data.tags.map((t: { displayName: string }) => t.displayName));
@@ -259,6 +287,22 @@ export default function StudioPage() {
         // ignore
       }
     })();
+  }, []);
+
+  // Load favorite tags from onboarding preferences
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("mystyle_user_personalization_v1");
+      if (!raw) return;
+      const data = JSON.parse(raw);
+      const styles: string[] = data.preferredStyles || [];
+      const labels = styles
+        .map((id: string) => FAVORITE_STYLE_MAP[id])
+        .filter(Boolean) as string[];
+      if (labels.length > 0) setFavoriteTags(labels);
+    } catch {
+      // ignore
+    }
   }, []);
 
   // Fetch AI tags when concept changes
@@ -307,11 +351,11 @@ export default function StudioPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [idolType, conceptStyle]);
 
-  // Reset girlcrush when switching away from girlgroup
+  // Reset gender-specific concepts when switching idol type
   useEffect(() => {
-    if (idolType !== "girlgroup" && conceptStyle === "girlcrush") {
-      setConceptStyle(null);
-    }
+    const current = CONCEPT_STYLES.find((s) => s.id === conceptStyle);
+    if (current?.girlOnly && idolType !== "girlgroup") setConceptStyle(null);
+    if (current?.boyOnly && idolType !== "boygroup") setConceptStyle(null);
   }, [idolType, conceptStyle]);
 
   useEffect(() => {
@@ -405,6 +449,7 @@ export default function StudioPage() {
           conceptStyle: selectedConcept?.mood || "Charismatic, stylish, energetic",
           conceptPrompt: selectedConcept?.prompt || "",
           imageCount,
+          ...(selectedPose ? { posePrompt: POSE_STYLES.find((p) => p.id === selectedPose)?.prompt } : {}),
           ...(stylistAdvice ? { stylistAdvice } : {}),
         }),
       });
@@ -547,8 +592,8 @@ export default function StudioPage() {
     setStylistFeedbacks([]);
     setSelectedStylistId(null);
     setSelectedTags([]);
+    setSelectedPose(null);
     setFreeInputText("");
-    setShowFreeInput(false);
   };
 
   const handleCopyLink = () => {
@@ -576,7 +621,7 @@ export default function StudioPage() {
   };
 
   const visibleConcepts = CONCEPT_STYLES.filter(
-    (s) => !s.girlOnly || idolType === "girlgroup"
+    (s) => (!s.girlOnly || idolType === "girlgroup") && (!s.boyOnly || idolType === "boygroup")
   );
 
   // Publish success screen with share
@@ -768,11 +813,49 @@ export default function StudioPage() {
             </div>
           </div>
 
-          {/* Step 3: Style Tags */}
-          <div className="space-y-4">
+          {/* Step 3: Pose Selection */}
+          <div className="space-y-3">
             <label className="text-[13px] font-bold text-gray-500 flex items-center gap-2.5">
               <span className="w-6 h-6 rounded-full bg-black text-white text-[11px] font-black flex items-center justify-center">3</span>
-              스타일 태그
+              포즈 선택
+              <span className="text-[11px] text-gray-300 font-medium">(선택사항)</span>
+            </label>
+            <div className="grid grid-cols-3 gap-3">
+              {POSE_STYLES.map((pose) => (
+                <button
+                  key={pose.id}
+                  onClick={() => setSelectedPose(selectedPose === pose.id ? null : pose.id)}
+                  className={`relative overflow-hidden rounded-xl py-3.5 px-2 text-center transition-all ${
+                    selectedPose === pose.id
+                      ? "ring-2 ring-black shadow-lg scale-[1.02] bg-gray-50"
+                      : "bg-white border border-gray-200 hover:border-black"
+                  }`}
+                >
+                  <div className="flex flex-col items-center gap-1.5">
+                    <span className="text-xl">{pose.icon}</span>
+                    <p className="text-[12px] font-bold leading-tight">{pose.label}</p>
+                  </div>
+                  {selectedPose === pose.id && (
+                    <div className="absolute top-1.5 right-1.5">
+                      <span className="material-symbols-outlined text-black text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+                    </div>
+                  )}
+                </button>
+              ))}
+            </div>
+            {!selectedPose && (
+              <p className="text-[11px] text-gray-300 text-center">선택하지 않으면 이미지마다 랜덤 포즈가 적용됩니다</p>
+            )}
+          </div>
+
+          {/* Step 4: AI Style Tags */}
+          <div className="space-y-4">
+            <label className="text-[13px] font-bold text-gray-500 flex items-center gap-2.5">
+              <span className="w-6 h-6 rounded-full bg-black text-white text-[11px] font-black flex items-center justify-center">4</span>
+              <span className="flex items-center gap-1">
+                스타일 태그
+                <span className="material-symbols-outlined text-[14px] text-gray-400">auto_awesome</span>
+              </span>
               {selectedTags.length > 0 && (
                 <span className="text-[11px] text-gray-400 font-medium ml-auto">
                   {selectedTags.length}/{MAX_SELECTED_TAGS}
@@ -782,18 +865,18 @@ export default function StudioPage() {
 
             {!conceptStyle && (
               <p className="text-[12px] text-gray-400 py-4 text-center">
-                컨셉을 선택하면 스타일 태그가 추천됩니다
+                컨셉을 선택하면 AI가 스타일 태그를 추천합니다
               </p>
             )}
 
-            {/* Concept Tags */}
+            {/* AI Concept Tags */}
             {conceptStyle && (
               <div className="space-y-2">
                 <p className="text-[11px] font-bold text-gray-400 flex items-center gap-1.5">
-                  <span className="material-symbols-outlined text-[14px]">style</span>
-                  컨셉 태그
+                  <span className="material-symbols-outlined text-[14px]">auto_awesome</span>
+                  AI추천 컨셉태그
                   {isTagsLoading && (
-                    <span className="inline-block w-3 h-3 border border-gray-300 border-t-gray-600 rounded-full animate-spin ml-1"></span>
+                    <span className="text-[11px] text-gray-400 font-medium ml-1 animate-pulse">AI가 추천태그를 찾고 있어요...</span>
                   )}
                 </p>
                 <div className="flex flex-wrap gap-2">
@@ -818,8 +901,8 @@ export default function StudioPage() {
             {conceptStyle && recommendedTags.length > 0 && (
               <div className="space-y-2">
                 <p className="text-[11px] font-bold text-gray-400 flex items-center gap-1.5">
-                  <span className="material-symbols-outlined text-[14px]">auto_awesome</span>
-                  추천 태그
+                  <span className="material-symbols-outlined text-[14px]">music_note</span>
+                  AI추천 스타일 리프
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {recommendedTags.map((tag) => (
@@ -837,6 +920,38 @@ export default function StudioPage() {
                   ))}
                 </div>
               </div>
+            )}
+
+            {/* Refresh tag suggestions — appends new tags */}
+            {conceptStyle && !isTagsLoading && (
+              <button
+                onClick={() => {
+                  setIsTagsLoading(true);
+                  (async () => {
+                    try {
+                      const res = await fetch("/api/tags/suggest", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ idolType, conceptStyle }),
+                      });
+                      const data = await res.json();
+                      const newCt: string[] = data.conceptTags || [];
+                      const newRt: string[] = data.recommendedTags || [];
+                      // Append unique new tags (no duplicates)
+                      setConceptTags((prev) => [...prev, ...newCt.filter((t) => !prev.includes(t))]);
+                      setRecommendedTags((prev) => [...prev, ...newRt.filter((t) => !prev.includes(t))]);
+                    } catch {
+                      // silent
+                    } finally {
+                      setIsTagsLoading(false);
+                    }
+                  })();
+                }}
+                className="w-full py-2.5 border border-dashed border-gray-300 rounded-xl text-[13px] font-bold text-gray-500 hover:border-black hover:text-black transition-colors flex items-center justify-center gap-1.5"
+              >
+                <span className="material-symbols-outlined text-[18px]">add_circle</span>
+                태그 추천 더받기
+              </button>
             )}
 
             {/* Popular Keywords */}
@@ -864,39 +979,57 @@ export default function StudioPage() {
               </div>
             )}
 
-            {/* Free Input (collapsible) */}
-            <div>
-              <button
-                onClick={() => setShowFreeInput(!showFreeInput)}
-                className="text-[12px] text-gray-400 font-semibold flex items-center gap-1 hover:text-black transition-colors"
-              >
-                <span className="material-symbols-outlined text-[16px]">
-                  {showFreeInput ? "expand_less" : "edit_note"}
-                </span>
-                {showFreeInput ? "자유 입력 접기" : "자유 입력 열기"}
-              </button>
-              {showFreeInput && (
-                <div className="relative mt-2">
-                  <textarea
-                    value={freeInputText}
-                    onChange={(e) => setFreeInputText(e.target.value)}
-                    placeholder="태그 외에 추가하고 싶은 스타일을 자유롭게 적어주세요"
-                    maxLength={300}
-                    rows={2}
-                    className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm text-black placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent resize-none"
-                  />
-                  <span className="absolute bottom-3 right-3 text-[10px] text-gray-300 font-medium">
-                    {freeInputText.length}/300
-                  </span>
+            {/* My Favorite Tags (from onboarding) */}
+            {favoriteTags.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-[11px] font-bold text-gray-400 flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-[14px]" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
+                  내 페이버릿 태그
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {favoriteTags.map((tag) => (
+                    <button
+                      key={tag}
+                      onClick={() => toggleTag(tag)}
+                      className={`px-3 py-1.5 text-[12px] font-semibold rounded-full transition-colors ${
+                        selectedTags.includes(tag)
+                          ? "bg-black text-white"
+                          : "bg-purple-50 border border-purple-200 text-purple-600 hover:border-purple-400"
+                      }`}
+                    >
+                      {tag}
+                    </button>
+                  ))}
                 </div>
-              )}
+              </div>
+            )}
+
+            {/* Free Input (always visible) */}
+            <div className="space-y-2">
+              <p className="text-[11px] font-bold text-gray-400 flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-[14px]">edit_note</span>
+                자유 입력
+              </p>
+              <div className="relative">
+                <textarea
+                  value={freeInputText}
+                  onChange={(e) => setFreeInputText(e.target.value)}
+                  placeholder="태그 외에 추가하고 싶은 스타일을 자유롭게 적어주세요"
+                  maxLength={300}
+                  rows={2}
+                  className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm text-black placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent resize-none"
+                />
+                <span className="absolute bottom-3 right-3 text-[10px] text-gray-300 font-medium">
+                  {freeInputText.length}/300
+                </span>
+              </div>
             </div>
           </div>
 
-          {/* Step 4: Image Count */}
+          {/* Step 5: Image Count */}
           <div className="space-y-3">
             <label className="text-[13px] font-bold text-gray-500 flex items-center gap-2.5">
-              <span className="w-6 h-6 rounded-full bg-black text-white text-[11px] font-black flex items-center justify-center">4</span>
+              <span className="w-6 h-6 rounded-full bg-black text-white text-[11px] font-black flex items-center justify-center">5</span>
               이미지 개수
             </label>
             <div className="flex gap-3">
@@ -1415,3 +1548,4 @@ export default function StudioPage() {
     </div>
   );
 }
+

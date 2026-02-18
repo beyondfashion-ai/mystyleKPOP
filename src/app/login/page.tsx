@@ -24,15 +24,20 @@ function LoginContent() {
     const [isLoading, setIsLoading] = useState(false);
     const [isGoogleLoading, setIsGoogleLoading] = useState(false);
     const [mode, setMode] = useState<"login" | "signup">("login");
+    const [routeToOnboardingAfterSignup, setRouteToOnboardingAfterSignup] = useState(false);
 
     const nextParam = searchParams.get("next");
     const redirectTo = nextParam && nextParam.startsWith("/") ? nextParam : "/studio";
 
     useEffect(() => {
         if (user) {
+            if (routeToOnboardingAfterSignup) {
+                router.replace(`/onboarding?next=${encodeURIComponent(redirectTo)}`);
+                return;
+            }
             router.replace(redirectTo);
         }
-    }, [user, router, redirectTo]);
+    }, [user, router, redirectTo, routeToOnboardingAfterSignup]);
 
     const handleEmailAuth = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -54,8 +59,13 @@ function LoginContent() {
                 setIsLoading(false);
                 return;
             }
+            // Set routing intent before auth state changes so signup users always go through onboarding.
+            setRouteToOnboardingAfterSignup(true);
             const result = await signUpWithEmail(email, password, displayName || undefined);
-            if (result.error) setError(result.error);
+            if (result.error) {
+                setRouteToOnboardingAfterSignup(false);
+                setError(result.error);
+            }
         }
 
         setIsLoading(false);

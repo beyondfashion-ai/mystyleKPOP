@@ -4,6 +4,7 @@ import { db } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { FieldValue } from "firebase-admin/firestore";
 import { verifyAuthToken } from "@/lib/auth-helpers";
+import { resolveGroupName } from "@/lib/group-aliases";
 import { randomUUID } from "crypto";
 import fs from "fs/promises";
 import path from "path";
@@ -27,7 +28,23 @@ async function writeLocalDb(data: Record<string, unknown>[]) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { imageUrl, imageUrls: rawImageUrls, prompt, concept, keywords, ownerHandle, groupTag, stylistFeedbacks, selectedStylistId } = body;
+    const {
+      imageUrl,
+      imageUrls: rawImageUrls,
+      prompt,
+      concept,
+      stylePresetId,
+      stylePresetLabel,
+      colorPresetIds,
+      colorPresetLabels,
+      stageVibeId,
+      stageVibeLabel,
+      keywords,
+      ownerHandle,
+      groupTag,
+      stylistFeedbacks,
+      selectedStylistId,
+    } = body;
 
     // Support single imageUrl or multiple imageUrls
     const imageUrls: string[] = rawImageUrls?.length ? rawImageUrls : imageUrl ? [imageUrl] : [];
@@ -44,9 +61,11 @@ export async function POST(request: Request) {
     const uid = decoded?.uid || body.ownerUid || "anonymous";
     const handle = decoded?.name || ownerHandle || "Guest Designer";
 
-    // Normalize group tag: trim, remove #, lowercase for search
-    const cleanGroupTag = groupTag ? String(groupTag).trim().replace(/^#/, "") : "";
-    const normalizedGroupTag = cleanGroupTag ? cleanGroupTag.toLowerCase().replace(/\s+/g, "") : "";
+    // Resolve group tag via canonical alias mapping
+    const rawGroupTag = groupTag ? String(groupTag).trim().replace(/^#/, "") : "";
+    const resolved = rawGroupTag ? resolveGroupName(rawGroupTag) : null;
+    const cleanGroupTag = resolved?.displayName || "";
+    const normalizedGroupTag = resolved?.canonical || "";
 
     const designData = {
       ownerUid: uid,
@@ -55,6 +74,12 @@ export async function POST(request: Request) {
       englishPrompt: prompt,
       systemPrompt: prompt,
       concept: concept || "general",
+      stylePresetId: stylePresetId || null,
+      stylePresetLabel: stylePresetLabel || null,
+      colorPresetIds: Array.isArray(colorPresetIds) ? colorPresetIds : [],
+      colorPresetLabels: Array.isArray(colorPresetLabels) ? colorPresetLabels : [],
+      stageVibeId: stageVibeId || null,
+      stageVibeLabel: stageVibeLabel || null,
       keywords: keywords || "",
       groupTag: cleanGroupTag || null,
       groupTagNormalized: normalizedGroupTag || null,

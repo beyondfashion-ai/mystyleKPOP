@@ -15,6 +15,12 @@ interface DesignDetail {
   ownerUid: string;
   ownerHandle: string;
   concept: string;
+  stylePresetId?: string | null;
+  stylePresetLabel?: string | null;
+  colorPresetIds?: string[];
+  colorPresetLabels?: string[];
+  stageVibeId?: string | null;
+  stageVibeLabel?: string | null;
   groupTag?: string | null;
   imageUrls?: { url: string; index?: number }[];
   representativeIndex?: number;
@@ -480,6 +486,15 @@ export default function DesignDetailPage() {
             )}
             {design.concept && (
               <span className="text-gray-500 font-semibold text-sm">#{design.concept.replace(/\s+/g, "")}</span>
+            )}
+            {design.stylePresetLabel && (
+              <span className="text-gray-500 font-semibold text-sm">#{design.stylePresetLabel.replace(/\s+/g, "")}</span>
+            )}
+            {design.colorPresetLabels?.map((color) => (
+              <span key={color} className="text-gray-500 font-semibold text-sm">#{color.replace(/\s+/g, "")}</span>
+            ))}
+            {design.stageVibeLabel && (
+              <span className="text-gray-500 font-semibold text-sm">#{design.stageVibeLabel.replace(/\s+/g, "")}</span>
             )}
             <span className="text-gray-500 font-semibold text-sm">#KPOP</span>
             <span className="text-gray-500 font-semibold text-sm">#무대의상</span>

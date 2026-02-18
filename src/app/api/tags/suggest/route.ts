@@ -12,6 +12,10 @@ const CONCEPT_LABELS: Record<string, string> = {
   suit: "수트/포멀",
   street: "스트릿/어반",
   girlcrush: "걸크러쉬/에지",
+  elegant: "요정/페어리/에테리얼",
+  dark: "다크/고딕/인텐스",
+  retro: "레트로/빈티지/클래식",
+  military: "밀리터리/유니폼/스트럭처드",
 };
 
 const IDOL_TYPE_LABELS: Record<string, string> = {
@@ -22,7 +26,7 @@ const IDOL_TYPE_LABELS: Record<string, string> = {
 
 export async function POST(request: Request) {
   try {
-    const { idolType, conceptStyle } = await request.json();
+    const { idolType, conceptStyle, exclude } = await request.json();
 
     if (!conceptStyle) {
       return NextResponse.json(
@@ -31,10 +35,22 @@ export async function POST(request: Request) {
       );
     }
 
+    const excludeList: string[] = Array.isArray(exclude)
+      ? exclude.filter((t: unknown) => typeof t === "string")
+      : [];
+
     const fallback = getConceptTags(conceptStyle);
 
     // If no API key, return fallback immediately (not an error)
     if (!GEMINI_API_KEY) {
+      // For "more" requests with exclude, return empty (fallback already sent)
+      if (excludeList.length > 0) {
+        return NextResponse.json({
+          conceptTags: [],
+          recommendedTags: [],
+          source: "fallback" as const,
+        });
+      }
       return NextResponse.json({
         conceptTags: fallback.conceptTags,
         recommendedTags: fallback.recommendedTags,
@@ -44,6 +60,10 @@ export async function POST(request: Request) {
 
     const conceptLabel = CONCEPT_LABELS[conceptStyle] || conceptStyle;
     const idolLabel = IDOL_TYPE_LABELS[idolType] || "K-POP 아이돌";
+
+    const excludeInstruction = excludeList.length > 0
+      ? `\n- 다음 태그는 이미 추천했으므로 절대 포함하지 마세요: ${excludeList.join(", ")}`
+      : "";
 
     const prompt = `당신은 K-POP 무대의상 스타일링 전문가입니다.
 ${idolLabel}의 "${conceptLabel}" 컨셉 무대의상에 어울리는 스타일 태그를 추천해주세요.
@@ -55,9 +75,9 @@ ${idolLabel}의 "${conceptLabel}" 컨셉 무대의상에 어울리는 스타일 
 }
 
 규칙:
-- conceptTags: 소재, 실루엣, 컬러, 악세서리, 무드 중심의 핵심 태그 10개
-- recommendedTags: 의외성 있는 보완 태그 5개 (트렌디하거나 독특한 조합)
-- 각 태그는 2~6글자 한국어 패션 키워드 (예: 크롬 메탈릭, 코르셋 탑)
+- conceptTags: 소재, 실루엣, 컬러, 악세서리, 무드 중심의 핵심 태그 20개
+- recommendedTags: 의외성 있는 보완 태그 10개 (트렌디하거나 독특한 조합)
+- 각 태그는 2~6글자 한국어 패션 키워드 (예: 크롬 메탈릭, 코르셋 탑)${excludeInstruction}
 - JSON만 출력, 다른 텍스트 없이`;
 
     const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
@@ -73,7 +93,7 @@ ${idolLabel}의 "${conceptLabel}" 컨셉 무대의상에 어울리는 스타일 
         contents: [{ role: "user", parts: [{ text: prompt }] }],
         generationConfig: {
           temperature: 0.7,
-          maxOutputTokens: 300,
+          maxOutputTokens: 600,
         },
       });
 
@@ -85,11 +105,11 @@ ${idolLabel}의 "${conceptLabel}" 컨셉 무대의상에 어울리는 스타일 
       const parsed = JSON.parse(jsonStr);
 
       const conceptTags = Array.isArray(parsed.conceptTags)
-        ? parsed.conceptTags.filter((t: unknown) => typeof t === "string").slice(0, 10)
+        ? parsed.conceptTags.filter((t: unknown) => typeof t === "string").slice(0, 20)
         : fallback.conceptTags;
 
       const recommendedTags = Array.isArray(parsed.recommendedTags)
-        ? parsed.recommendedTags.filter((t: unknown) => typeof t === "string").slice(0, 5)
+        ? parsed.recommendedTags.filter((t: unknown) => typeof t === "string").slice(0, 10)
         : fallback.recommendedTags;
 
       return NextResponse.json({
