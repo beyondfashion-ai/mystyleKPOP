@@ -26,7 +26,7 @@
 | `GET`  | `/api/designs/[id]`          | No      | Get design detail                  | 60/min per IP            |
 | `POST` | `/api/vote`                  | Yes     | Toggle like on a design            | 1 per user per design    |
 | `GET`  | `/api/gallery`               | No      | List designs with filters          | 60/min per IP            |
-| `GET`  | `/api/ranking/monthly`       | No      | Get current month ranking          | 30/min per IP            |
+| `GET`  | `/api/ranking?period=...`    | No      | Get ranking (`weekly` or `monthly`) | 30/min per IP            |
 | `POST` | `/api/report`                | Yes     | Report a design                    | 5/min per user           |
 | `PATCH`| `/api/admin/settings`        | Admin   | Update platform settings           | Admin only               |
 

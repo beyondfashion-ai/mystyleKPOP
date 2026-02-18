@@ -184,13 +184,37 @@ The monthly #1 winner's design is manufactured into a real costume and delivered
 | `/gallery`       | Explore           | Masonry grid + infinite scroll     |
 | `/design/[id]`   | Detail            | Full view + Like + Boost + Share + Animate |
 | `/ranking`       | Monthly Ranking   | Top 50 + phase-specific score text |
-| `/auth/*`        | Auth              | Email/Password login/signup        |
-| `/account`       | My Page           | User profile + my designs          |
+| `/login`         | Auth              | Email/Password login               |
+| `/onboarding`    | Onboarding        | Preference survey after signup     |
+| `/mypage`        | My Page           | User profile + my designs          |
 | `/admin/*`       | Admin Console     | Moderation + operations            |
 
 ---
 
+## 5.1 Current Code Overrides (Conflict Resolution)
+
+If any older section in this document conflicts with the actual repository structure, use these values as the source of truth.
+
+- App routes (current):
+  - `/` -> `src/app/page.tsx`
+  - `/studio` -> `src/app/studio/page.tsx`
+  - `/gallery` -> `src/app/gallery/page.tsx`
+  - `/design/[id]` -> `src/app/design/[id]/page.tsx`
+  - `/ranking` -> `src/app/ranking/page.tsx`
+  - `/mypage` -> `src/app/mypage/page.tsx`
+  - `/login` -> `src/app/login/page.tsx`
+  - `/onboarding` -> `src/app/onboarding/page.tsx`
+  - `/about` -> `src/app/about/page.tsx`
+- Ranking API (current):
+  - `GET /api/ranking?period=weekly|monthly`
+- Note:
+  - Legacy examples that reference route groups like `(main)` or `(auth)` are historical and should not be treated as current file paths.
+
+---
+
 ## 6. Project Structure
+
+Legacy snapshot (for context). For active implementation decisions, use Section 5.1 above.
 
 ```
 mystyleai/
@@ -371,7 +395,7 @@ mystyleai/
 - Past winner archive
 - Countdown timer for remaining days
 
-### 7.6 Account (`/account`)
+### 7.6 My Page (`/mypage`)
 
 - User profile (handle, bio, profile image)
 - My designs list (private + public)

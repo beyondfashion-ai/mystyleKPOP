@@ -114,15 +114,15 @@ body {
 
 | Route            | File Path                                  | Layout Group |
 | ---------------- | ------------------------------------------ | ------------ |
-| `/`              | `src/app/(main)/page.tsx`                  | `(main)`     |
-| `/studio`        | `src/app/(main)/studio/page.tsx`           | `(main)`     |
-| `/gallery`       | `src/app/(main)/gallery/page.tsx`          | `(main)`     |
-| `/design/[id]`   | `src/app/(main)/design/[id]/page.tsx`      | `(main)`     |
-| `/ranking`       | `src/app/(main)/ranking/page.tsx`          | `(main)`     |
-| `/account`       | `src/app/(main)/account/page.tsx`          | `(main)`     |
-| `/login`         | `src/app/(auth)/login/page.tsx`            | `(auth)`     |
-| `/signup`        | `src/app/(auth)/signup/page.tsx`           | `(auth)`     |
-| `/admin`         | `src/app/admin/page.tsx`                   | none         |
+| `/`              | `src/app/page.tsx`                         | root         |
+| `/studio`        | `src/app/studio/page.tsx`                  | root         |
+| `/gallery`       | `src/app/gallery/page.tsx`                 | root         |
+| `/design/[id]`   | `src/app/design/[id]/page.tsx`             | root         |
+| `/ranking`       | `src/app/ranking/page.tsx`                 | root         |
+| `/mypage`        | `src/app/mypage/page.tsx`                  | root         |
+| `/login`         | `src/app/login/page.tsx`                   | root         |
+| `/about`         | `src/app/about/page.tsx`                   | root         |
+| `/admin/*`       | `src/app/admin/*`                          | root         |
 
 ### Page-Specific Requirements
 

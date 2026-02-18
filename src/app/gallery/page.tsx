@@ -63,7 +63,7 @@ const CONCEPT_FILTERS = [
 ];
 
 const GALLERY_AD_FREQUENCY = 8;
-const GALLERY_AD_SLOT = process.env.NEXT_PUBLIC_ADSENSE_SLOT_GALLERY || "demo-gallery-slot";
+const GALLERY_AD_SLOT = process.env.NEXT_PUBLIC_ADSENSE_SLOT_GALLERY || "";
 
 export default function GalleryPage() {
     return (
