@@ -160,6 +160,66 @@ export const CONCEPT_TAG_MAP: Record<string, ConceptTagSet> = {
     ],
   },
 
+  balletcore: {
+    conceptTags: [
+      "튤 스커트", "새틴 코르셋", "리본 레이스업", "포인트 슈즈",
+      "시폰 레이어", "파스텔 핑크", "레오타드 탑", "메쉬 스타킹",
+      "펄 장식", "발레 랩스커트", "오프숄더 가운", "새틴 리본",
+      "엠브로이더리", "소프트 글리터", "베이비 핑크", "오간자 드레스",
+      "크리스탈 티아라", "실크 슬리퍼", "플로럴 크라운", "레이스 칼라",
+    ],
+    recommendedTags: [
+      "토슈즈 앵클릿", "백스테이지 무드", "발레리나 번", "튤 케이프",
+      "프렌치 핑크", "스완레이크 모티프", "시어 보디수트", "새틴 쵸커",
+      "파스텔 그라데이션", "미니 티아라",
+    ],
+  },
+
+  darkromance: {
+    conceptTags: [
+      "고딕 레이스", "벨벳 코르셋", "빅토리안 칼라", "블랙 케이프",
+      "십자가 펜던트", "다크 레드 립", "레이스업 부츠", "시어 가운",
+      "벨벳 쵸커", "바로크 패턴", "블러디 레드", "블랙 크라운",
+      "레이븐 페더", "가시 왕관", "퍼플 포이즌", "올블랙 레이어드",
+      "슬릿 드레스", "새틴 글러브", "오간자 베일", "블러드문 컬러",
+    ],
+    recommendedTags: [
+      "로즈 자수", "캔들라이트 무드", "빈티지 브로치", "블랙 로즈",
+      "성당 스테인드글라스", "다크 벨벳", "뱀파이어 칼라", "와인 새틴",
+      "문라이트 실루엣", "블랙 레이스 베일",
+    ],
+  },
+
+  neohanbok: {
+    conceptTags: [
+      "모던 저고리", "구조적 숄더", "한복 리본", "금박 자수",
+      "실크 치마", "오방색 컬러", "고름 디테일", "전통 문양",
+      "한지 텍스처", "자개 장식", "갓 모티프", "비단 원단",
+      "배자 레이어", "옥색 팔레트", "자수 패턴", "노리개 악세서리",
+      "두루마기 실루엣", "댕기 리본", "금사 자수", "매듭 장식",
+    ],
+    recommendedTags: [
+      "LED 금박", "네온 오방색", "투명 갓", "퓨처 저고리",
+      "메탈릭 고름", "3D 프린팅 비녀", "홀로그램 자개", "서울 스카이라인",
+      "해금 모티프", "크롬 노리개",
+    ],
+  },
+
+  luxesport: {
+    conceptTags: [
+      "테일러드 트랙재킷", "테크니컬 패브릭", "실크 패널", "프리미엄 스니커즈",
+      "지퍼 디테일", "로고 테이프", "슬림 조거", "네오프렌 소재",
+      "메쉬 레이어", "모노크롬 블랙", "파워 숄더", "골드 체인",
+      "스포츠 선글라스", "유틸리티 벨트", "나일론 윈드브레이커", "컬러 블로킹 슈트",
+      "카고 포켓", "하이탑 스니커즈", "크롭 재킷", "메탈릭 네일",
+    ],
+    recommendedTags: [
+      "카본 텍스처", "F1 모티프", "야광 파이핑", "실버 버클",
+      "하이테크 장갑", "퍼포먼스 니트", "에어로 핏", "럭셔리 더플백",
+      "셔링 트랙팬츠", "테크웨어 고글",
+    ],
+  },
+
   military: {
     conceptTags: [
       "밀리터리 재킷", "카모플라주 패턴", "에폴렛 숄더", "카키 컬러",
@@ -176,7 +236,33 @@ export const CONCEPT_TAG_MAP: Record<string, ConceptTagSet> = {
   },
 };
 
-/** Get tags for a given concept with fallback to empty */
-export function getConceptTags(conceptId: string): ConceptTagSet {
-  return CONCEPT_TAG_MAP[conceptId] || { conceptTags: [], recommendedTags: [] };
+// Tags that are inappropriate for boygroup concepts
+const GIRL_ONLY_TAGS = new Set([
+  "미니스커트", "레더 미니스커트", "코르셋 탑", "크롭 코르셋", "새틴 코르셋",
+  "벨벳 코르셋", "레이스업 코르셋", "레이스 보디수트", "시어 보디수트",
+  "새틴 슬립", "슬릿 드레스", "오간자 드레스", "오프숄더 가운", "시어 가운",
+  "피셔넷 스타킹", "피쉬넷 스타킹", "메쉬 스타킹", "핫팬츠",
+  "딥 브이넥", "백리스 디자인", "컷아웃 디테일", "시퀸 브라탑",
+  "크리스탈 보디체인", "글로우 스킨", "글리터 바디",
+  "튤 스커트", "발레 랩스커트", "레오타드 탑", "포인트 슈즈", "실크 슬리퍼",
+  "발레리나 번", "스완레이크 모티프", "토슈즈 앵클릿",
+  "테니스 스커트", "플리츠 스커트", "셔링 블라우스",
+  "플로럴 크라운", "크리스탈 티아라", "미니 티아라", "페어리 윙",
+  "리본 타이", "새틴 리본", "댕기 리본",
+  "스트링 비키니 탑", "크리스탈 뷔스티에",
+  "스틸레토 힐", "크리스탈 힐", "젤리 슈즈",
+]);
+
+/** Get tags for a given concept, filtered by idol type */
+export function getConceptTags(conceptId: string, idolType?: string): ConceptTagSet {
+  const raw = CONCEPT_TAG_MAP[conceptId];
+  if (!raw) return { conceptTags: [], recommendedTags: [] };
+
+  // Only boygroup gets filtered — girlgroup has no restrictions
+  if (idolType !== "boygroup") return raw;
+
+  return {
+    conceptTags: raw.conceptTags.filter((t) => !GIRL_ONLY_TAGS.has(t)),
+    recommendedTags: raw.recommendedTags.filter((t) => !GIRL_ONLY_TAGS.has(t)),
+  };
 }

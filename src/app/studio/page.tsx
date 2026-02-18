@@ -115,7 +115,7 @@ const FAVORITE_STYLE_MAP: Record<string, string> = {
 const MAX_SELECTED_TAGS = 15;
 
 const IMAGE_COUNT_OPTIONS = [1, 2, 4];
-const STUDIO_LOADING_AD_SLOT = process.env.NEXT_PUBLIC_ADSENSE_SLOT_STUDIO_LOADING || "demo-studio-loading-slot";
+const STUDIO_LOADING_AD_SLOT = process.env.NEXT_PUBLIC_ADSENSE_SLOT_STUDIO_LOADING || "";
 const AD_DWELL_STORAGE_KEY = "studio_ad_dwell_count";
 const STUDIO_ENTRY_INTRO_STORAGE_KEY = "studio_entry_intro_seen_v1";
 const STUDIO_ENTRY_INTRO_MS = 3150;
@@ -150,6 +150,7 @@ export default function StudioPage() {
   const [idolType, setIdolType] = useState("girlgroup");
   const [conceptStyle, setConceptStyle] = useState<string | null>(null);
   const [selectedPose, setSelectedPose] = useState<string | null>(null);
+  const [quality, setQuality] = useState<"light" | "pro">("light");
   const [imageCount, setImageCount] = useState(1);
   const [isGenerating, setIsGenerating] = useState(false);
   const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
@@ -449,6 +450,7 @@ export default function StudioPage() {
           conceptStyle: selectedConcept?.mood || "Charismatic, stylish, energetic",
           conceptPrompt: selectedConcept?.prompt || "",
           imageCount,
+          quality,
           ...(selectedPose ? { posePrompt: POSE_STYLES.find((p) => p.id === selectedPose)?.prompt } : {}),
           ...(stylistAdvice ? { stylistAdvice } : {}),
         }),
@@ -593,6 +595,7 @@ export default function StudioPage() {
     setSelectedStylistId(null);
     setSelectedTags([]);
     setSelectedPose(null);
+    setQuality("light");
     setFreeInputText("");
   };
 
@@ -818,7 +821,6 @@ export default function StudioPage() {
             <label className="text-[13px] font-bold text-gray-500 flex items-center gap-2.5">
               <span className="w-6 h-6 rounded-full bg-black text-white text-[11px] font-black flex items-center justify-center">3</span>
               포즈 선택
-              <span className="text-[11px] text-gray-300 font-medium">(선택사항)</span>
             </label>
             <div className="grid grid-cols-3 gap-3">
               {POSE_STYLES.map((pose) => (
@@ -843,9 +845,6 @@ export default function StudioPage() {
                 </button>
               ))}
             </div>
-            {!selectedPose && (
-              <p className="text-[11px] text-gray-300 text-center">선택하지 않으면 이미지마다 랜덤 포즈가 적용됩니다</p>
-            )}
           </div>
 
           {/* Step 4: AI Style Tags */}
@@ -932,7 +931,7 @@ export default function StudioPage() {
                       const res = await fetch("/api/tags/suggest", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ idolType, conceptStyle }),
+                        body: JSON.stringify({ idolType, conceptStyle, exclude: [...conceptTags, ...recommendedTags] }),
                       });
                       const data = await res.json();
                       const newCt: string[] = data.conceptTags || [];
@@ -1051,10 +1050,69 @@ export default function StudioPage() {
             </div>
           </div>
 
+          {/* Step 6: Quality Mode */}
+          <div className="space-y-3">
+            <label className="text-[13px] font-bold text-gray-500 flex items-center gap-2.5">
+              <span className="w-6 h-6 rounded-full bg-black text-white text-[11px] font-black flex items-center justify-center">6</span>
+              생성 모드
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => setQuality("light")}
+                className={`relative py-4 px-3 rounded-xl text-center transition-all ${
+                  quality === "light"
+                    ? "ring-2 ring-black shadow-lg bg-gray-50"
+                    : "bg-white border border-gray-200 hover:border-black"
+                }`}
+              >
+                <div className="flex flex-col items-center gap-1.5">
+                  <span className="material-symbols-outlined text-[24px]">bolt</span>
+                  <p className="text-[13px] font-bold">라이트</p>
+                  <p className="text-[10px] text-gray-400">빠른 생성</p>
+                </div>
+                {quality === "light" && (
+                  <div className="absolute top-1.5 right-1.5">
+                    <span className="material-symbols-outlined text-black text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+                  </div>
+                )}
+              </button>
+              <button
+                onClick={() => {
+                  if (!user) {
+                    showToastMsg("프로 모드는 로그인이 필요합니다");
+                    return;
+                  }
+                  setQuality("pro");
+                }}
+                className={`relative py-4 px-3 rounded-xl text-center transition-all ${
+                  quality === "pro"
+                    ? "ring-2 ring-black shadow-lg bg-gradient-to-br from-amber-50 to-yellow-50"
+                    : "bg-white border border-gray-200 hover:border-black"
+                }`}
+              >
+                <div className="flex flex-col items-center gap-1.5">
+                  <span className="material-symbols-outlined text-[24px]" style={{ fontVariationSettings: "'FILL' 1" }}>workspace_premium</span>
+                  <p className="text-[13px] font-bold">프로</p>
+                  <p className="text-[10px] text-gray-400">최고 품질</p>
+                </div>
+                {!user && (
+                  <div className="absolute top-1.5 right-1.5">
+                    <span className="material-symbols-outlined text-gray-300 text-[16px]">lock</span>
+                  </div>
+                )}
+                {quality === "pro" && user && (
+                  <div className="absolute top-1.5 right-1.5">
+                    <span className="material-symbols-outlined text-black text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+                  </div>
+                )}
+              </button>
+            </div>
+          </div>
+
           {/* Generate button */}
           <button
             onClick={() => handleGenerate()}
-            disabled={isGenerating || (selectedTags.length === 0 && !freeInputText.trim())}
+            disabled={isGenerating || !selectedPose || (selectedTags.length === 0 && !freeInputText.trim())}
             className="w-full py-4 bg-black text-white text-[15px] font-bold rounded-full hover:bg-gray-900 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2.5 active:scale-[0.98]"
           >
             {isGenerating ? (

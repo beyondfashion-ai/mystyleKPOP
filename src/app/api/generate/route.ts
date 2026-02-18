@@ -196,6 +196,36 @@ const KO_EN_MAP: Record<string, string> = {
     "밴드 프린트 티": "band print tee", "패치워크": "patchwork",
     "컬러 블로킹 슈트": "color-blocking suit", "지퍼 디테일": "zipper details",
 
+    // Balletcore / Neohanbok / Luxesport / Dark Romance
+    "튤 스커트": "tulle skirt", "새틴 코르셋": "satin corset",
+    "리본 레이스업": "ribbon lace-up", "포인트 슈즈": "pointe shoes",
+    "레오타드 탑": "leotard top", "발레 랩스커트": "ballet wrap skirt",
+    "실크 슬리퍼": "silk slippers", "토슈즈 앵클릿": "pointe shoe anklet",
+    "발레리나 번": "ballerina bun", "튤 케이프": "tulle cape",
+    "스완레이크 모티프": "swan lake motif", "파스텔 그라데이션": "pastel gradient",
+    "고딕 레이스": "gothic lace", "블랙 케이프": "black cape",
+    "레이스업 부츠": "lace-up boots", "오간자 베일": "organza veil",
+    "블랙 로즈": "black rose", "뱀파이어 칼라": "vampire collar",
+    "와인 새틴": "wine satin", "문라이트 실루엣": "moonlight silhouette",
+    "블랙 레이스 베일": "black lace veil", "로즈 자수": "rose embroidery",
+    "캔들라이트 무드": "candlelight mood",
+    "모던 저고리": "modernized jeogori", "한복 리본": "hanbok ribbon",
+    "금박 자수": "gold leaf embroidery", "실크 치마": "silk chima skirt",
+    "오방색 컬러": "five-direction color palette", "고름 디테일": "goreum tie detail",
+    "전통 문양": "traditional Korean pattern", "한지 텍스처": "hanji paper texture",
+    "자개 장식": "mother-of-pearl ornament", "갓 모티프": "gat hat motif",
+    "비단 원단": "silk brocade", "배자 레이어": "baeja vest layering",
+    "옥색 팔레트": "jade color palette", "자수 패턴": "embroidery pattern",
+    "노리개 악세서리": "norigae accessory", "두루마기 실루엣": "durumagi silhouette",
+    "댕기 리본": "daenggi ribbon", "금사 자수": "gold thread embroidery",
+    "매듭 장식": "maedeup knot ornament",
+    "테일러드 트랙재킷": "tailored track jacket", "테크니컬 패브릭": "technical fabric",
+    "실크 패널": "silk panel", "프리미엄 스니커즈": "premium sneakers",
+    "로고 테이프": "logo tape trim", "슬림 조거": "slim jogger pants",
+    "스포츠 선글라스": "sport sunglasses", "카본 텍스처": "carbon fiber texture",
+    "야광 파이핑": "glow-in-the-dark piping", "에어로 핏": "aero fit",
+    "테크웨어 고글": "techwear goggles", "퍼포먼스 니트": "performance knit",
+
     // Mood / Vibe
     "스모키 아이": "smoky eye makeup", "글로시 립": "glossy lip",
     "글로우 스킨": "glowing skin", "레드 립스틱 무드": "red lipstick mood",
@@ -218,44 +248,11 @@ function translateTag(tag: string): string {
     return trimmed;
 }
 
-/** Convert comma-separated Korean tags into a natural English outfit description */
-function tagsToNaturalPrompt(tagsStr: string): string {
+/** Convert comma-separated Korean tags to English keywords (no natural language wrapping) */
+function tagsToEnglish(tagsStr: string): string {
     const tags = tagsStr.split(",").map((t) => t.trim()).filter(Boolean);
     if (tags.length === 0) return "";
-
-    const translated = [...new Set(tags.map(translateTag))];
-
-    // Group into garment, accessory, and mood/vibe
-    const garments: string[] = [];
-    const accessories: string[] = [];
-    const details: string[] = [];
-
-    const accessoryWords = ["boots", "heels", "shoes", "sneakers", "choker", "earring", "necklace", "belt", "bag", "hat", "beret", "beanie", "gloves", "crown", "tiara", "bracelet", "anklet", "ring", "brooch", "pendant", "stockings", "harness", "chain wallet", "sunglasses", "clip", "wings", "patch", "cufflinks", "scarf"];
-    const moodWords = ["mood", "vibe", "effect", "makeup", "skin", "lip", "eye"];
-
-    for (const term of translated) {
-        const lower = term.toLowerCase();
-        if (moodWords.some((w) => lower.includes(w))) {
-            details.push(term);
-        } else if (accessoryWords.some((w) => lower.includes(w))) {
-            accessories.push(term);
-        } else {
-            garments.push(term);
-        }
-    }
-
-    const parts: string[] = [];
-    if (garments.length > 0) {
-        parts.push(`a stage outfit featuring ${garments.join(", ")}`);
-    }
-    if (accessories.length > 0) {
-        parts.push(`accessorized with ${accessories.join(", ")}`);
-    }
-    if (details.length > 0) {
-        parts.push(`with ${details.join(" and ")} finishing touches`);
-    }
-
-    return parts.join(", ") || translated.join(", ");
+    return [...new Set(tags.map(translateTag))].join(", ");
 }
 
 /** Extract English fashion terms and translate Korean style words from stylist advice */
@@ -272,6 +269,38 @@ function extractStyleKeywords(advice: string): string {
 }
 
 // =============================================================================
+// Content Safety
+// =============================================================================
+
+/** Blocked terms — reject generation if any match found in user input */
+const BLOCKED_TERMS = [
+    // Explicit nudity / pornography (NOT fashion-sexy — K-POP sexy concepts are allowed)
+    "nude", "naked", "topless", "bottomless", "nsfw", "porn", "hentai",
+    "orgasm", "genital", "penis", "vagina", "intercourse",
+    "nipple", "bondage", "bdsm", "fetish", "loli", "underage", "child abuse",
+    // Violence / gore
+    "gore", "dismember", "decapitat", "mutilat", "torture", "rape",
+    // Hate
+    "nazi", "swastika", "white supremac", "racial slur",
+    // Self-harm / drugs
+    "suicide", "self-harm", "drug injection", "meth", "cocaine",
+    // Korean — explicit only (패션 노출/섹시는 허용)
+    "누드", "나체", "알몸", "벗은", "포르노", "야동", "성인물",
+    "성행위", "성관계", "자위", "음부", "성기",
+    "고문", "참수", "살해", "강간", "아동학대",
+    "나치", "인종차별", "자살", "자해", "마약",
+];
+
+/** Check if user input contains blocked content */
+function containsBlockedContent(text: string): boolean {
+    const lower = text.toLowerCase().replace(/[\s_\-\.]/g, "");
+    return BLOCKED_TERMS.some((term) => lower.includes(term.replace(/[\s_\-]/g, "")));
+}
+
+/** Safety prefix injected into every prompt (invisible to users) */
+const SAFETY_PREFIX = "Professional K-POP stage performance fashion editorial photo. Sensual and alluring stage outfits are allowed, but absolutely no full nudity, no explicit sexual content, no pornography, no gore, no hate symbols. The subject must always be wearing a stage costume.";
+
+// =============================================================================
 // POST /api/generate
 // =============================================================================
 
@@ -284,7 +313,7 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
         }
 
-        const { prompt, idolType, conceptStyle, conceptPrompt, imageCount: requestedCount, stylistAdvice, posePrompt } = body;
+        const { prompt, idolType, conceptStyle, conceptPrompt, imageCount: requestedCount, stylistAdvice, posePrompt, quality } = body;
 
         if (!prompt || typeof prompt !== "string") {
             return NextResponse.json(
@@ -300,6 +329,15 @@ export async function POST(request: Request) {
             );
         }
 
+        // Content safety: block NSFW/harmful input
+        const allUserText = [prompt, stylistAdvice, posePrompt].filter(Boolean).join(" ");
+        if (containsBlockedContent(allUserText)) {
+            return NextResponse.json(
+                { error: "부적절한 내용이 포함되어 있습니다. 패션/의상 관련 키워드만 사용해주세요." },
+                { status: 400 }
+            );
+        }
+
         if (!process.env.FAL_KEY) {
             return NextResponse.json(
                 { error: "FAL_KEY is not configured" },
@@ -307,16 +345,17 @@ export async function POST(request: Request) {
             );
         }
 
+        const usePro = quality === "pro";
         const idolLabel = idolType || "K-POP idol";
         const conceptKeywords = conceptPrompt || "";
         const conceptMood = conceptStyle || "charismatic, stylish, energetic";
         const count = Math.min(Math.max(Number(requestedCount) || 1, 1), 4);
         const adviceKeywords = stylistAdvice ? extractStyleKeywords(stylistAdvice) : "";
 
-        // Convert Korean tags to natural English outfit description
-        const outfitDescription = tagsToNaturalPrompt(prompt);
+        // Translate Korean tags to English keywords (direct, no wrapping)
+        const outfitKeywords = tagsToEnglish(prompt);
 
-        // Pre-shuffle variation banks so each image in a batch gets unique elements
+        // Pre-shuffle variation banks
         const shuffledPoses = shuffle(POSES);
         const shuffledCameras = shuffle(CAMERAS);
         const shuffledAngles = shuffle(ANGLES);
@@ -329,38 +368,48 @@ export async function POST(request: Request) {
             const light = shuffledLighting[index % shuffledLighting.length];
 
             return [
-                // Subject + action (highest priority for Flux)
+                // Safety guardrail (invisible to user, highest priority)
+                SAFETY_PREFIX,
                 `Editorial fancam photograph of a real Korean ${idolLabel} ${pose} on a massive concert stage.`,
-                // Outfit (Korean tags → natural English description)
-                `The performer wears ${outfitDescription}.`,
-                // Concept
-                conceptKeywords ? `${conceptKeywords} concept aesthetic.` : "",
-                // Mood
+                `Wearing: ${outfitKeywords}.`,
+                conceptKeywords ? `${conceptKeywords} aesthetic.` : "",
                 `Mood: ${conceptMood}.`,
-                // Stylist advice keywords
-                adviceKeywords ? `Style details: ${adviceKeywords}.` : "",
-                // Photorealism anchors — skin, hair, makeup
-                "Authentic Korean beauty with natural skin texture showing visible pores and subtle perspiration glow under stage lights, real human hair with individual strands visible, professional K-POP stage makeup with precise eyeliner and subtle glitter accents.",
-                // Stage environment + lighting
+                adviceKeywords ? `Style: ${adviceKeywords}.` : "",
+                "Authentic Korean beauty, natural skin texture, real hair, K-POP stage makeup.",
                 `${light}.`,
-                // Camera + angle (end of prompt — technical specs)
                 `${camera}, ${angle}.`,
             ].filter(Boolean).join(" ");
         };
 
         const generateOne = (index: number) => {
             const variedPrompt = buildPrompt(index);
-            console.log(`[Generate] Image #${index + 1}/${count}:`, variedPrompt.substring(0, 120) + "...");
+            console.log(`[Generate][${usePro ? "PRO" : "LIGHT"}] #${index + 1}/${count}:`, variedPrompt.substring(0, 120) + "...");
 
-            return fal.subscribe("fal-ai/flux-2-pro", {
+            if (usePro) {
+                return fal.subscribe("fal-ai/flux-2-pro", {
+                    input: {
+                        prompt: variedPrompt,
+                        image_size: "portrait_4_3" as const,
+                        seed: Math.floor(Math.random() * 2147483647),
+                        safety_tolerance: "3" as const,
+                    },
+                    logs: false,
+                    pollInterval: 1500,
+                });
+            }
+
+            // Light mode: flux-2/turbo — fast + affordable
+            return fal.subscribe("fal-ai/flux-2/turbo", {
                 input: {
                     prompt: variedPrompt,
                     image_size: "portrait_4_3" as const,
+                    num_inference_steps: 8,
+                    guidance_scale: 2.5,
                     seed: Math.floor(Math.random() * 2147483647),
-                    safety_tolerance: "5" as const,
+                    enable_safety_checker: true,
                 },
                 logs: false,
-                pollInterval: 2000,
+                pollInterval: 1000,
             });
         };
 
@@ -383,7 +432,7 @@ export async function POST(request: Request) {
             );
         }
 
-        return NextResponse.json({ urls });
+        return NextResponse.json({ urls, quality: usePro ? "pro" : "light" });
     } catch (error) {
         console.error("Generate error:", error);
 
