@@ -26,7 +26,7 @@ const IDOL_TYPE_LABELS: Record<string, string> = {
 
 export async function POST(request: Request) {
   try {
-    const { idolType, conceptStyle, exclude } = await request.json();
+    const { idolType, conceptStyle, exclude, customLabel, customMood } = await request.json();
 
     if (!conceptStyle) {
       return NextResponse.json(
@@ -39,11 +39,10 @@ export async function POST(request: Request) {
       ? exclude.filter((t: unknown) => typeof t === "string")
       : [];
 
-    const fallback = getConceptTags(conceptStyle, idolType);
+    const isCustomConcept = !!customLabel || (typeof conceptStyle === "string" && conceptStyle.startsWith("custom_"));
 
-    // Initial load (no exclude): return random subset from expanded pool
-    // Gemini is only used for "태그 추천 더받기" (has exclude list)
-    if (excludeList.length === 0) {
+    // For predefined concepts: initial load returns random from pool
+    if (!isCustomConcept && excludeList.length === 0) {
       const random = getRandomConceptTags(conceptStyle, idolType);
       return NextResponse.json({
         conceptTags: random.conceptTags,
@@ -52,7 +51,7 @@ export async function POST(request: Request) {
       });
     }
 
-    // "더받기" request but no API key — return empty
+    // No Gemini API key — return empty for custom concepts, fallback for predefined "더받기"
     if (!GEMINI_API_KEY) {
       return NextResponse.json({
         conceptTags: [],
@@ -61,11 +60,19 @@ export async function POST(request: Request) {
       });
     }
 
-    const conceptLabel = CONCEPT_LABELS[conceptStyle] || conceptStyle;
+    const fallback = isCustomConcept ? { conceptTags: [], recommendedTags: [] } : getConceptTags(conceptStyle, idolType);
+
+    const conceptLabel = isCustomConcept
+      ? (customLabel || conceptStyle)
+      : (CONCEPT_LABELS[conceptStyle] || conceptStyle);
     const idolLabel = IDOL_TYPE_LABELS[idolType] || "K-POP 아이돌";
 
     const excludeInstruction = excludeList.length > 0
       ? `\n- 다음 태그는 이미 추천했으므로 절대 포함하지 마세요: ${excludeList.join(", ")}`
+      : "";
+
+    const customMoodInstruction = isCustomConcept && customMood
+      ? `\n- 유저가 설명한 무드/키워드: "${customMood}" — 이 방향성을 중심으로 태그를 추천하세요.`
       : "";
 
     const prompt = `당신은 K-POP 무대의상 스타일링 전문가입니다.
@@ -81,7 +88,7 @@ ${idolLabel}의 "${conceptLabel}" 컨셉 무대의상에 어울리는 스타일 
 - conceptTags: 소재, 실루엣, 컬러, 악세서리, 무드 중심의 핵심 태그 20개
 - recommendedTags: 의외성 있는 보완 태그 10개 (트렌디하거나 독특한 조합)
 - 각 태그는 2~6글자 한국어 패션 키워드 (예: 크롬 메탈릭, 코르셋 탑)
-- 중요: ${idolLabel} 의상에 적합한 태그만 추천. ${idolType === "boygroup" ? "미니스커트, 코르셋, 브라탑, 보디수트, 스타킹, 티아라, 하이힐 등 여성복 태그 제외." : ""}${excludeInstruction}
+- 중요: ${idolLabel} 의상에 적합한 태그만 추천. ${idolType === "boygroup" ? "미니스커트, 코르셋, 브라탑, 보디수트, 스타킹, 티아라, 하이힐 등 여성복 태그 제외." : ""}${customMoodInstruction}${excludeInstruction}
 - JSON만 출력, 다른 텍스트 없이`;
 
     const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);

@@ -108,15 +108,28 @@ export async function GET(request: NextRequest) {
     const concept = searchParams.get("concept");
     const groupTag = searchParams.get("groupTag");
     const ownerUid = searchParams.get("ownerUid");
+    const likedBy = searchParams.get("likedBy");
     const groupsParam = searchParams.get("groups"); // comma-separated for recommended
 
     // Use Admin SDK if available (no composite index needed — filter/sort in JS)
     if (adminDb) {
+      // If likedBy is provided, first get liked designIds from likes collection
+      let likedDesignIds: Set<string> | null = null;
+      if (likedBy) {
+        const likesSnap = await adminDb.collection("likes")
+          .where("uid", "==", likedBy).get();
+        likedDesignIds = new Set(likesSnap.docs.map((d) => d.data().designId as string));
+        if (likedDesignIds.size === 0) {
+          return NextResponse.json({ designs: [], nextCursor: null, hasMore: false });
+        }
+      }
+
       const snapshot = await adminDb.collection("designs").get();
       let all: Record<string, unknown>[] = snapshot.docs
         .map((d) => ({ id: d.id, ...d.data() } as Record<string, unknown>))
         .filter((d) => d.visibility === "public");
 
+      if (likedDesignIds) all = all.filter((d) => likedDesignIds!.has(d.id as string));
       if (ownerUid) all = all.filter((d) => d.ownerUid === ownerUid);
       if (groupTag) {
         const norm = groupTag.toLowerCase().replace(/\s+/g, "");
@@ -204,6 +217,16 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ designs: [], nextCursor: null, hasMore: false });
       }
     }
+    // If likedBy, get liked design IDs first (client SDK)
+    let likedDesignIdsClient: Set<string> | null = null;
+    if (likedBy) {
+      const likesSnap = await getDocs(query(collection(db, "likes"), where("uid", "==", likedBy)));
+      likedDesignIdsClient = new Set(likesSnap.docs.map((d) => d.data().designId as string));
+      if (likedDesignIdsClient.size === 0) {
+        return NextResponse.json({ designs: [], nextCursor: null, hasMore: false });
+      }
+    }
+
     const constraints: Parameters<typeof query>[1][] = [where("visibility", "==", "public")];
     if (ownerUid) constraints.push(where("ownerUid", "==", ownerUid));
     if (groupTag) constraints.push(where("groupTagNormalized", "==", groupTag.toLowerCase().replace(/\s+/g, "")));
@@ -211,7 +234,8 @@ export async function GET(request: NextRequest) {
 
     const q = query(collection(db, "designs"), ...constraints);
     const snapshot = await getDocs(q);
-    const all: Record<string, unknown>[] = snapshot.docs.map((d) => ({ id: d.id, ...(d.data() as Record<string, unknown>) }));
+    let all: Record<string, unknown>[] = snapshot.docs.map((d) => ({ id: d.id, ...(d.data() as Record<string, unknown>) }));
+    if (likedDesignIdsClient) all = all.filter((d) => likedDesignIdsClient!.has(d.id as string));
 
     // Recommended sort with groups prioritization
     if (sort === "recommended" && groupsParam) {

@@ -102,7 +102,7 @@ When working on domain-specific tasks, reference the relevant sub-agent file for
    - Minimalist, high-conversion layout with strong CTAs.
    - Mobile-first responsive design.
    - All UI text in **English** (global audience target).
-3. **Key Pages**: Landing (`/`), Studio (`/studio`), Gallery (`/gallery`), Detail (`/design/[id]`), Ranking (`/ranking`), Account (`/account`), Admin (`/admin`).
+3. **Key Pages**: Landing (`/`), Studio (`/studio`), Gallery (`/gallery`), Detail (`/design/[id]`), Ranking (`/ranking`), My Page (`/mypage`), Admin (`/admin/*`).
 4. **Generation Limits**: Daily free limit is **10**. Beyond that, users spend 1 Credit per extra generation (Phase 2+). See CLAUDE.md §7.2 for details.
 
 ### Phase 3: Backend Infrastructure (Firebase MCP)

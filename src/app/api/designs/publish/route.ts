@@ -3,11 +3,46 @@ import { adminDb } from "@/lib/firebase-admin";
 import { db } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { FieldValue } from "firebase-admin/firestore";
+import { getStorage } from "firebase-admin/storage";
 import { verifyAuthToken } from "@/lib/auth-helpers";
 import { resolveGroupName } from "@/lib/group-aliases";
 import { randomUUID } from "crypto";
 import fs from "fs/promises";
 import path from "path";
+
+/**
+ * Download an image from a URL and upload it to Firebase Storage.
+ * Returns the permanent public URL, or falls back to the original URL on failure.
+ */
+async function uploadToFirebaseStorage(
+  imageUrl: string,
+  designId: string,
+  index: number
+): Promise<string> {
+  try {
+    const response = await fetch(imageUrl);
+    if (!response.ok) throw new Error(`Download failed: ${response.status}`);
+    const buffer = Buffer.from(await response.arrayBuffer());
+
+    const contentType = response.headers.get("content-type") || "image/webp";
+    const ext = contentType.includes("png") ? "png" : contentType.includes("jpeg") || contentType.includes("jpg") ? "jpg" : "webp";
+    const filePath = `designs/${designId}/${index}.${ext}`;
+
+    const bucket = getStorage().bucket();
+    const file = bucket.file(filePath);
+
+    await file.save(buffer, {
+      contentType,
+      metadata: { cacheControl: "public, max-age=31536000" },
+    });
+    await file.makePublic();
+
+    return `https://storage.googleapis.com/${bucket.name}/${filePath}`;
+  } catch (error) {
+    console.warn(`Failed to upload image ${index} to Firebase Storage, using original URL:`, error);
+    return imageUrl;
+  }
+}
 
 const LOCAL_DB_PATH = path.join(process.cwd(), "data", "designs.json");
 
@@ -95,13 +130,23 @@ export async function POST(request: Request) {
 
     // Use Admin SDK if available, otherwise fall back to client SDK
     if (adminDb) {
-      const docRef = await adminDb.collection("designs").add({
+      // Pre-generate document ID for storage path
+      const docRef = adminDb.collection("designs").doc();
+      const designId = docRef.id;
+
+      // Upload images from fal.ai to Firebase Storage (permanent URLs)
+      const permanentUrls = await Promise.all(
+        imageUrls.map((url: string, i: number) => uploadToFirebaseStorage(url, designId, i))
+      );
+
+      await docRef.set({
         ...designData,
+        imageUrls: permanentUrls.map((url: string, index: number) => ({ url, index })),
         publishedAt: FieldValue.serverTimestamp(),
         createdAt: FieldValue.serverTimestamp(),
         updatedAt: FieldValue.serverTimestamp(),
       });
-      return NextResponse.json({ success: true, designId: docRef.id });
+      return NextResponse.json({ success: true, designId });
     }
 
     // Fallback to client SDK

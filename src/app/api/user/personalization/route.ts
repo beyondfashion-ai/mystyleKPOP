@@ -5,27 +5,6 @@ import { adminDb } from "@/lib/firebase-admin";
 import { db } from "@/lib/firebase";
 import { unauthorizedResponse, verifyAuthToken } from "@/lib/auth-helpers";
 
-const ALLOWED_STYLE_IDS = new Set(["cyber", "y2k", "highteen", "sexy", "suit", "street", "girlcrush", "elegant", "dark", "retro", "military"]);
-const ALLOWED_COLOR_IDS = new Set(["black-silver", "pink-white", "red-black", "blue-white", "neon-mix", "pastel"]);
-const ALLOWED_STAGE_VIBES = new Set(["glam", "chic", "bright", "dark"]);
-
-function normalizeStringList(input: unknown, maxItems: number, maxLen = 30): string[] {
-  if (!Array.isArray(input)) return [];
-  const normalized = input
-    .map((v) => (typeof v === "string" ? v.trim() : ""))
-    .filter((v) => v.length > 0 && v.length <= maxLen);
-  return Array.from(new Set(normalized)).slice(0, maxItems);
-}
-
-function normalizeStyleList(input: unknown): string[] {
-  const styles = normalizeStringList(input, 6, 20).map((s) => s.toLowerCase());
-  return styles.filter((s) => ALLOWED_STYLE_IDS.has(s));
-}
-
-function normalizeColorList(input: unknown): string[] {
-  const colors = normalizeStringList(input, 4, 20).map((s) => s.toLowerCase());
-  return colors.filter((s) => ALLOWED_COLOR_IDS.has(s)).slice(0, 2);
-}
 
 export async function GET(request: Request) {
   try {
@@ -57,31 +36,39 @@ export async function GET(request: Request) {
   }
 }
 
+
 export async function POST(request: Request) {
   try {
     const decoded = await verifyAuthToken(request);
+    // if (!decoded?.uid) return unauthorizedResponse(); // Allow anonymous for now if needed, or keep strict
+
+    // Re-enable strict auth check if verified working
     if (!decoded?.uid) return unauthorizedResponse();
 
     const body = await request.json();
 
-    const favoriteGroups = normalizeStringList(body.favoriteGroups, 8, 30);
-    const preferredStyles = normalizeStyleList(body.preferredStyles);
-    const preferredColors = normalizeColorList(body.preferredColors);
-    const preferredConceptRaw = typeof body.preferredConcept === "string" ? body.preferredConcept.toLowerCase().trim() : "";
-    const preferredConcept = ALLOWED_STYLE_IDS.has(preferredConceptRaw) ? preferredConceptRaw : undefined;
-    const preferredStageVibeRaw = typeof body.preferredStageVibe === "string" ? body.preferredStageVibe.toLowerCase().trim() : "";
-    const preferredStageVibe = ALLOWED_STAGE_VIBES.has(preferredStageVibeRaw) ? preferredStageVibeRaw : null;
-    const starterPrompt = typeof body.starterPrompt === "string" ? body.starterPrompt.trim().slice(0, 200) : undefined;
+    // New Schema Fields
+    const archetypeId = typeof body.archetypeId === "string" ? body.archetypeId.slice(0, 50) : null;
+    const archetypeLabel = typeof body.archetypeLabel === "string" ? body.archetypeLabel.slice(0, 50) : null;
+    const styleKeywords = Array.isArray(body.styleKeywords)
+      ? body.styleKeywords.map((s: any) => String(s).slice(0, 30)).slice(0, 10)
+      : [];
+    const colorPaletteId = typeof body.colorPaletteId === "string" ? body.colorPaletteId.slice(0, 50) : null;
+    const starterPrompt = typeof body.starterPrompt === "string" ? body.starterPrompt.slice(0, 500) : null;
+    const customGroupName = typeof body.customGroupName === "string" ? body.customGroupName.trim().slice(0, 30) : null;
+    const customColorText = typeof body.customColorText === "string" ? body.customColorText.trim().slice(0, 30) : null;
 
     const personalization = {
       onboardingCompleted: Boolean(body.onboardingCompleted),
-      onboardingVersion: "v1",
-      favoriteGroups,
-      preferredStyles: preferredStyles.length > 0 ? preferredStyles : preferredConcept ? [preferredConcept] : [],
-      preferredColors,
-      preferredStageVibe,
-      preferredConcept: preferredConcept || null,
-      starterPrompt: starterPrompt || null,
+      onboardingVersion: "v2",
+      archetypeId,
+      archetypeLabel,
+      customGroupName,
+      styleKeywords,
+      colorPaletteId,
+      customColorText,
+      starterPrompt,
+      updatedAt: Date.now(),
     };
 
     if (adminDb) {
@@ -113,3 +100,4 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
+

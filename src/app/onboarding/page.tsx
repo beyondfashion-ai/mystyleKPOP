@@ -1,320 +1,457 @@
 "use client";
 
 import { useAuth } from "@/context/AuthContext";
-import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Check, ChevronRight, Sparkles, Music, Palette, Star, ArrowRight } from "lucide-react";
+import { ARCHETYPES, STYLE_KEYWORDS, COLOR_PALETTES, Archetype } from "@/data/onboarding-data";
+import { resolveGroupName } from "@/lib/group-aliases";
 
 const USER_PERSONALIZATION_STORAGE_KEY = "mystyle_user_personalization_v1";
 
-const IDOL_PRESETS = ["NewJeans", "aespa", "IVE", "BTS", "SEVENTEEN", "Stray Kids", "BLACKPINK", "TXT"];
-
-const STYLE_PRESETS = [
-  { id: "y2k", label: "Y2K", prompt: "Y2K retro stage styling" },
-  { id: "highteen", label: "하이틴", prompt: "high teen preppy stage outfit" },
-  { id: "street", label: "스트릿", prompt: "streetwear urban styling" },
-  { id: "suit", label: "수트", prompt: "tailored suit performance look" },
-  { id: "cyber", label: "미래지향적", prompt: "cyberpunk futuristic outfit" },
-  { id: "girlcrush", label: "걸크러쉬", prompt: "girl crush edgy styling" },
-  { id: "sexy", label: "섹시", prompt: "sexy glamorous stage look" },
-];
-
-const COLOR_PRESETS = [
-  { id: "black-silver", label: "블랙/실버", prompt: "black and silver palette" },
-  { id: "pink-white", label: "핑크/화이트", prompt: "pink and white palette" },
-  { id: "red-black", label: "레드/블랙", prompt: "red and black contrast palette" },
-  { id: "blue-white", label: "블루/화이트", prompt: "blue and white palette" },
-  { id: "neon-mix", label: "네온 믹스", prompt: "neon mixed color palette" },
-  { id: "pastel", label: "파스텔", prompt: "soft pastel tones" },
-];
-
-const VIBE_PRESETS = [
-  { id: "glam", label: "화려한 콘서트", prompt: "high-energy concert spotlight atmosphere" },
-  { id: "chic", label: "시크/럭셔리", prompt: "chic and luxury performance mood" },
-  { id: "bright", label: "귀엽고 밝게", prompt: "bright and playful stage mood" },
-  { id: "dark", label: "다크/강렬", prompt: "dark and intense performance vibe" },
-];
-
-function buildStarterPrompt(groups: string[], styles: string[], colors: string[], vibe: string | null) {
-  const groupPart = groups[0] ? `${groups[0]} style` : "K-POP idol style";
-  const styleParts = styles
-    .map((id) => STYLE_PRESETS.find((s) => s.id === id)?.prompt)
-    .filter((v): v is string => Boolean(v))
-    .slice(0, 2);
-  const colorParts = colors
-    .map((id) => COLOR_PRESETS.find((c) => c.id === id)?.prompt)
-    .filter((v): v is string => Boolean(v))
-    .slice(0, 2);
-  const vibePart = vibe ? VIBE_PRESETS.find((v) => v.id === vibe)?.prompt : "";
-
-  const joined = [groupPart, ...styleParts, ...colorParts, vibePart]
-    .filter(Boolean)
-    .join(", ");
-  return joined.slice(0, 200);
-}
-
 export default function OnboardingPage() {
-  return (
-    <Suspense fallback={<div className="min-h-screen bg-white" />}>
-      <OnboardingContent />
-    </Suspense>
-  );
-}
-
-function OnboardingContent() {
   const { user } = useAuth();
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const [favoriteGroups, setFavoriteGroups] = useState<string[]>([]);
-  const [preferredStyles, setPreferredStyles] = useState<string[]>([]);
-  const [preferredColors, setPreferredColors] = useState<string[]>([]);
-  const [preferredStageVibe, setPreferredStageVibe] = useState<string | null>(null);
-  const [customGroupInput, setCustomGroupInput] = useState("");
+
+  // Steps: 1=Idol, 2=Style/Keywords, 3=Color, 4=Loading/Contract
+  const [step, setStep] = useState(1);
+  const [selectedArchetypeId, setSelectedArchetypeId] = useState<string | null>(null);
+  const [customGroupName, setCustomGroupName] = useState("");
+  const [groupSuggestions, setGroupSuggestions] = useState<{ displayName: string; count: number }[]>([]);
+  const [showGroupSuggestions, setShowGroupSuggestions] = useState(false);
+  const [selectedKeywords, setSelectedKeywords] = useState<string[]>([]);
+  const [customKeywordInput, setCustomKeywordInput] = useState("");
+  const [selectedColorId, setSelectedColorId] = useState<string | null>(null);
+  const [customColorText, setCustomColorText] = useState("");
   const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState("");
 
-  const nextParam = searchParams.get("next");
-  const redirectTo = nextParam && nextParam.startsWith("/") ? nextParam : "/studio";
-
+  // Auth check
   useEffect(() => {
     if (!user) {
-      router.replace(`/login?next=${encodeURIComponent("/onboarding")}`);
+      // Just redirect to login if not auth, keeping next param if needed
+      // For now simple redirect
+      // router.replace("/login"); 
     }
   }, [user, router]);
 
-  const starterPrompt = useMemo(
-    () => buildStarterPrompt(favoriteGroups, preferredStyles, preferredColors, preferredStageVibe),
-    [favoriteGroups, preferredStyles, preferredColors, preferredStageVibe]
+  const selectedArchetype = useMemo(() =>
+    ARCHETYPES.find(a => a.id === selectedArchetypeId),
+    [selectedArchetypeId]
   );
 
-  const toggleGroup = (name: string) => {
-    setFavoriteGroups((prev) => {
-      if (prev.includes(name)) return prev.filter((v) => v !== name);
-      if (prev.length >= 3) return prev;
-      return [...prev, name];
-    });
+  const handleNext = () => {
+    if (step < 3) setStep(step + 1);
+    else handleComplete();
   };
 
-  const addCustomGroup = () => {
-    const value = customGroupInput.trim();
-    if (!value) return;
-    if (value.length > 30) return;
-    setFavoriteGroups((prev) => {
-      if (prev.includes(value)) return prev;
-      if (prev.length >= 3) return prev;
-      return [...prev, value];
-    });
-    setCustomGroupInput("");
-  };
-
-  const toggleStyle = (id: string) => {
-    setPreferredStyles((prev) => {
-      if (prev.includes(id)) return prev.filter((v) => v !== id);
-      if (prev.length >= 3) return prev;
-      return [...prev, id];
-    });
-  };
-
-  const toggleColor = (id: string) => {
-    setPreferredColors((prev) => {
-      if (prev.includes(id)) return prev.filter((v) => v !== id);
-      if (prev.length >= 2) return prev;
-      return [...prev, id];
-    });
-  };
-
-  const savePersonalization = async (skip = false) => {
-    if (!user) return;
-    setError("");
-    setIsSaving(true);
-
-    try {
-      const payload = {
-        onboardingCompleted: !skip,
-        favoriteGroups: skip ? [] : favoriteGroups,
-        preferredStyles: skip ? [] : preferredStyles,
-        preferredColors: skip ? [] : preferredColors,
-        preferredStageVibe: skip ? null : preferredStageVibe,
-        preferredConcept: skip ? null : preferredStyles[0] || null,
-        starterPrompt: skip ? null : starterPrompt || null,
-      };
-
-      const token = await user.getIdToken();
-      const res = await fetch("/api/user/personalization", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data?.error || "Failed to save preferences");
-      }
-
+  // Debounced group name search
+  useEffect(() => {
+    if (!customGroupName.trim()) { setGroupSuggestions([]); return; }
+    const timer = setTimeout(async () => {
       try {
-        localStorage.setItem(USER_PERSONALIZATION_STORAGE_KEY, JSON.stringify(payload));
-      } catch {
-        // ignore storage errors
+        const res = await fetch(`/api/tags/search?q=${encodeURIComponent(customGroupName.trim())}&limit=5`);
+        const data = await res.json();
+        setGroupSuggestions(data.tags || []);
+      } catch { setGroupSuggestions([]); }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [customGroupName]);
+
+  const hasStep1Selection = !!selectedArchetypeId || customGroupName.trim().length > 0;
+
+  const handleComplete = async () => {
+    setIsSaving(true);
+    setStep(4); // Show loading/contract animation
+
+    // Construct prompt
+    const archetypeKeywords = selectedArchetype?.keywords.join(", ") || "";
+    const styleKwLabels = selectedKeywords.map(k => STYLE_KEYWORDS.find(sk => sk.id === k)?.label || k).join(", ");
+    const colorPalette = COLOR_PALETTES.find(c => c.id === selectedColorId)?.label || customColorText.trim() || "";
+
+    const promptParts = ["K-Pop Stage Outfit", archetypeKeywords, styleKwLabels, colorPalette ? `${colorPalette} Color Palette` : "", "High Quality", "Detailed"].filter(Boolean);
+    const starterPrompt = promptParts.join(", ");
+
+    const rawCustom = customGroupName.trim();
+    const resolvedCustom = rawCustom ? resolveGroupName(rawCustom).displayName : null;
+    const trimmedColor = customColorText.trim();
+    const payload = {
+      onboardingCompleted: true,
+      archetypeId: selectedArchetypeId,
+      archetypeLabel: selectedArchetype?.label || resolvedCustom || null,
+      customGroupName: resolvedCustom || null,
+      styleKeywords: selectedKeywords,
+      colorPaletteId: selectedColorId,
+      customColorText: trimmedColor || null,
+      starterPrompt,
+      createdAt: Date.now()
+    };
+
+    // Save to API (mocked for now as per previous code structure, or assuming API exists)
+    try {
+      if (user) {
+        const token = await user.getIdToken();
+        await fetch("/api/user/personalization", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
+        });
       }
 
-      router.replace(redirectTo);
+      // Save local for immediate use
+      localStorage.setItem(USER_PERSONALIZATION_STORAGE_KEY, JSON.stringify(payload));
+
+      // Delay for effect
+      setTimeout(() => {
+        router.replace("/studio");
+      }, 2500);
     } catch (e) {
-      const message = e instanceof Error ? e.message : "저장 중 오류가 발생했습니다.";
-      setError(message);
-    } finally {
-      setIsSaving(false);
+      console.error("Failed to save", e);
+      // Fallback
+      localStorage.setItem(USER_PERSONALIZATION_STORAGE_KEY, JSON.stringify(payload));
+      setTimeout(() => {
+        router.replace("/studio");
+      }, 2500);
     }
   };
 
   return (
-    <div className="min-h-screen bg-white text-black font-korean">
-      <div className="h-1 bg-gradient-to-r from-black via-gray-800 to-vibrant-cyan" />
-      <div className="max-w-xl mx-auto px-6 py-10">
-        <h1 className="text-2xl font-black tracking-tight">취향 설정</h1>
-        <p className="mt-2 text-sm text-gray-500">30초만에 메이킹룸을 내 취향으로 맞춰드릴게요.</p>
+    <div className="min-h-screen bg-black text-white font-sans selection:bg-cyan-500 selection:text-black overflow-hidden relative">
+      {/* Background Ambience */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
+        <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-purple-600/20 rounded-full blur-[100px]" />
+        <div className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-cyan-600/20 rounded-full blur-[100px]" />
+      </div>
 
-        <section className="mt-8 space-y-3">
-          <h2 className="text-sm font-bold text-gray-600">선호 아이돌/그룹 (최대 3개)</h2>
-          <div className="flex flex-wrap gap-2">
-            {IDOL_PRESETS.map((name) => {
-              const selected = favoriteGroups.includes(name);
-              return (
-                <button
-                  key={name}
-                  type="button"
-                  onClick={() => toggleGroup(name)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-colors ${
-                    selected
-                      ? "bg-black text-white border-black"
-                      : "bg-white text-gray-700 border-gray-200 hover:border-black"
-                  }`}
-                >
-                  #{name}
-                </button>
-              );
-            })}
+      <div className="relative z-10 max-w-2xl mx-auto px-6 py-12 flex flex-col min-h-screen">
+
+        {/* Header / Progress */}
+        <header className="flex items-center justify-between mb-12">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-white text-black rounded-lg flex items-center justify-center font-bold text-xl font-serif">M</div>
+            <span className="font-bold tracking-wider text-sm">MYSTYLE <span className="text-cyan-400">AGENCY</span></span>
           </div>
+          {step < 4 && (
+            <div className="flex gap-2">
+              {[1, 2, 3].map((s) => (
+                <div
+                  key={s}
+                  className={`h-1.5 w-8 rounded-full transition-all duration-300 ${s <= step ? "bg-cyan-400" : "bg-gray-800"}`}
+                />
+              ))}
+            </div>
+          )}
+        </header>
 
-          <div className="flex gap-2">
-            <input
-              value={customGroupInput}
-              onChange={(e) => setCustomGroupInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  addCustomGroup();
-                }
-              }}
-              placeholder="직접 입력 (예: LE SSERAFIM)"
-              className="flex-1 px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-black"
-              maxLength={30}
-            />
-            <button
-              type="button"
-              onClick={addCustomGroup}
-              className="px-4 py-2.5 text-sm font-bold rounded-lg border border-gray-200 hover:border-black"
+        <AnimatePresence mode="wait">
+          {step === 1 && (
+            <motion.div
+              key="step1"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="flex-1 flex flex-col"
             >
-              추가
-            </button>
-          </div>
-        </section>
+              <div className="mb-8">
+                <h1 className="text-3xl font-black mb-2">당신의 뮤즈를 찾아보세요</h1>
+                <p className="text-gray-400">어떤 스타일의 그룹을 프로듀싱 하시겠습니까?</p>
+              </div>
 
-        <section className="mt-8 space-y-3">
-          <h2 className="text-sm font-bold text-gray-600">선호 스타일 (최대 3개)</h2>
-          <div className="flex flex-wrap gap-2">
-            {STYLE_PRESETS.map((style) => {
-              const selected = preferredStyles.includes(style.id);
-              return (
+              <div className="grid grid-cols-2 gap-4 content-start">
+                {ARCHETYPES.map((arch) => (
+                  <button
+                    key={arch.id}
+                    onClick={() => { setSelectedArchetypeId(arch.id); setCustomGroupName(""); }}
+                    className={`relative group p-4 rounded-2xl border transition-all duration-300 text-left hover:scale-[1.02] ${selectedArchetypeId === arch.id
+                        ? "bg-gray-800 border-cyan-400 ring-1 ring-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.2)]"
+                        : "bg-gray-900/50 border-gray-800 hover:border-gray-600"
+                      }`}
+                  >
+                    <div className="text-3xl mb-3">{arch.visual}</div>
+                    <h3 className="font-bold text-sm mb-1">{arch.label}</h3>
+                    <p className="text-xs text-gray-500 line-clamp-2">{arch.description}</p>
+
+                    {selectedArchetypeId === arch.id && (
+                      <div className="absolute top-3 right-3 text-cyan-400">
+                        <Check size={18} strokeWidth={3} />
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
+
+              {/* Custom group name input with autocomplete */}
+              <div className="mt-5">
+                <p className="text-xs text-gray-500 mb-2">또는 직접 입력</p>
+                <div className="relative">
+                  <input
+                    value={customGroupName}
+                    onChange={(e) => { setCustomGroupName(e.target.value); if (e.target.value.trim()) setSelectedArchetypeId(null); setShowGroupSuggestions(true); }}
+                    onFocus={() => setShowGroupSuggestions(true)}
+                    onBlur={() => setTimeout(() => setShowGroupSuggestions(false), 200)}
+                    placeholder="응원하는 그룹 이름을 입력하세요 (예: BTS, 뉴진스)"
+                    maxLength={30}
+                    className="w-full px-4 py-3 bg-gray-900/50 border border-gray-800 rounded-xl text-sm text-white placeholder-gray-600 focus:outline-none focus:border-cyan-400 transition-colors"
+                  />
+                  {customGroupName.trim() && (
+                    <button
+                      onClick={() => { setCustomGroupName(""); setGroupSuggestions([]); }}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5"
+                    >
+                      <span className="text-gray-500 text-sm">✕</span>
+                    </button>
+                  )}
+                  {showGroupSuggestions && groupSuggestions.length > 0 && (
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-gray-900 border border-gray-700 rounded-xl shadow-lg z-10 overflow-hidden">
+                      {groupSuggestions.map((tag) => (
+                        <button
+                          key={tag.displayName}
+                          onMouseDown={() => { setCustomGroupName(tag.displayName); setSelectedArchetypeId(null); setShowGroupSuggestions(false); }}
+                          className="w-full px-4 py-2.5 text-left flex items-center justify-between hover:bg-gray-800 transition-colors"
+                        >
+                          <span className="text-sm font-semibold text-white">#{tag.displayName}</span>
+                          <span className="text-[11px] text-gray-500">{tag.count}개 디자인</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="mt-8 flex justify-end">
                 <button
-                  key={style.id}
-                  type="button"
-                  onClick={() => toggleStyle(style.id)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-colors ${
-                    selected
-                      ? "bg-black text-white border-black"
-                      : "bg-white text-gray-700 border-gray-200 hover:border-black"
-                  }`}
+                  onClick={handleNext}
+                  disabled={!hasStep1Selection}
+                  className="px-8 py-4 bg-white text-black font-bold rounded-full flex items-center gap-2 hover:bg-cyan-400 transition-colors disabled:opacity-50 disabled:hover:bg-white"
                 >
-                  {style.label}
+                  다음 단계 <ArrowRight size={18} />
                 </button>
-              );
-            })}
-          </div>
-        </section>
+              </div>
+            </motion.div>
+          )}
 
-        <section className="mt-8 space-y-3">
-          <h2 className="text-sm font-bold text-gray-600">선호 색상 (최대 2개)</h2>
-          <div className="flex flex-wrap gap-2">
-            {COLOR_PRESETS.map((color) => {
-              const selected = preferredColors.includes(color.id);
-              return (
+          {step === 2 && (
+            <motion.div
+              key="step2"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="flex-1 flex flex-col"
+            >
+              <div className="mb-8">
+                <div className="text-cyan-400 text-sm font-bold mb-2 uppercase tracking-wider">{selectedArchetype?.label}</div>
+                <h1 className="text-3xl font-black mb-2">컨셉 키워드 정의</h1>
+                <p className="text-gray-400">그룹의 비주얼 아이덴티티를 3가지 선택해주세요.</p>
+              </div>
+
+              <div className="flex flex-wrap gap-3">
+                {STYLE_KEYWORDS.map((kw) => {
+                  const isSelected = selectedKeywords.includes(kw.id);
+                  return (
+                    <button
+                      key={kw.id}
+                      onClick={() => {
+                        if (isSelected) {
+                          setSelectedKeywords(prev => prev.filter(k => k !== kw.id));
+                        } else {
+                          if (selectedKeywords.length < 3) {
+                            setSelectedKeywords(prev => [...prev, kw.id]);
+                          }
+                        }
+                      }}
+                      className={`px-5 py-3 rounded-full border text-sm font-bold transition-all ${isSelected
+                          ? "bg-cyan-500/20 border-cyan-400 text-cyan-400"
+                          : "bg-gray-900 border-gray-700 text-gray-400 hover:border-gray-500"
+                        }`}
+                    >
+                      <span className="mr-2">{kw.emoji}</span>
+                      {kw.label}
+                    </button>
+                  );
+                })}
+                {/* Custom keywords as chips */}
+                {selectedKeywords.filter(k => !STYLE_KEYWORDS.some(sk => sk.id === k)).map((ck) => (
+                  <button
+                    key={ck}
+                    onClick={() => setSelectedKeywords(prev => prev.filter(k => k !== ck))}
+                    className="px-5 py-3 rounded-full border text-sm font-bold bg-cyan-500/20 border-cyan-400 text-cyan-400"
+                  >
+                    ✕ {ck}
+                  </button>
+                ))}
+              </div>
+
+              {/* Custom keyword input (max 2) */}
+              {selectedKeywords.filter(k => !STYLE_KEYWORDS.some(sk => sk.id === k)).length < 2 && selectedKeywords.length < 3 && (
+                <div className="mt-4 flex gap-2">
+                  <input
+                    value={customKeywordInput}
+                    onChange={(e) => setCustomKeywordInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        const v = customKeywordInput.trim();
+                        if (v && !selectedKeywords.includes(v) && selectedKeywords.length < 3) {
+                          setSelectedKeywords(prev => [...prev, v]);
+                          setCustomKeywordInput("");
+                        }
+                      }
+                    }}
+                    placeholder="직접 입력 (예: 글래머러스한)"
+                    maxLength={20}
+                    className="flex-1 px-4 py-3 bg-gray-900/50 border border-gray-800 rounded-xl text-sm text-white placeholder-gray-600 focus:outline-none focus:border-cyan-400 transition-colors"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const v = customKeywordInput.trim();
+                      if (v && !selectedKeywords.includes(v) && selectedKeywords.length < 3) {
+                        setSelectedKeywords(prev => [...prev, v]);
+                        setCustomKeywordInput("");
+                      }
+                    }}
+                    className="px-5 py-3 border border-gray-700 rounded-xl text-sm font-bold text-gray-400 hover:border-cyan-400 hover:text-cyan-400 transition-colors"
+                  >
+                    추가
+                  </button>
+                </div>
+              )}
+
+              <div className="mt-auto flex justify-between pt-12">
                 <button
-                  key={color.id}
-                  type="button"
-                  onClick={() => toggleColor(color.id)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-colors ${
-                    selected
-                      ? "bg-black text-white border-black"
-                      : "bg-white text-gray-700 border-gray-200 hover:border-black"
-                  }`}
+                  onClick={() => setStep(1)}
+                  className="px-6 py-4 text-gray-500 font-bold hover:text-white transition-colors"
                 >
-                  {color.label}
+                  이전
                 </button>
-              );
-            })}
-          </div>
-        </section>
-
-        <section className="mt-8 space-y-3">
-          <h2 className="text-sm font-bold text-gray-600">선호 무대 무드</h2>
-          <div className="flex flex-wrap gap-2">
-            {VIBE_PRESETS.map((vibe) => {
-              const selected = preferredStageVibe === vibe.id;
-              return (
                 <button
-                  key={vibe.id}
-                  type="button"
-                  onClick={() => setPreferredStageVibe(selected ? null : vibe.id)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-colors ${
-                    selected
-                      ? "bg-black text-white border-black"
-                      : "bg-white text-gray-700 border-gray-200 hover:border-black"
-                  }`}
+                  onClick={handleNext}
+                  disabled={selectedKeywords.length === 0}
+                  className="px-8 py-4 bg-white text-black font-bold rounded-full flex items-center gap-2 hover:bg-cyan-400 transition-colors disabled:opacity-50 disabled:hover:bg-white"
                 >
-                  {vibe.label}
+                  다음 단계 <ArrowRight size={18} />
                 </button>
-              );
-            })}
-          </div>
-        </section>
+              </div>
+            </motion.div>
+          )}
 
-        <section className="mt-8 p-4 bg-gray-50 rounded-xl">
-          <p className="text-xs font-bold text-gray-500">미리 생성되는 스타터 프롬프트</p>
-          <p className="mt-1 text-sm text-black">{starterPrompt || "선택하면 자동으로 생성됩니다."}</p>
-        </section>
+          {step === 3 && (
+            <motion.div
+              key="step3"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="flex-1 flex flex-col"
+            >
+              <div className="mb-8">
+                <div className="flex gap-2 mb-2">
+                  <span className="text-cyan-400 text-sm font-bold">{selectedArchetype?.label}</span>
+                  <span className="text-gray-600 text-sm">•</span>
+                  <span className="text-gray-400 text-sm font-medium">{selectedKeywords.length}개 키워드</span>
+                </div>
+                <h1 className="text-3xl font-black mb-2">시그니처 컬러</h1>
+                <p className="text-gray-400">그룹을 대표할 비주얼 컬러를 정해주세요.</p>
+              </div>
 
-        {error && <p className="mt-4 text-sm text-red-500">{error}</p>}
+              <div className="grid grid-cols-2 gap-4">
+                {COLOR_PALETTES.map((pal) => (
+                  <button
+                    key={pal.id}
+                    onClick={() => { setSelectedColorId(pal.id); setCustomColorText(""); }}
+                    className={`relative p-4 rounded-xl border transition-all ${selectedColorId === pal.id
+                        ? "bg-gray-800 border-cyan-400"
+                        : "bg-gray-900/50 border-gray-800 hover:border-gray-600"
+                      }`}
+                  >
+                    <div className="flex gap-2 mb-3 h-12 rounded-lg overflow-hidden w-full">
+                      {pal.colors.map((c, i) => (
+                        <div key={i} className="flex-1 h-full" style={{ backgroundColor: c }} />
+                      ))}
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="font-bold text-sm">{pal.label}</span>
+                      {selectedColorId === pal.id && <Check size={16} className="text-cyan-400" />}
+                    </div>
+                  </button>
+                ))}
+              </div>
 
-        <div className="mt-8 flex gap-3">
-          <button
-            type="button"
-            onClick={() => savePersonalization(true)}
-            disabled={isSaving}
-            className="flex-1 py-3 rounded-xl border border-gray-200 text-sm font-bold hover:border-black disabled:opacity-60"
-          >
-            건너뛰기
-          </button>
-          <button
-            type="button"
-            onClick={() => savePersonalization(false)}
-            disabled={isSaving}
-            className="flex-1 py-3 rounded-xl bg-black text-white text-sm font-bold hover:opacity-90 disabled:opacity-60"
-          >
-            {isSaving ? "저장 중..." : "완료하고 시작하기"}
-          </button>
-        </div>
+              {/* Custom color input */}
+              <div className="mt-4">
+                <p className="text-xs text-gray-500 mb-2">또는 직접 입력</p>
+                <input
+                  value={customColorText}
+                  onChange={(e) => { setCustomColorText(e.target.value); if (e.target.value.trim()) setSelectedColorId(null); }}
+                  placeholder="원하는 컬러 느낌 (예: 코랄 핑크, 네이비 골드)"
+                  maxLength={30}
+                  className="w-full px-4 py-3 bg-gray-900/50 border border-gray-800 rounded-xl text-sm text-white placeholder-gray-600 focus:outline-none focus:border-cyan-400 transition-colors"
+                />
+              </div>
+
+              <div className="mt-auto flex justify-between pt-12">
+                <button
+                  onClick={() => setStep(2)}
+                  className="px-6 py-4 text-gray-500 font-bold hover:text-white transition-colors"
+                >
+                  이전
+                </button>
+                <button
+                  onClick={handleNext}
+                  disabled={!selectedColorId && !customColorText.trim()}
+                  className="px-8 py-4 bg-gradient-to-r from-cyan-400 to-blue-500 text-white font-bold rounded-full flex items-center gap-2 hover:shadow-[0_0_20px_rgba(34,211,238,0.4)] transition-all disabled:opacity-50 disabled:shadow-none"
+                >
+                  <Sparkles size={18} fill="currentColor" />
+                  계약 및 데뷔하기
+                </button>
+              </div>
+            </motion.div>
+          )}
+
+          {step === 4 && (
+            <motion.div
+              key="step4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="flex-1 flex flex-col items-center justify-center text-center pb-20"
+            >
+              <motion.div
+                animate={{
+                  scale: [1, 1.1, 1],
+                  rotate: [0, 5, -5, 0]
+                }}
+                transition={{ duration: 2, repeat: Infinity }}
+                className="w-24 h-24 bg-gradient-to-tr from-cyan-400 to-purple-500 rounded-full flex items-center justify-center mb-8 shadow-[0_0_40px_rgba(34,211,238,0.3)]"
+              >
+                <Music size={40} className="text-white" />
+              </motion.div>
+
+              <h2 className="text-2xl font-black mb-2">계약서 등록 중...</h2>
+              <p className="text-gray-400 mb-8 max-w-xs">
+                프로듀서님의 전용 스튜디오를 생성하고 있습니다.
+                <br />
+                K-POP 역사를 새로 쓸 준비를 하세요.
+              </p>
+
+              <div className="w-64 h-2 bg-gray-800 rounded-full overflow-hidden">
+                <motion.div
+                  initial={{ width: "0%" }}
+                  animate={{ width: "100%" }}
+                  transition={{ duration: 2.2, ease: "easeInOut" }}
+                  className="h-full bg-cyan-400"
+                />
+              </div>
+
+              <div className="mt-8 flex gap-2 text-xs text-gray-600 font-mono">
+                <span>ID: {user?.uid?.slice(0, 8) || "PRODUCER"}</span>
+                <span>•</span>
+                <span>ACCESS: GRANTED</span>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

@@ -32,7 +32,7 @@ export default function LandingPage() {
             .then((data) => {
                 if (data.rankings) setBestPicks(data.rankings.slice(0, 5));
             })
-            .catch(() => {});
+            .catch(() => { });
     }, []);
 
     useEffect(() => {
@@ -86,8 +86,10 @@ export default function LandingPage() {
                             {"\uB2F9\uC2E0\uC758 "}<span className="text-primary">{"\uD32C\uC2EC"}</span>{"\uC774"}<br />{"\uD604\uC2E4\uC774 \uB418\uB294 \uACF3"}
                         </h1>
                         <p className="text-sm text-gray-600 mb-10 max-w-[280px] mx-auto leading-relaxed">
-                            {"\uB0B4 \uCD5C\uC560\uB97C \uC704\uD55C \uBB34\uB300 \uC758\uC0C1\uC744 \uB514\uC790\uC778\uD574\uBCF4\uC138\uC694."}<br />
-                            {"\uC6D4\uAC04 \uB7AD\uD0B9 1\uC704 \uC6B0\uC2B9\uC791\uC740 K-POP\uC804\uBB38 \uBB34\uB300\uC758\uC0C1 \uC81C\uC791\uD300\uACFC \uD604\uC2E4 \uC81C\uC791\uC73C\uB85C \uC5F0\uACB0\uB429\uB2C8\uB2E4!"}
+                            내 최애를 위한 무대 의상을 디자인해보세요.<br />
+                            월간 랭킹 1위 우승작은<br />
+                            K-POP전문 무대의상 제작팀과<br />
+                            현실 제작으로 연결됩니다!
                         </p>
                         <Link href="/studio" className="w-full bg-black text-white py-4 px-6 rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-transform active:scale-95">
                             <span className="material-symbols-outlined text-lg">edit</span>

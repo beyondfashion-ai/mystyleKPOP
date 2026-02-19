@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MY-STYLE.AI — Hackathon Pitch Deck</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Noto+Sans+KR:wght@400;500;700;900&family=Inter:wght@400;500;600&display=swap');
+
+  :root {
+    --bg: #f0f4f9;
+    --bg-sub: #e8eef6;
+    --primary: #1978e5;
+    --primary-soft: rgba(25, 120, 229, 0.08);
+    --primary-mid: rgba(25, 120, 229, 0.15);
+    --text: #1a1a1a;
+    --text-sub: #555555;
+    --text-light: #8a94a0;
+    --border: #d4dce8;
+    --border-light: #dfe5ef;
+    --glass: rgba(255, 255, 255, 0.6);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-snap-type: y mandatory; }
+  body {
+    font-family: 'Noto Sans KR', 'Inter', 'Sora', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* --- Slide --- */
+  .slide {
+    min-height: 100vh;
+    scroll-snap-align: start;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 60px 40px;
+    border-bottom: 1px solid var(--border-light);
+  }
+
+  .slide:nth-child(odd) { background: var(--bg); }
+  .slide:nth-child(even) { background: var(--bg-sub); }
+  .slide.cover { background: var(--bg-sub); }
+
+  .slide-inner {
+    max-width: 960px;
+    width: 100%;
+  }
+
+  /* --- Typography --- */
+  .slide-number {
+    font-family: 'Sora', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--primary);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+
+  h1 {
+    font-family: 'Sora', sans-serif;
+    font-size: 52px;
+    font-weight: 800;
+    line-height: 1.15;
+    margin-bottom: 24px;
+    color: var(--text);
+  }
+
+  h2 {
+    font-family: 'Sora', sans-serif;
+    font-size: 36px;
+    font-weight: 700;
+    line-height: 1.25;
+    margin-bottom: 20px;
+    color: var(--text);
+  }
+
+  h3 {
+    font-family: 'Sora', sans-serif;
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: var(--text);
+  }
+
+  .subtitle {
+    font-size: 18px;
+    color: var(--text-sub);
+    line-height: 1.7;
+    max-width: 560px;
+  }
+
+  .accent { color: var(--primary); }
+
+  /* --- Cover --- */
+  .cover-logo {
+    font-family: 'Sora', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 5px;
+    color: var(--primary);
+    margin-bottom: 32px;
+  }
+
+  .cover h1 { font-size: 56px; }
+
+  .cover .tagline {
+    font-size: 20px;
+    color: var(--text-sub);
+    margin-bottom: 48px;
+    line-height: 1.7;
+  }
+
+  .team-info {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    padding-top: 32px;
+    border-top: 1px solid var(--border);
+    font-size: 14px;
+    color: var(--text-light);
+  }
+
+  .team-info span { color: var(--text); font-weight: 600; }
+
+  /* --- Screenshot --- */
+  .screenshot-area {
+    background: var(--bg-sub);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    margin: 16px 0;
+  }
+
+  .screenshot-area img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  .screenshot-placeholder {
+    aspect-ratio: 9/16;
+    max-height: 480px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-light);
+    font-size: 13px;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .screenshot-placeholder .icon { font-size: 32px; opacity: 0.3; }
+
+  .phone-frame {
+    max-width: 280px;
+    margin: 0 auto;
+    border-radius: 28px;
+    border: 2px solid var(--border);
+    overflow: hidden;
+    background: var(--bg-sub);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+  }
+
+  /* --- Layout --- */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 48px;
+    align-items: center;
+  }
+
+  .three-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px;
+  }
+
+  /* --- Feature List --- */
+  .feature-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .feature-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--text);
+  }
+
+  .feature-list .dot {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: var(--primary-soft);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    margin-top: 1px;
+  }
+
+  .feature-list .muted { color: var(--text-sub); }
+
+  /* --- Cards --- */
+  .info-card {
+    background: var(--glass);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    transition: box-shadow 0.2s;
+  }
+
+  .info-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.06); }
+
+  .info-card h3 { font-size: 16px; margin-bottom: 8px; }
+  .info-card p { font-size: 14px; color: var(--text-sub); line-height: 1.6; }
+
+  /* --- Journey --- */
+  .journey-flow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin: 32px 0;
+  }
+
+  .journey-step {
+    background: var(--glass);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 18px;
+    text-align: center;
+    min-width: 130px;
+    transition: box-shadow 0.2s;
+  }
+
+  .journey-step:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
+
+  .journey-step .emoji { font-size: 24px; margin-bottom: 6px; }
+  .journey-step .label { font-size: 13px; font-weight: 600; color: var(--text); }
+  .journey-step .desc { font-size: 11px; color: var(--text-light); margin-top: 3px; }
+
+  .journey-arrow { font-size: 18px; color: var(--primary); flex-shrink: 0; }
+
+  /* --- Tech --- */
+  .tech-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+
+  .tech-item {
+    background: var(--glass);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px;
+    transition: box-shadow 0.2s;
+  }
+
+  .tech-item:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
+
+  .tech-item .category {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    color: var(--primary);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .tech-item .name { font-size: 15px; font-weight: 600; color: var(--text); }
+  .tech-item .detail { font-size: 12px; color: var(--text-sub); margin-top: 3px; }
+
+  /* --- Phase --- */
+  .phase-timeline { display: flex; gap: 16px; margin-top: 24px; }
+
+  .phase-card {
+    flex: 1;
+    background: var(--glass);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px;
+    transition: box-shadow 0.2s;
+  }
+
+  .phase-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
+
+  .phase-card.active { border-color: var(--primary); border-width: 2px; }
+
+  .phase-card .phase-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-light);
+    margin-bottom: 10px;
+  }
+
+  .phase-card.active .phase-label { color: var(--primary); }
+  .phase-card h3 { font-size: 15px; margin-bottom: 6px; }
+  .phase-card p { font-size: 13px; color: var(--text-sub); line-height: 1.5; }
+
+  /* --- Stat --- */
+  .stat-row {
+    display: flex;
+    gap: 48px;
+    margin: 28px 0;
+  }
+
+  .stat { text-align: center; }
+  .stat .value {
+    font-family: 'Sora', sans-serif;
+    font-size: 36px;
+    font-weight: 800;
+    color: var(--text);
+  }
+
+  .stat .value .highlight {
+    color: var(--primary);
+  }
+  .stat .label { font-size: 13px; color: var(--text-sub); margin-top: 4px; }
+
+  /* --- Nav Dots --- */
+  .slide-nav {
+    position: fixed;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .slide-nav a {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--border);
+    display: block;
+    transition: all 0.2s;
+    border: 1px solid rgba(0,0,0,0.08);
+  }
+
+  .slide-nav a:hover { background: var(--primary); transform: scale(1.4); border-color: var(--primary); }
+
+  /* --- Stylist Grid --- */
+  .stylist-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .stylist-card {
+    background: var(--glass);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    transition: box-shadow 0.2s;
+  }
+
+  .stylist-card:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.05); }
+
+  .stylist-card h3 { font-size: 14px; margin-bottom: 3px; }
+  .stylist-card p { font-size: 12px; color: var(--text-sub); margin: 0; }
+
+  /* --- Responsive --- */
+  @media (max-width: 768px) {
+    .slide { padding: 40px 20px; }
+    h1 { font-size: 32px; }
+    .cover h1 { font-size: 38px; }
+    h2 { font-size: 26px; }
+    .two-col { grid-template-columns: 1fr; gap: 24px; }
+    .three-col { grid-template-columns: 1fr; }
+    .tech-grid { grid-template-columns: 1fr; }
+    .phase-timeline { flex-direction: column; }
+    .journey-flow { flex-direction: column; }
+    .journey-arrow { transform: rotate(90deg); }
+    .slide-nav { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Navigation Dots -->
+<nav class="slide-nav">
+  <a href="#cover" title="Cover"></a>
+  <a href="#problem" title="Problem"></a>
+  <a href="#solution" title="Solution"></a>
+  <a href="#landing" title="Landing"></a>
+  <a href="#onboarding" title="Onboarding"></a>
+  <a href="#studio" title="Studio"></a>
+  <a href="#stylist" title="AI Stylist"></a>
+  <a href="#gallery" title="Gallery"></a>
+  <a href="#detail" title="Detail"></a>
+  <a href="#ranking" title="Ranking"></a>
+  <a href="#mypage" title="My Page"></a>
+  <a href="#business" title="Business"></a>
+</nav>
+
+<!-- ===== SLIDE 1: COVER ===== -->
+<section class="slide cover" id="cover">
+  <div class="slide-inner" style="text-align: center;">
+    <div class="cover-logo">MY-STYLE.AI</div>
+    <h1>당신의 <span class="accent">팬심</span>이<br>현실이 되는 곳</h1>
+    <p class="tagline">
+      AI로 아이돌 무대의상을 디자인하고, 팬덤이 투표하고,<br>
+      우승작은 실제 의상으로 제작됩니다.
+    </p>
+    <div class="team-info" style="justify-content: center;">
+      <div>Team <span>Beyond Fashion AI</span></div>
+      <div>·</div>
+      <div><span>my-style.ai</span></div>
+      <div>·</div>
+      <div>2026</div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 2: PROBLEM ===== -->
+<section class="slide" id="problem">
+  <div class="slide-inner">
+    <div class="slide-number">01 — Problem</div>
+    <h2>K-POP 팬덤의 창작 에너지는<br><span class="accent">폭발</span>하지만, 출구가 없다</h2>
+    <div class="three-col" style="margin-top: 32px;">
+      <div class="info-card">
+        <h3>팬아트의 한계</h3>
+        <p>그림 실력이 있어야만 창작 가능. 대다수의 팬은 "보는 것"에 머무름.</p>
+      </div>
+      <div class="info-card">
+        <h3>투표만 하는 팬덤</h3>
+        <p>음원·영상 투표는 활발하지만 "내가 직접 만든 것"으로 참여하는 구조가 없음.</p>
+      </div>
+      <div class="info-card">
+        <h3>창작 → 현실 단절</h3>
+        <p>팬이 아무리 좋은 아이디어를 내도 실제 제작으로 이어지는 경로가 존재하지 않음.</p>
+      </div>
+    </div>
+    <div class="stat-row" style="margin-top: 40px; justify-content: center;">
+      <div class="stat">
+        <div class="value">4.7B+</div>
+        <div class="label">K-POP 관련 소셜 인터랙션 (연간)</div>
+      </div>
+      <div class="stat">
+        <div class="value">&lt;1%</div>
+        <div class="label">팬 창작이 실물로 이어진 비율</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 3: SOLUTION ===== -->
+<section class="slide" id="solution">
+  <div class="slide-inner" style="text-align: center;">
+    <div class="slide-number">02 — Solution</div>
+    <h2>Create → Support → <span class="accent">Reality</span></h2>
+    <p class="subtitle" style="margin: 0 auto 40px;">
+      팬이 AI로 무대의상을 만들고, 커뮤니티가 투표하고,<br>
+      매월 1위 디자인은 실제로 제작합니다.
+    </p>
+    <div class="journey-flow">
+      <div class="journey-step">
+        <div class="emoji">✏️</div>
+        <div class="label">프롬프트 입력</div>
+        <div class="desc">키워드 + 컨셉 선택</div>
+      </div>
+      <div class="journey-arrow">→</div>
+      <div class="journey-step">
+        <div class="emoji">🎨</div>
+        <div class="label">AI 의상 생성</div>
+        <div class="desc">Flux 2</div>
+      </div>
+      <div class="journey-arrow">→</div>
+      <div class="journey-step">
+        <div class="emoji">💖</div>
+        <div class="label">커뮤니티 투표</div>
+        <div class="desc">Like + Superstar</div>
+      </div>
+      <div class="journey-arrow">→</div>
+      <div class="journey-step">
+        <div class="emoji">👑</div>
+        <div class="label">월간 1위</div>
+        <div class="desc">명예의 전당 등극</div>
+      </div>
+      <div class="journey-arrow">→</div>
+      <div class="journey-step" style="border-color: var(--primary);">
+        <div class="emoji">👗</div>
+        <div class="label">실제 의상 제작</div>
+        <div class="desc">R2R: Result to Reality</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 4: LANDING ===== -->
+<section class="slide" id="landing">
+  <div class="slide-inner">
+    <div class="slide-number">03 — Landing Page</div>
+    <div class="two-col">
+      <div>
+        <h2>당신의 팬심이<br>현실이 되는 곳</h2>
+        <ul class="feature-list">
+          <li>
+            <div class="dot">🏠</div>
+            <div><strong>Hero CTA</strong><br><span class="muted">"지금 바로 디자인하기" — 원클릭으로 메이킹 룸 진입</span></div>
+          </li>
+          <li>
+            <div class="dot">🏆</div>
+            <div><strong>Best Picks</strong><br><span class="muted">월간 랭킹 상위 디자인을 실시간으로 노출</span></div>
+          </li>
+          <li>
+            <div class="dot">📋</div>
+            <div><strong>4단계 Journey</strong><br><span class="muted">서비스 이용 흐름을 직관적으로 안내</span></div>
+          </li>
+        </ul>
+      </div>
+      <div class="phone-frame">
+        <div class="screenshot-area">
+          <!-- Replace: <img src="screenshots/01-landing.png" alt="Landing Page"> -->
+          <div class="screenshot-placeholder">
+            <div class="icon">📱</div>
+            <div>screenshots/01-landing.png</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 5: ONBOARDING ===== -->
+<section class="slide" id="onboarding">
+  <div class="slide-inner">
+    <div class="slide-number">04 — Onboarding</div>
+    <div class="two-col">
+      <div class="phone-frame">
+        <div class="screenshot-area">
+          <!-- Replace: <img src="screenshots/02-onboarding.png" alt="Onboarding"> -->
+          <div class="screenshot-placeholder">
+            <div class="icon">📱</div>
+            <div>screenshots/02-onboarding.png</div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <h2>나만의<br><span class="accent">Style DNA</span> 설정</h2>
+        <ul class="feature-list">
+          <li>
+            <div class="dot">💜</div>
+            <div><strong>선호 아이돌</strong><br><span class="muted">응원하는 그룹을 직접 입력</span></div>
+          </li>
+          <li>
+            <div class="dot">🎯</div>
+            <div><strong>컨셉 키워드</strong><br><span class="muted">선호하는 3개 스타일 키워드 선택</span></div>
+          </li>
+          <li>
+            <div class="dot">🎨</div>
+            <div><strong>컬러 팔레트</strong><br><span class="muted">좋아하는 색감 계열 지정 → 맞춤 추천에 활용</span></div>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 6: STUDIO ===== -->
+<section class="slide" id="studio">
+  <div class="slide-inner">
+    <div class="slide-number">05 — Making Room (핵심 기능)</div>
+    <div class="two-col">
+      <div>
+        <h2>AI로 무대의상을<br><span class="accent">디자인</span>하다</h2>
+        <p class="subtitle" style="margin-bottom: 20px;">
+          4단계 입력만으로 프로급 무대의상 이미지가 생성됩니다.
+        </p>
+        <ul class="feature-list">
+          <li><div class="dot">👤</div><div><strong>아이돌 타입</strong> — 걸그룹 / 보이그룹</div></li>
+          <li><div class="dot">✨</div><div><strong>컨셉 스타일</strong> — Cyber, Y2K, 하이틴, 네오한복 등 11종</div></li>
+          <li><div class="dot">✍️</div><div><strong>키워드 + 해시태그</strong> — 자유 텍스트 + #그룹태그</div></li>
+          <li><div class="dot">🖼️</div><div><strong>이미지 생성</strong> — 최대 4장, 포즈/앵글 자동 랜덤화</div></li>
+        </ul>
+      </div>
+      <div class="phone-frame">
+        <div class="screenshot-area">
+          <!-- Replace: <img src="screenshots/03-studio.png" alt="Studio"> -->
+          <div class="screenshot-placeholder">
+            <div class="icon">📱</div>
+            <div>screenshots/03-studio.png</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 7: AI STYLIST ===== -->
+<section class="slide" id="stylist">
+  <div class="slide-inner">
+    <div class="slide-number">06 — AI Virtual Stylist (차별점)</div>
+    <div class="two-col">
+      <div class="phone-frame">
+        <div class="screenshot-area">
+          <!-- Replace: <img src="screenshots/04-stylist.png" alt="AI Stylist"> -->
+          <div class="screenshot-placeholder">
+            <div class="icon">📱</div>
+            <div>screenshots/04-stylist.png</div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <h2>4명의 가상 CD가<br>디자인을 <span class="accent">평가</span></h2>
+        <p class="subtitle" style="margin-bottom: 20px;">
+          빅4 기획사 출신 전직 Creative Director 설정의 AI 캐릭터가
+          실시간 트렌드를 반영한 피드백을 제공합니다.
+        </p>
+        <div class="stylist-grid">
+          <div class="stylist-card">
+            <h3>NOVA 차하은</h3>
+            <p>INTJ · Neo-Culture, Chrome, Y3K</p>
+          </div>
+          <div class="stylist-card">
+            <h3>ONYX 윤시혁</h3>
+            <p>ISTP · Dark Luxury, Power Shoulder</p>
+          </div>
+          <div class="stylist-card">
+            <h3>LORE 서유진</h3>
+            <p>INFP · Retro-Futurism, Narrative</p>
+          </div>
+          <div class="stylist-card">
+            <h3>PRISM 한도윤</h3>
+            <p>ENFP · Color Blocking, Sporty-Chic</p>
+          </div>
+        </div>
+        <p style="font-size: 13px; color: var(--text-sub); margin-top: 14px;">
+          Gemini 2.0 Flash + Google Search Grounding · 실시간 K-POP 트렌드 반영
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 8: GALLERY ===== -->
+<section class="slide" id="gallery">
+  <div class="slide-inner">
+    <div class="slide-number">07 — Style Pick</div>
+    <div class="two-col">
+      <div>
+        <h2>팬덤이 만든<br><span class="accent">스타일 갤러리</span></h2>
+        <ul class="feature-list">
+          <li><div class="dot">🧱</div><div><strong>마소니 그리드</strong><br><span class="muted">무한 스크롤로 끊김 없는 탐색 경험</span></div></li>
+          <li><div class="dot">🏷️</div><div><strong>컨셉 + 그룹 필터</strong><br><span class="muted">11개 컨셉 + 인기 그룹 태그로 빠른 탐색</span></div></li>
+          <li><div class="dot">💖</div><div><strong>낙관적 Like</strong><br><span class="muted">탭 한 번으로 즉시 반영되는 응원</span></div></li>
+          <li><div class="dot">📣</div><div><strong>응원 메시지</strong><br><span class="muted">"@님이 ○○를 응원합니다" 자동 생성</span></div></li>
+        </ul>
+      </div>
+      <div class="phone-frame">
+        <div class="screenshot-area">
+          <!-- Replace: <img src="screenshots/05-gallery.png" alt="Gallery"> -->
+          <div class="screenshot-placeholder">
+            <div class="icon">📱</div>
+            <div>screenshots/05-gallery.png</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 9: DETAIL ===== -->
+<section class="slide" id="detail">
+  <div class="slide-inner">
+    <div class="slide-number">08 — Design Detail</div>
+    <div class="two-col">
+      <div class="phone-frame">
+        <div class="screenshot-area">
+          <!-- Replace: <img src="screenshots/06-detail.png" alt="Design Detail"> -->
+          <div class="screenshot-placeholder">
+            <div class="icon">📱</div>
+            <div>screenshots/06-detail.png</div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <h2>응원하고<br><span class="accent">공유하기</span></h2>
+        <ul class="feature-list">
+          <li><div class="dot">💖</div><div><strong>Like</strong> — 무제한 무료 투표</div></li>
+          <li><div class="dot">⭐</div><div><strong>Superstar</strong> — 10배 가중치 (주 1회)</div></li>
+          <li><div class="dot">🔗</div><div><strong>공유</strong> — KakaoTalk, X, Instagram, 링크 복사</div></li>
+          <li><div class="dot">💬</div><div><strong>AI 스타일리스트 피드백</strong> — 4명 전원 열람 가능</div></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 10: RANKING ===== -->
+<section class="slide" id="ranking">
+  <div class="slide-inner">
+    <div class="slide-number">09 — Hall of Fame</div>
+    <div class="two-col">
+      <div>
+        <h2>매월 1위는<br><span class="accent">현실이 된다</span></h2>
+        <p class="subtitle" style="margin-bottom: 20px;">
+          R2R (Result to Reality) — 우리 서비스만의 핵심 차별점.
+          매월 1위 디자인은 실제 무대의상으로 제작·배송됩니다.
+        </p>
+        <div class="info-card" style="border-color: var(--primary);">
+          <h3>랭킹 스코어 공식</h3>
+          <p style="font-family: 'Sora'; font-size: 17px; color: var(--primary); margin-top: 6px;">
+            Score = Likes + (Superstar × 10)
+          </p>
+          <p style="margin-top: 6px;">
+            Like와 Superstar는 항상 분리 표시 · 공식은 공개 투명
+          </p>
+        </div>
+      </div>
+      <div class="phone-frame">
+        <div class="screenshot-area">
+          <!-- Replace: <img src="screenshots/07-ranking.png" alt="Ranking"> -->
+          <div class="screenshot-placeholder">
+            <div class="icon">📱</div>
+            <div>screenshots/07-ranking.png</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 11: MY PAGE ===== -->
+<section class="slide" id="mypage">
+  <div class="slide-inner">
+    <div class="slide-number">10 — Lookbook</div>
+    <div class="two-col">
+      <div class="phone-frame">
+        <div class="screenshot-area">
+          <!-- Replace: <img src="screenshots/08-mypage.png" alt="My Page"> -->
+          <div class="screenshot-placeholder">
+            <div class="icon">📱</div>
+            <div>screenshots/08-mypage.png</div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <h2>나의 <span class="accent">룩북</span></h2>
+        <ul class="feature-list">
+          <li><div class="dot">👤</div><div><strong>프로필 & 통계</strong><br><span class="muted">디자인 수, 받은 Like, 팔로워</span></div></li>
+          <li><div class="dot">🖼️</div><div><strong>내 디자인 / 좋아한 디자인</strong><br><span class="muted">탭 전환으로 작품 모아보기</span></div></li>
+          <li><div class="dot">🧬</div><div><strong>Style DNA 편집</strong><br><span class="muted">선호 아이돌, 키워드, 컬러 팔레트를 언제든 수정</span></div></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 12: BUSINESS & TECH ===== -->
+<section class="slide" id="business">
+  <div class="slide-inner">
+    <div class="slide-number">11 — Business Model & Tech Stack</div>
+    <h2 style="text-align: center; margin-bottom: 36px;">수익화 로드맵</h2>
+
+    <div class="phase-timeline">
+      <div class="phase-card active">
+        <div class="phase-label">Phase 1 — Now</div>
+        <h3>Likes 기반 랭킹</h3>
+        <p>무료 투표로 유저 확보 집중<br>일 10회 무료 AI 생성</p>
+      </div>
+      <div class="phase-card">
+        <div class="phase-label">Phase 2-A</div>
+        <h3>Google AdSense + 크레딧</h3>
+        <p>갤러리 인피드 광고 (8번째 카드마다)<br>스튜디오 생성 대기 중 디스플레이 광고<br>리워드 광고 → 스타일리스트 잠금 해제<br>미션 크레딧 · Boost = 가시성 향상</p>
+      </div>
+      <div class="phase-card">
+        <div class="phase-label">Phase 2-B</div>
+        <h3>유료 크레딧 + 투표</h3>
+        <p>PayPal 결제 · 광고 제거<br>추가 생성 1회 = 1 크레딧<br>Boost Vote = 랭킹 직접 반영</p>
+      </div>
+    </div>
+
+    <!-- AdSense Detail -->
+    <div style="margin-top: 20px; background: var(--primary-soft); border-radius: 10px; padding: 20px 24px; border: 1px solid var(--primary-mid);">
+      <h3 style="font-size: 14px; color: var(--primary); margin-bottom: 10px;">Google AdSense 배치 전략 (Phase 2-A)</h3>
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 12px; font-size: 13px;">
+        <div><strong>갤러리</strong><br><span style="color: var(--text-sub);">인피드 네이티브 광고<br>8번째 카드마다 삽입</span></div>
+        <div><strong>스튜디오</strong><br><span style="color: var(--text-sub);">생성 대기(~10초)<br>디스플레이 광고</span></div>
+        <div><strong>랭킹 하단</strong><br><span style="color: var(--text-sub);">배너 광고</span></div>
+        <div><strong>스타일리스트</strong><br><span style="color: var(--text-sub);">리워드 광고 시청<br>→ 잠금 해제</span></div>
+      </div>
+    </div>
+
+    <h3 style="text-align: center; margin-top: 44px; margin-bottom: 20px;">기술 스택</h3>
+    <div class="tech-grid">
+      <div class="tech-item">
+        <div class="category">Frontend</div>
+        <div class="name">Next.js 16 + TypeScript</div>
+        <div class="detail">App Router · Turbopack · Tailwind CSS v4</div>
+      </div>
+      <div class="tech-item">
+        <div class="category">AI Generation</div>
+        <div class="name">Flux 2 Turbo</div>
+        <div class="detail">1~4장 동시 생성 · 포즈/앵글 랜덤화</div>
+      </div>
+      <div class="tech-item">
+        <div class="category">AI Stylist</div>
+        <div class="name">Gemini 2.0 Flash</div>
+        <div class="detail">Google Search Grounding · 실시간 트렌드 반영</div>
+      </div>
+      <div class="tech-item">
+        <div class="category">Backend</div>
+        <div class="name">Firebase + Vercel</div>
+        <div class="detail">Firestore · Auth · Storage · Edge Network</div>
+      </div>
+    </div>
+
+    <div style="text-align: center; margin-top: 48px;">
+      <h2 style="font-size: 28px; color: var(--primary);">From Prompt to Stage</h2>
+      <p style="color: var(--text-sub); margin-top: 10px; font-size: 15px;">
+        my-style.ai — 팬심이 무대 위의 현실이 되는 순간
+      </p>
+    </div>
+  </div>
+</section>
+
+</body>
+</html>
