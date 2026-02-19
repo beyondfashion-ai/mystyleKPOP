@@ -548,6 +548,54 @@
         display: none;
       }
     }
+
+    /* --- Print / PDF --- */
+    @media print {
+      @page {
+        size: A4 landscape;
+        margin: 0;
+      }
+
+      html {
+        scroll-snap-type: none;
+      }
+
+      body {
+        background: var(--bg);
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+
+      .slide-nav {
+        display: none !important;
+      }
+
+      .slide {
+        min-height: 100vh;
+        height: 100vh;
+        page-break-after: always;
+        break-after: page;
+        page-break-inside: avoid;
+        break-inside: avoid;
+        scroll-snap-align: none;
+        overflow: hidden;
+        padding: 48px 56px;
+      }
+
+      .slide:last-child {
+        page-break-after: auto;
+        break-after: auto;
+      }
+
+      img {
+        max-width: 100%;
+      }
+
+      a {
+        text-decoration: none;
+        color: inherit;
+      }
+    }
   </style>
 </head>
 
