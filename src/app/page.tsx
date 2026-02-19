@@ -278,6 +278,8 @@ export default function LandingPage() {
                             <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-2">Support</p>
                             <div className="space-y-1">
                                 <Link href="/about" className="block text-[12px] text-gray-600 hover:text-black">About</Link>
+                                <Link href="/terms" className="block text-[12px] text-gray-600 hover:text-black">Terms</Link>
+                                <Link href="/privacy" className="block text-[12px] text-gray-600 hover:text-black">Privacy</Link>
                                 <a href="mailto:support@mystyle.ai" className="block text-[12px] text-gray-600 hover:text-black">Contact</a>
                             </div>
                         </div>

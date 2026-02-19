@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
 
@@ -48,6 +49,34 @@ export default function AboutPage() {
               통해 확정하시길 권고합니다.
             </p>
           </div>
+        </section>
+
+        <section className="rounded-2xl border border-gray-100 bg-white p-5">
+          <h3 className="text-[15px] font-bold font-korean mb-3">법률 및 정책 안내</h3>
+          <nav className="space-y-0 divide-y divide-gray-100">
+            {[
+              { href: "/terms", label: "이용약관", sub: "Terms of Service" },
+              { href: "/privacy", label: "개인정보처리방침", sub: "Privacy Policy" },
+              { href: "/refund", label: "결제/환불 정책", sub: "Payment & Refund Policy" },
+              { href: "/ai-policy", label: "AI 콘텐츠 정책", sub: "AI Content Policy" },
+              { href: "/community-guidelines", label: "커뮤니티 가이드라인", sub: "Community Guidelines" },
+              { href: "/security", label: "데이터 보안 고지", sub: "Data Security Notice" },
+            ].map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="flex items-center justify-between py-3 group"
+              >
+                <div>
+                  <p className="text-[13px] font-bold font-korean text-black group-hover:text-gray-600">{item.label}</p>
+                  <p className="text-[11px] text-gray-400">{item.sub}</p>
+                </div>
+                <span className="material-symbols-outlined text-gray-300 text-lg group-hover:text-gray-500">
+                  chevron_right
+                </span>
+              </Link>
+            ))}
+          </nav>
         </section>
 
         <section className="rounded-2xl border border-gray-100 bg-white p-5">
