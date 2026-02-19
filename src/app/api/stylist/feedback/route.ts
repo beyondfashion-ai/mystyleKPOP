@@ -39,10 +39,15 @@ export async function POST(request: Request) {
 
     const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 
-    // Gemini 2.0 Flash with Google Search grounding for real-time trend references
-    const model = genAI.getGenerativeModel({
+    // Primary: Gemini 2.0 Flash with Google Search grounding
+    const modelWithSearch = genAI.getGenerativeModel({
       model: "gemini-2.0-flash",
       tools: [{ googleSearch: {} } as any],
+    });
+
+    // Fallback: without Google Search (in case grounding is unavailable)
+    const modelBasic = genAI.getGenerativeModel({
+      model: "gemini-2.0-flash",
     });
 
     // Fetch image for visual analysis
@@ -81,17 +86,34 @@ ${imageData ? "위 이미지는 유저가 AI로 생성한 K-POP 무대의상 디
 최신 패션 트렌드를 검색하여 참고한 뒤, 당신의 관점에서 이 디자인을 평가해주세요. 반드시 한국어로 2~3줄. 당신만의 말투와 관점으로 짧고 임팩트 있게.`,
           });
 
-          const result = await model.generateContent({
-            contents: [{ role: "user", parts }],
-            generationConfig: {
-              maxOutputTokens: 200,
-              temperature: 0.9,
-            },
-          });
+          let text: string;
+          try {
+            // Try with Google Search grounding first
+            const result = await modelWithSearch.generateContent({
+              contents: [{ role: "user", parts }],
+              generationConfig: {
+                maxOutputTokens: 200,
+                temperature: 0.9,
+              },
+            });
+            text = result.response.text()?.trim() || "";
+          } catch (searchErr) {
+            console.warn(
+              `[${persona.id}] Google Search grounding failed, falling back to basic model:`,
+              searchErr instanceof Error ? searchErr.message : searchErr
+            );
+            // Fallback: generate without search grounding
+            const result = await modelBasic.generateContent({
+              contents: [{ role: "user", parts }],
+              generationConfig: {
+                maxOutputTokens: 200,
+                temperature: 0.9,
+              },
+            });
+            text = result.response.text()?.trim() || "";
+          }
 
-          const text =
-            result.response.text()?.trim() ||
-            "피드백을 생성할 수 없습니다.";
+          if (!text) text = "피드백을 생성할 수 없습니다.";
 
           // Filter out any real artist/group names that might slip through
           const filtered = filterArtistNames(text);
@@ -114,9 +136,10 @@ ${imageData ? "위 이미지는 유저가 AI로 생성한 K-POP 무대의상 디
             avatar: persona.avatar,
           };
         } catch (err) {
+          const errMsg = err instanceof Error ? err.message : String(err);
           console.error(
             `Feedback generation failed for ${persona.id}:`,
-            err instanceof Error ? err.message : err
+            errMsg
           );
           return {
             personaId: persona.id,

@@ -48,5 +48,8 @@ ui-debug.log
 # local dev data
 data/
 
+# claude code local settings (may contain auto-approved commands with secrets)
+.claude/settings.local.json
+
 # misc
 *.pem
