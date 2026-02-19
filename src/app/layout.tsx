@@ -18,6 +18,9 @@ const useMockAds = process.env.NEXT_PUBLIC_ADSENSE_USE_MOCK === "true";
 export const metadata: Metadata = {
   title: "MyStyleAI - 당신의 팬심이 현실이 되는 곳",
   description: "AI로 만드는 나만의 K-POP 아이돌 스타일",
+  other: {
+    "google-adsense-account": adsenseClient,
+  },
 };
 
 export default function RootLayout({
@@ -29,17 +32,17 @@ export default function RootLayout({
     <html lang="ko" className={`${inter.variable} ${sora.variable} ${notoSansKr.variable}`}>
       <head>
         <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+      </head>
+      <body className="font-display antialiased bg-background-light text-text-main min-h-screen">
         {!useMockAds && adsenseClient ? (
           <Script
             id="google-adsense-script"
             async
             src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsenseClient}`}
             crossOrigin="anonymous"
-            strategy="beforeInteractive"
+            strategy="afterInteractive"
           />
         ) : null}
-      </head>
-      <body className="font-display antialiased bg-background-light text-text-main min-h-screen">
         <AuthProvider>
           {children}
         </AuthProvider>
