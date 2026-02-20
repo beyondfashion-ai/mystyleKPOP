@@ -9,7 +9,7 @@ import Header from "@/components/Header";
 import CheeringBadge from "@/components/CheeringBadge";
 import AdBanner from "@/components/ads/AdBanner";
 import StylistFeedbackCard from "@/components/StylistFeedbackCard";
-import type { StylistFeedback } from "@/lib/stylist-personas";
+import { STYLIST_PERSONAS, type StylistFeedback } from "@/lib/stylist-personas";
 import { ARCHETYPES, STYLE_KEYWORDS, COLOR_PALETTES } from "@/data/onboarding-data";
 import { IDOL_TYPES, CONCEPT_STYLES } from "@/data/concept-styles";
 
@@ -445,35 +445,89 @@ export default function StudioPage() {
     setTimeout(() => setShowToast(false), 3000);
   };
 
+  const feedbackParamsRef = useRef<{ idolType: string; concept: string; keywords: string; imageUrl?: string } | null>(null);
+
+  // Build placeholder StylistFeedback from persona metadata (no API feedback yet)
+  const buildPlaceholder = (persona: typeof STYLIST_PERSONAS[number]): StylistFeedback => ({
+    personaId: persona.id,
+    fullName: persona.fullName,
+    stylehouse: persona.stylehouse,
+    title: persona.title,
+    bio: persona.bio,
+    philosophy: persona.philosophy,
+    mbti: persona.mbti,
+    feedback: "",
+    tags: persona.tags.slice(0, 3),
+    color: persona.color,
+    icon: persona.icon,
+    avatar: persona.avatar,
+  });
+
   const fetchStylistFeedback = async (firstImageUrl?: string) => {
     setIsFeedbackLoading(true);
-    setStylistFeedbacks([]);
     setSelectedStylistId(null);
 
     const selectedIdol = IDOL_TYPES.find((t) => t.id === idolType);
     const selectedConcept = findConcept(conceptStyle);
 
+    const params = {
+      idolType: selectedIdol?.label || idolType,
+      concept: selectedConcept?.label || conceptStyle || "general",
+      keywords: selectedTags.join(", "),
+      imageUrl: firstImageUrl || undefined,
+    };
+    feedbackParamsRef.current = params;
+
+    // Pick 1 random persona for fast initial load
+    const allIds = ["nova", "onyx", "lore", "prism"];
+    const pickedId = allIds[Math.floor(Math.random() * allIds.length)];
+
+    // Set all 4 placeholders immediately so tabs render
+    setStylistFeedbacks(STYLIST_PERSONAS.map(buildPlaceholder));
+
     try {
       const res = await fetch("/api/stylist/feedback", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          idolType: selectedIdol?.label || idolType,
-          concept: selectedConcept?.label || conceptStyle || "general",
-          keywords: selectedTags.join(", "),
-          imageUrl: firstImageUrl || undefined,
-        }),
+        body: JSON.stringify({ ...params, personaIds: [pickedId] }),
       });
       const data = await res.json();
       if (data.feedbacks?.length) {
-        setStylistFeedbacks(data.feedbacks);
-        // Auto-select the first persona
-        setSelectedStylistId(data.feedbacks[0].personaId);
+        const real = data.feedbacks[0] as StylistFeedback;
+        setStylistFeedbacks((prev) =>
+          prev.map((f) => (f.personaId === real.personaId ? real : f))
+        );
+        setSelectedStylistId(real.personaId);
       }
     } catch (err) {
       console.error("Stylist feedback error:", err);
     } finally {
       setIsFeedbackLoading(false);
+    }
+  };
+
+  const fetchRemainingStylistFeedbacks = async () => {
+    const loadedIds = stylistFeedbacks.filter((f) => f.feedback).map((f) => f.personaId);
+    const remainingIds = ["nova", "onyx", "lore", "prism"].filter((id) => !loadedIds.includes(id));
+    if (remainingIds.length === 0) return;
+
+    try {
+      const res = await fetch("/api/stylist/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...feedbackParamsRef.current, personaIds: remainingIds }),
+      });
+      const data = await res.json();
+      if (data.feedbacks?.length) {
+        setStylistFeedbacks((prev) =>
+          prev.map((f) => {
+            const updated = data.feedbacks.find((r: StylistFeedback) => r.personaId === f.personaId);
+            return updated || f;
+          })
+        );
+      }
+    } catch (err) {
+      console.error("Remaining stylist feedback error:", err);
     }
   };
 
@@ -1420,6 +1474,7 @@ export default function StudioPage() {
                 onSelect={(id) => setSelectedStylistId(id)}
                 onRegenerate={handleAdviceRegenerate}
                 isRegenerating={isRefiningPrompt}
+                onUnlock={fetchRemainingStylistFeedbacks}
               />
             )}
 

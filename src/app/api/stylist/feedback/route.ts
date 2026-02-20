@@ -21,7 +21,7 @@ async function fetchImageAsBase64(
 
 export async function POST(request: Request) {
   try {
-    const { idolType, concept, keywords, imageUrl } = await request.json();
+    const { idolType, concept, keywords, imageUrl, personaIds } = await request.json();
 
     if (!concept) {
       return NextResponse.json(
@@ -61,8 +61,13 @@ export async function POST(request: Request) {
       .filter(Boolean)
       .join(". ");
 
+    // If personaIds provided, only generate for those personas (faster)
+    const targetPersonas = personaIds?.length
+      ? STYLIST_PERSONAS.filter((p) => personaIds.includes(p.id))
+      : STYLIST_PERSONAS;
+
     const feedbacks: StylistFeedback[] = await Promise.all(
-      STYLIST_PERSONAS.map(async (persona) => {
+      targetPersonas.map(async (persona) => {
         try {
           const parts: Part[] = [];
 
@@ -116,7 +121,7 @@ ${imageData ? "위 이미지는 유저가 AI로 생성한 K-POP 무대의상 디
           if (!text) text = "피드백을 생성할 수 없습니다.";
 
           // Filter out any real artist/group names that might slip through
-          const filtered = filterArtistNames(text);
+          const filtered = filterOutput(text);
 
           const shuffled = [...persona.tags].sort(() => Math.random() - 0.5);
           const selectedTags = shuffled.slice(0, 3);
@@ -226,11 +231,17 @@ const BLOCKED_NAMES = [
   "Stray Kids",
 ];
 
-function filterArtistNames(text: string): string {
+function filterOutput(text: string): string {
   let filtered = text;
+  // Remove citation markers from Google Search Grounding ([cite: ...], [1], etc.)
+  filtered = filtered.replace(/\[cite:\s*[\d,\s]+\]/g, "");
+  filtered = filtered.replace(/\[\d+\]/g, "");
+  // Remove preamble phrases (AI greeting/acknowledgment before actual advice)
+  filtered = filtered.replace(/^(네[,.]?\s*|예[,.]?\s*|알겠습니다[.!]?\s*|조언\s*(시작|드리|해)\S*\s*)/g, "");
+  // Filter real artist/group names
   for (const name of BLOCKED_NAMES) {
     const regex = new RegExp(name, "gi");
     filtered = filtered.replace(regex, "아티스트");
   }
-  return filtered;
+  return filtered.trim();
 }

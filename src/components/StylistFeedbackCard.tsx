@@ -11,6 +11,7 @@ interface StylistFeedbackCardProps {
   onRegenerate?: (feedback: string) => void; // Regenerate with this advice
   isRegenerating?: boolean; // Show spinner on regenerate button
   freeCount?: number; // How many feedbacks are free (default: 1 for select, all for display)
+  onUnlock?: () => void; // Called after ad viewed — fetch remaining feedbacks
 }
 
 function PersonaAvatar({
@@ -109,6 +110,7 @@ export default function StylistFeedbackCard({
   onRegenerate,
   isRegenerating,
   freeCount,
+  onUnlock,
 }: StylistFeedbackCardProps) {
   // Default: display mode = all free, select mode = 1 free
   const effectiveFreeCount = freeCount ?? (mode === "display" ? feedbacks.length : 1);
@@ -119,7 +121,7 @@ export default function StylistFeedbackCard({
   const [adTargetId, setAdTargetId] = useState<string | null>(null);
   const { adState, showAd, resetAd } = useRewardedAd();
 
-  // Randomly select free feedbacks on mount
+  // Determine free personas: those with loaded feedback content
   useEffect(() => {
     if (feedbacks.length > 0) {
       let freeIds: Set<string>;
@@ -127,18 +129,27 @@ export default function StylistFeedbackCard({
         // Display mode: all free
         freeIds = new Set(feedbacks.map((f) => f.personaId));
       } else {
-        // Select mode: randomly pick which ones are free
-        const shuffled = [...feedbacks].sort(() => Math.random() - 0.5);
-        freeIds = new Set(
-          shuffled.slice(0, effectiveFreeCount).map((f) => f.personaId)
-        );
+        // Select mode: personas with loaded feedback are free
+        const loaded = feedbacks.filter((f) => f.feedback);
+        if (loaded.length > 0) {
+          freeIds = new Set(loaded.slice(0, effectiveFreeCount).map((f) => f.personaId));
+        } else {
+          // Fallback: pick first one
+          freeIds = new Set([feedbacks[0].personaId]);
+        }
       }
-      setUnlockedIds(freeIds);
+      setUnlockedIds((prev) => {
+        const merged = new Set(prev);
+        freeIds.forEach((id) => merged.add(id));
+        return merged;
+      });
       setFreePersonaIds(freeIds);
 
-      // Set active tab to the first free persona
-      const freeIndex = feedbacks.findIndex((f) => freeIds.has(f.personaId));
-      if (freeIndex >= 0) setActiveIndex(freeIndex);
+      // Set active tab to the first free persona (only on initial load)
+      if (freePersonaIds.size === 0) {
+        const freeIndex = feedbacks.findIndex((f) => freeIds.has(f.personaId));
+        if (freeIndex >= 0) setActiveIndex(freeIndex);
+      }
     }
   }, [feedbacks, effectiveFreeCount]);
 
@@ -159,9 +170,10 @@ export default function StylistFeedbackCard({
 
   const handleUnlock = async (personaId: string) => {
     setAdTargetId(personaId);
+    // Start fetching remaining feedbacks AND showing ad simultaneously
+    onUnlock?.();
     const success = await showAd();
     if (success) {
-      // Unlock all stylists with a single ad view
       setUnlockedIds(new Set(feedbacks.map((f) => f.personaId)));
       if (mode === "select" && onSelect) {
         onSelect(personaId);
@@ -236,7 +248,7 @@ export default function StylistFeedbackCard({
                   />
                 </div>
                 <span className={`text-[10px] font-bold ${!unlocked && !free ? "opacity-50" : ""}`}>
-                  {fb.stylehouse}
+                  {fb.fullName}
                 </span>
               </div>
             </button>
@@ -305,9 +317,16 @@ export default function StylistFeedbackCard({
               <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">
                 Style Advice
               </p>
-              <p className="text-[14px] text-gray-700 leading-relaxed font-korean">
-                {activeFb.feedback}
-              </p>
+              {activeFb.feedback ? (
+                <p className="text-[14px] text-gray-700 leading-relaxed font-korean">
+                  {activeFb.feedback}
+                </p>
+              ) : (
+                <div className="flex items-center gap-2 py-3">
+                  <div className="w-4 h-4 border-2 border-gray-200 border-t-gray-500 rounded-full animate-spin" />
+                  <span className="text-[13px] text-gray-400">피드백 로딩 중...</span>
+                </div>
+              )}
               {mode === "select" && onRegenerate && (
                 <button
                   onClick={() => onRegenerate(activeFb.feedback)}

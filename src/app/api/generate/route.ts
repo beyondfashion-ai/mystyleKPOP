@@ -1,4 +1,5 @@
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 import { fal } from "@fal-ai/client";
 import { NextResponse } from "next/server";
@@ -391,7 +392,7 @@ export async function POST(request: Request) {
                         prompt: variedPrompt,
                         image_size: "portrait_4_3" as const,
                         seed: Math.floor(Math.random() * 2147483647),
-                        safety_tolerance: "3" as const,
+                        safety_tolerance: 3,
                     },
                     logs: false,
                     pollInterval: 1500,
@@ -433,12 +434,20 @@ export async function POST(request: Request) {
         }
 
         return NextResponse.json({ urls, quality: usePro ? "pro" : "light" });
-    } catch (error) {
+    } catch (error: unknown) {
         console.error("Generate error:", error);
 
-        const message =
-            error instanceof Error ? error.message : "Image generation failed";
+        let message = "Image generation failed";
+        let status = 500;
 
-        return NextResponse.json({ error: message }, { status: 500 });
+        if (error instanceof Error) {
+            message = error.message;
+            // Extract fal.ai status if available
+            const errAny = error as Record<string, unknown>;
+            if (errAny.status) status = Number(errAny.status) || 500;
+            if (errAny.body) console.error("fal.ai error body:", JSON.stringify(errAny.body));
+        }
+
+        return NextResponse.json({ error: message }, { status });
     }
 }
