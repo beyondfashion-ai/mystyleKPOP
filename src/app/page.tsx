@@ -99,11 +99,14 @@ export default function LandingPage() {
                 </section>
                 {/* Monthly Ranking */}
                 <section className="py-12 bg-white border-y border-gray-50">
-                    <div className="px-6 flex justify-between items-end mb-6">
-                        <h2 className="text-xl font-black font-korean flex items-center gap-2">
-                            👑 월간 랭킹
-                        </h2>
-                        <Link href="/ranking" className="text-xs text-gray-400 font-bold border-b border-gray-200">View All</Link>
+                    <div className="px-6 mb-6">
+                        <div className="flex justify-between items-end">
+                            <h2 className="text-xl font-black font-korean flex items-center gap-2">
+                                👑 월간 랭킹
+                            </h2>
+                            <Link href="/ranking" className="text-xs text-gray-400 font-bold border-b border-gray-200">View All</Link>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1.5 font-korean">매월 1위 디자인은 실제 무대의상으로 제작됩니다</p>
                     </div>
                     <div className="px-6">
                         {/* 1st place ??portrait 3:4 to match generated images */}
