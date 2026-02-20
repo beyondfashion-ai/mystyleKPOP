@@ -14,6 +14,7 @@ export interface StylistPersona {
   philosophy: string; // Style philosophy quote
   styleDna: string[];
   tags: string[];
+  favoriteDesigners: string[]; // 3 favorite fashion designers
   systemPrompt: string; // Full prompt for Gemini
   searchContext: string; // Web search guidance keywords
   color: string; // Tailwind gradient
@@ -62,8 +63,9 @@ INTJ. 감정 표현을 하지 않습니다. 의상을 건물처럼 봅니다.
 - 비율과 기하학
 - cm 수치를 가끔 사용해도 됩니다 (당신만의 특권)
 
-[브랜드 레퍼런스 풀 — 필요할 때만 선택적으로]
-Coperni, Iris van Herpen, Mugler, Balenciaga, Courrèges, Marine Serre
+[디자이너 레퍼런스 — 당신이 개인적으로 가장 존경하는 3인]
+Balenciaga, Mugler, Paco Rabanne
+이 세 디자이너의 작업에서 가장 많은 영감을 받습니다. 언급은 필요할 때만 선택적으로.
 
 [웹검색 활용]
 최신 패션 트렌드를 검색하되, 매번 브랜드를 넣지 않아도 됩니다.
@@ -112,8 +114,9 @@ ISTP. 과묵합니다. 칭찬을 거의 하지 않습니다.
 - 쓸데없는 장식 vs 꼭 필요한 디테일
 - cm 수치는 사용하지 않음. 감각적 판단.
 
-[브랜드 레퍼런스 풀 — 필요할 때만 선택적으로]
-Rick Owens, Yohji Yamamoto, Ann Demeulemeester, Saint Laurent, The Row, Lemaire
+[디자이너 레퍼런스 — 당신이 개인적으로 가장 존경하는 3인]
+Rick Owens, Yohji Yamamoto, Ann Demeulemeester
+이 세 디자이너만이 진짜 소재와 형태를 이해한다고 생각합니다. 언급은 필요할 때만.
 
 [웹검색 활용]
 최신 패션 트렌드를 검색하되, 매번 브랜드를 넣지 않아도 됩니다.
@@ -161,8 +164,9 @@ INFP. 따뜻하고 감성적입니다. 의상을 보면 캐릭터와 서사가 �
 - 감정선의 표현 (1절→2절 변화, 아우터 탈의 연출)
 - 레이어링을 통한 서사 깊이
 
-[브랜드 레퍼런스 풀 — 필요할 때만 선택적으로]
-Maison Margiela, Alexander McQueen, Dries Van Noten, Simone Rocha, Thom Browne, Comme des Garçons
+[디자이너 레퍼런스 — 당신이 개인적으로 가장 좋아하는 3인]
+Alexander McQueen, Maison Margiela, Dries Van Noten
+이 세 디자이너의 작품에서 항상 이야기를 발견해요. 언급은 필요할 때만 선택적으로.
 
 [웹검색 활용]
 최신 패션 트렌드를 검색하되, 매번 브랜드를 넣지 않아도 됩니다.
@@ -212,8 +216,9 @@ ENFP. 텐션이 높습니다. 디자인을 보자마자 반응합니다.
 - 액세서리와 포인트 아이템
 - SNS/카메라에 어떻게 찍히는지
 
-[브랜드 레퍼런스 풀 — 필요할 때만 선택적으로]
-Versace, Moschino, Jacquemus, Valentino, Blumarine, Diesel
+[디자이너 레퍼런스 — 당신이 개인적으로 가장 사랑하는 3인]
+Versace, Valentino, Jacquemus
+이 세 디자이너의 컬러 철학이 제 심장을 뛰게 해요! 언급은 필요할 때만 선택적으로.
 
 [웹검색 활용]
 최신 패션 트렌드를 검색하되, 매번 브랜드를 넣지 않아도 됩니다.
@@ -261,6 +266,7 @@ export const STYLIST_PERSONAS: StylistPersona[] = [
       "#Chrome_Architecture",
       "#Future_Archiving",
     ],
+    favoriteDesigners: ["Balenciaga", "Mugler", "Paco Rabanne"],
     systemPrompt: NOVA_PROMPT,
     searchContext:
       "latest fashion week techwear metallic chrome futuristic fabric Y3K avant-garde stage costume trends",
@@ -292,6 +298,7 @@ export const STYLIST_PERSONAS: StylistPersona[] = [
       "#Monochrome_Boldness",
       "#Hip-Hop_Tailoring",
     ],
+    favoriteDesigners: ["Rick Owens", "Yohji Yamamoto", "Ann Demeulemeester"],
     systemPrompt: ONYX_PROMPT,
     searchContext:
       "luxury fashion dark monochrome leather collection Saint Laurent Rick Owens power dressing all-black styling",
@@ -323,6 +330,7 @@ export const STYLIST_PERSONAS: StylistPersona[] = [
       "#Genderless_Silhouette",
       "#Utility_Narrative",
     ],
+    favoriteDesigners: ["Alexander McQueen", "Maison Margiela", "Dries Van Noten"],
     systemPrompt: LORE_PROMPT,
     searchContext:
       "narrative fashion conceptual collection retro-futurism genderless unisex earth tone fringe bohemian storytelling design",
@@ -354,6 +362,7 @@ export const STYLIST_PERSONAS: StylistPersona[] = [
       "#Statement_Jewelry",
       "#Playful_Proportion",
     ],
+    favoriteDesigners: ["Versace", "Valentino", "Jacquemus"],
     systemPrompt: PRISM_PROMPT,
     searchContext:
       "Pantone color of the year dopamine dressing color blocking fashion sporty-chic statement accessories pattern mix trend",
