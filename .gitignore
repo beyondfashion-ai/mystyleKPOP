@@ -45,8 +45,8 @@ firebase-debug.log
 firestore-debug.log
 ui-debug.log
 
-# local dev data
-data/
+# local dev data (root-level only, not src/data/)
+/data/
 
 # claude code local settings (may contain auto-approved commands with secrets)
 .claude/settings.local.json
