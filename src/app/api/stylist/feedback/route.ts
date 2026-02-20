@@ -241,7 +241,7 @@ const BLOCKED_NAMES = [
 function filterOutput(text: string): string {
   let filtered = text;
   // Remove citation markers from Google Search Grounding ([cite: ...], [1], etc.)
-  filtered = filtered.replace(/\[cite:\s*[\d,\s]+\]/g, "");
+  filtered = filtered.replace(/\[cite:[^\]]*\]/g, "");
   filtered = filtered.replace(/\[\d+\]/g, "");
   // Remove preamble phrases (AI greeting/acknowledgment before actual advice)
   filtered = filtered.replace(/^(네[,.]?\s*|예[,.]?\s*|알겠습니다[.!]?\s*|조언\s*(시작|드리|해)\S*\s*)/g, "");
