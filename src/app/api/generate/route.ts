@@ -4,10 +4,6 @@ export const maxDuration = 60; // Vercel: extend function timeout to 60 seconds 
 import { fal } from "@fal-ai/client";
 import { NextResponse } from "next/server";
 
-fal.config({
-    credentials: process.env.FAL_KEY,
-});
-
 // =============================================================================
 // Variation Banks — 4 axes of diversity for multi-image generation
 // =============================================================================
@@ -306,6 +302,11 @@ const SAFETY_PREFIX = "Professional K-POP stage performance fashion editorial ph
 // =============================================================================
 
 export async function POST(request: Request) {
+    // Configure fal at request time so Vercel env vars are available
+    fal.config({
+        credentials: process.env.FAL_KEY,
+    });
+
     try {
         let body;
         try {
