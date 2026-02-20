@@ -388,25 +388,25 @@ export async function POST(request: Request) {
             console.log(`[Generate][${usePro ? "PRO" : "LIGHT"}] #${index + 1}/${count}:`, variedPrompt.substring(0, 120) + "...");
 
             if (usePro) {
-                return fal.subscribe("fal-ai/flux-2-pro", {
+                // PRO mode: FLUX1.1 [pro] — highest quality
+                return fal.subscribe("fal-ai/flux-pro/v1.1", {
                     input: {
                         prompt: variedPrompt,
                         image_size: "portrait_4_3" as const,
                         seed: Math.floor(Math.random() * 2147483647),
-                        safety_tolerance: "3" as const,
+                        safety_tolerance: 3,
                     },
                     logs: false,
                     pollInterval: 1500,
                 });
             }
 
-            // Light mode: flux-2/turbo — fast + affordable
-            return fal.subscribe("fal-ai/flux-2/turbo", {
+            // Light mode: FLUX.1 [schnell] — fast + affordable
+            return fal.subscribe("fal-ai/flux/schnell", {
                 input: {
                     prompt: variedPrompt,
                     image_size: "portrait_4_3" as const,
-                    num_inference_steps: 8,
-                    guidance_scale: 2.5,
+                    num_inference_steps: 4,
                     seed: Math.floor(Math.random() * 2147483647),
                     enable_safety_checker: true,
                 },
