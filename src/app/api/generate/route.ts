@@ -392,7 +392,7 @@ export async function POST(request: Request) {
                         prompt: variedPrompt,
                         image_size: "portrait_4_3" as const,
                         seed: Math.floor(Math.random() * 2147483647),
-                        safety_tolerance: 3,
+                        safety_tolerance: "3",
                     },
                     logs: false,
                     pollInterval: 1500,
@@ -443,7 +443,7 @@ export async function POST(request: Request) {
         if (error instanceof Error) {
             message = error.message;
             // Extract fal.ai status if available
-            const errAny = error as Record<string, unknown>;
+            const errAny = error as unknown as Record<string, unknown>;
             if (errAny.status) status = Number(errAny.status) || 500;
             if (errAny.body) console.error("fal.ai error body:", JSON.stringify(errAny.body));
         }
