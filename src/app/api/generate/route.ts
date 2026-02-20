@@ -1,4 +1,5 @@
 export const dynamic = "force-dynamic";
+export const maxDuration = 60; // Vercel: extend function timeout to 60 seconds for AI image generation
 
 import { fal } from "@fal-ai/client";
 import { NextResponse } from "next/server";
