@@ -81,9 +81,16 @@ export async function POST(request: Request) {
             });
           }
 
+          // Gender-specific styling instruction injected after persona prompt
+          const genderInstruction = idolType === "boygroup"
+            ? "\n\n[중요 지시] 이 의상은 보이그룹용입니다. 미니스커트, 코르셋, 브라탑, 보디수트, 슬릿 드레스, 스타킹, 하이힐 등 여성 전용 아이템을 절대 추천하지 마세요. 파워숄더, 와이드팬츠, 테일러드 재킷, 레더 팬츠, 하네스, 체인 디테일, 컴뱃 부츠 등 남성 무대의상에 적합한 방향으로 조언하세요."
+            : idolType === "girlgroup"
+              ? "\n\n[참고] 이 의상은 걸그룹용입니다. 걸그룹 무대의상 특성(실루엣, 무브먼트, 팬서비스 포인트 등)을 고려하여 조언하세요."
+              : "";
+
           // Construct prompt with search guidance
           parts.push({
-            text: `${persona.systemPrompt}
+            text: `${persona.systemPrompt}${genderInstruction}
 
 ${imageData ? "위 이미지는 유저가 AI로 생성한 K-POP 무대의상 디자인입니다. 이 이미지를 직접 보고 평가하세요." : ""}
 디자인 정보: ${textContext}

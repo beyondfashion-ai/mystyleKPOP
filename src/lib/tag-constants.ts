@@ -507,7 +507,29 @@ const GIRL_ONLY_TAGS = new Set([
   "리본 타이", "새틴 리본", "댕기 리본",
   "스트링 비키니 탑", "크리스탈 뷔스티에",
   "스틸레토 힐", "크리스탈 힐", "젤리 슈즈",
+  // additional girl-only entries (expanded)
+  "데님 미니", "체크 미니스커트", "스팽글 미니스커트", "메탈릭 미니스커트",
+  "밀리터리 미니스커트", "코듀로이 미니", "레이스 가터",
+  "새틴 캐미솔", "실키 캐미솔", "시스루 블라우스", "누드 시어 탑",
+  "레드 새틴 코르셋", "블랙 새틴 코르셋", "고딕 코르셋 벨트", "레더 코르셋 벨트",
+  "스포츠 크롭탑", "실크 스포츠 브라",
+  "블랙 홀터넥", "시크 원숄더",
 ]);
+
+// Boygroup replacement tags: when a girl-only tag is removed, one of these
+// is injected per removed slot so the pool size stays consistent.
+const BOY_REPLACEMENT_TAGS: string[] = [
+  "와이드 팬츠", "테일러드 슬랙스", "파워 숄더 재킷", "레더 팬츠",
+  "오버사이즈 블레이저", "하네스 레이어드", "스트랩 베스트", "크롭 탱크탑",
+  "메쉬 레이어 탑", "하이삭스", "앵클 부츠", "헤드밴드", "이어커프",
+  "롱 코트", "테일코트", "컴뱃 부츠", "체인 디테일", "레더 글러브",
+  "더블 브레스트 코트", "밀리터리 케이프", "구조적 베스트", "지퍼 디테일 재킷",
+  "스터드 벨트", "메탈 체인 목걸이", "와이드 카고 팬츠", "슬림 테일러드 팬츠",
+  "블랙 터틀넥", "레더 바이커 재킷", "오버핏 셔츠", "사이드 슬릿 팬츠",
+  "메탈릭 블레이저", "벨벳 재킷", "실크 셔츠", "구조적 숄더패드",
+  "체인 브레이슬릿", "레이어드 니트", "네오프렌 재킷", "카고 조끼",
+  "테크 글러브", "메탈 링 벨트",
+];
 
 /** Shuffle array in place (Fisher-Yates) */
 function shuffle<T>(arr: T[]): T[] {
@@ -519,6 +541,28 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
+/**
+ * Replace girl-only tags with boygroup alternatives so pool size stays consistent.
+ * Uses a shuffled copy of BOY_REPLACEMENT_TAGS to fill removed slots.
+ */
+function replaceGirlOnlyTags(tags: string[]): string[] {
+  const existing = new Set(tags);
+  const replacements = shuffle(BOY_REPLACEMENT_TAGS).filter((t) => !existing.has(t));
+  let ri = 0;
+  const result: string[] = [];
+  for (const tag of tags) {
+    if (GIRL_ONLY_TAGS.has(tag)) {
+      if (ri < replacements.length) {
+        result.push(replacements[ri++]);
+      }
+      // else: skip (no more unique replacements available)
+    } else {
+      result.push(tag);
+    }
+  }
+  return result;
+}
+
 /** Get tags for a given concept, filtered by idol type */
 export function getConceptTags(conceptId: string, idolType?: string): ConceptTagSet {
   const raw = CONCEPT_TAG_MAP[conceptId];
@@ -528,8 +572,8 @@ export function getConceptTags(conceptId: string, idolType?: string): ConceptTag
   if (idolType !== "boygroup") return raw;
 
   return {
-    conceptTags: raw.conceptTags.filter((t) => !GIRL_ONLY_TAGS.has(t)),
-    recommendedTags: raw.recommendedTags.filter((t) => !GIRL_ONLY_TAGS.has(t)),
+    conceptTags: replaceGirlOnlyTags(raw.conceptTags),
+    recommendedTags: replaceGirlOnlyTags(raw.recommendedTags),
   };
 }
 

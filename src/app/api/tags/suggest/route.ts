@@ -88,7 +88,7 @@ ${idolLabel}의 "${conceptLabel}" 컨셉 무대의상에 어울리는 스타일 
 - conceptTags: 소재, 실루엣, 컬러, 악세서리, 무드 중심의 핵심 태그 20개
 - recommendedTags: 의외성 있는 보완 태그 10개 (트렌디하거나 독특한 조합)
 - 각 태그는 2~6글자 한국어 패션 키워드 (예: 크롬 메탈릭, 코르셋 탑)
-- 중요: ${idolLabel} 의상에 적합한 태그만 추천. ${idolType === "boygroup" ? "미니스커트, 코르셋, 브라탑, 보디수트, 스타킹, 티아라, 하이힐 등 여성복 태그 제외." : ""}${customMoodInstruction}${excludeInstruction}
+- 중요: ${idolLabel} 의상에 적합한 태그만 추천. ${idolType === "boygroup" ? "미니스커트, 코르셋, 브라탑, 보디수트, 스타킹, 티아라, 하이힐, 슬릿 드레스, 핫팬츠, 크롭 코르셋, 시어 가운, 오프숄더 가운, 레이스 보디수트, 플리츠 스커트, 튤 스커트, 레오타드, 캐미솔, 홀터넥, 시스루 블라우스 등 여성복 태그 제외. 대신 파워숄더, 레더 팬츠, 오버사이즈 블레이저, 하네스, 체인 디테일, 컴뱃 부츠, 와이드 팬츠, 테일러드 재킷, 구조적 숄더, 카고 팬츠, 레더 글러브, 메탈 체인 등 남성 무대의상에 적합한 태그를 추천하세요." : idolType === "girlgroup" ? "걸그룹 무대의상에 어울리는 실루엣(크롭탑, 미니스커트, 코르셋 등), 소재(시어, 새틴, 레이스 등), 디테일을 포함하세요." : ""}${customMoodInstruction}${excludeInstruction}
 - JSON만 출력, 다른 텍스트 없이`;
 
     const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
