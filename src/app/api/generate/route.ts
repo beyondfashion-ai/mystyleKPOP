@@ -1,8 +1,11 @@
 export const dynamic = "force-dynamic";
-export const maxDuration = 60; // Vercel: extend function timeout to 60 seconds for AI image generation
 
 import { fal } from "@fal-ai/client";
 import { NextResponse } from "next/server";
+
+fal.config({
+    credentials: process.env.FAL_KEY,
+});
 
 // =============================================================================
 // Variation Banks — 4 axes of diversity for multi-image generation
@@ -302,11 +305,6 @@ const SAFETY_PREFIX = "Professional K-POP stage performance fashion editorial ph
 // =============================================================================
 
 export async function POST(request: Request) {
-    // Configure fal at request time so Vercel env vars are available
-    fal.config({
-        credentials: process.env.FAL_KEY,
-    });
-
     try {
         let body;
         try {
@@ -388,25 +386,25 @@ export async function POST(request: Request) {
             console.log(`[Generate][${usePro ? "PRO" : "LIGHT"}] #${index + 1}/${count}:`, variedPrompt.substring(0, 120) + "...");
 
             if (usePro) {
-                // PRO mode: FLUX1.1 [pro] — highest quality
-                return fal.subscribe("fal-ai/flux-pro/v1.1", {
+                return fal.subscribe("fal-ai/flux-2-pro", {
                     input: {
                         prompt: variedPrompt,
                         image_size: "portrait_4_3" as const,
                         seed: Math.floor(Math.random() * 2147483647),
-                        safety_tolerance: 3,
+                        safety_tolerance: "3" as const,
                     },
                     logs: false,
                     pollInterval: 1500,
                 });
             }
 
-            // Light mode: FLUX.1 [schnell] — fast + affordable
-            return fal.subscribe("fal-ai/flux/schnell", {
+            // Light mode: flux-2/turbo — fast + affordable
+            return fal.subscribe("fal-ai/flux-2/turbo", {
                 input: {
                     prompt: variedPrompt,
                     image_size: "portrait_4_3" as const,
-                    num_inference_steps: 4,
+                    num_inference_steps: 8,
+                    guidance_scale: 2.5,
                     seed: Math.floor(Math.random() * 2147483647),
                     enable_safety_checker: true,
                 },
